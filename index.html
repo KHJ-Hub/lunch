@@ -3,21 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍴 배정고 급식 안내 (4월까지)</title>
+    <title>🍴 배정고 급식 안내 (중식/석식)</title>
     <style>
-        :root { --primary-color: #4CAF50; --bg-color: #f4f7f6; }
+        :root { --primary-color: #4CAF50; --secondary-color: #FF9800; --bg-color: #f4f7f6; }
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; width: 90%; max-width: 420px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         h1 { font-size: 1.5rem; color: #333; margin-bottom: 5px; }
         .school-name { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
         .date-display { color: #888; font-size: 1rem; margin-bottom: 25px; font-weight: 500; }
-        .meal-card { background: #e8f5e9; padding: 25px; border-radius: 15px; border-left: 5px solid var(--primary-color); margin-bottom: 20px; min-height: 150px; display: flex; flex-direction: column; justify-content: center; }
-        .meal-title { font-weight: bold; color: var(--primary-color); font-size: 1.2rem; margin-bottom: 15px; }
+        
+        /* 중식/석식 탭 스타일 */
+        .tab-group { display: flex; background: #eee; border-radius: 12px; margin-bottom: 20px; padding: 5px; }
+        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #777; transition: 0.3s; }
+        .tab.active.lunch { background: var(--primary-color); color: white; }
+        .tab.active.dinner { background: var(--secondary-color); color: white; }
+
+        .meal-card { background: #fff; padding: 25px; border-radius: 15px; border: 2px solid #eee; margin-bottom: 20px; min-height: 180px; display: flex; flex-direction: column; justify-content: center; }
+        .meal-card.lunch { border-color: var(--primary-color); background: #f1f8e9; }
+        .meal-card.dinner { border-color: var(--secondary-color); background: #fff3e0; }
+        
+        .meal-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; }
+        .lunch .meal-title { color: var(--primary-color); }
+        .dinner .meal-title { color: var(--secondary-color); }
+
         .menu-list { line-height: 1.8; color: #444; word-break: keep-all; font-size: 1.1rem; }
         .btn-group { display: flex; gap: 10px; justify-content: center; }
-        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; transition: 0.2s; font-weight: bold; font-size: 1rem; flex: 1; }
-        .btn-today { background: var(--primary-color); color: white; }
-        .btn-next { background: #eee; color: #555; }
+        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; transition: 0.2s; font-weight: bold; font-size: 1rem; flex: 1; background: #eee; color: #555; }
+        button.active { background: #333; color: white; }
         .no-meal { color: #999; font-style: italic; }
         footer { margin-top: 25px; font-size: 0.8rem; color: #bbb; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
@@ -28,56 +40,34 @@
         <div class="school-name">배정고등학교 급식 안내</div>
         <div class="date-display" id="current-date"></div>
 
-        <div class="meal-card">
-            <div class="meal-title" id="meal-status">오늘의 메뉴</div>
+        <div class="tab-group">
+            <div id="tab-lunch" class="tab active lunch" onclick="changeMealType('lunch')">☀️ 점심(중식)</div>
+            <div id="tab-dinner" class="tab dinner" onclick="changeMealType('dinner')">🌙 저녁(석식)</div>
+        </div>
+
+        <div id="meal-card" class="meal-card lunch">
+            <div class="meal-title" id="meal-status">오늘의 점심</div>
             <div class="menu-list" id="menu-content">식단을 불러오는 중...</div>
         </div>
 
         <div class="btn-group">
-            <button class="btn-today" onclick="showMeal(0)">오늘</button>
-            <button class="btn-next" onclick="showMeal(1)">내일</button>
+            <button id="btn-today" class="active" onclick="changeDate(0)">오늘</button>
+            <button id="btn-tomorrow" onclick="changeDate(1)">내일</button>
         </div>
 
-        <footer>1학년 1반 담임 김현정 선생님이 만듦 ❤️</footer>
+        <footer>1학년 담임 김현정 선생님이 만듦 ❤️</footer>
     </div>
 
     <script>
-        // 엑셀에서 추출한 4월 30일까지의 전체 데이터
-        const mealData = {
-            "2026-03-23": "한우불고기덮밥, 유부콩나물국, 건새우마늘쫑볶음, 양념어묵꼬치, 배추김치, 치즈타르트, 우동, 돈까스",
-            "2026-03-24": "칼슘밥, 자장소스, 계란후라이, 배추김치, 유기농주스 (전국연합학력평가)",
-            "2026-03-25": "현미밥, 만두국, 치즈닭구이, 감자전, 취나물무침, 배추김치, 오징어주꾸미비빔밥",
-            "2026-03-26": "칼슘밥, 나주곰탕, 김치오징어전, 찰도그, 깍두기, 바나나, 우대갈비구이",
-            "2026-03-27": "혼합잡곡밥, 동태국, 콩나물잡채, 동그랑땡계란부침, 햄감자조림, 배추김치, 나가사끼짬뽕",
-            "2026-03-30": "마파두부덮밥, 봄동된장국, 탕수육, 돌나물, 새우치즈구이, 배추김치, 부대찌개, 삼치구이",
-            "2026-03-31": "현미밥, 호박수제비국, 고구마함박스테이크, 계란장조림, 콥샐러드, 지코바치밥",
-            "2026-04-01": "백미밥, 북어채콩나물국, 궁중갈비찜, 브로콜리두부무침, 딸기오믈렛, 떡국, 깐쇼새우",
-            "2026-04-02": "혼합잡곡밥, 청국장찌개, 오징어주꾸미볶음, 순두부계란찜, 미니돈까스, 라면, 모듬튀김",
-            "2026-04-03": "✨ 진로체험의 날 (급식 없음)",
-            "2026-04-06": "현미밥, 쇠고기미역국, 대패오리불고기, 두부구이, 김말이튀김, 김치말이국수",
-            "2026-04-07": "칼슘밥, 우거지등뼈감자탕, 계란말이, 고등어구이, 나시고랭볶음밥, 불고기분짜",
-            "2026-04-08": "곤드레밥, 두부호박된장국, 오향장육, 무쌈, 고구마롤, 닭곰탕, 스팸구이",
-            "2026-04-09": "흑미밥, 어묵국, 메추리알쇠고기볶음, 소시지계란부침, 통닭구이, 무절임",
-            "2026-04-10": "칼슘밥, 계란찜, 탕평채, 배추김치, 파인애플, 칼비빔면, 함박스테이크",
-            "2026-04-13": "국수, 백미밥, 떡갈비, 미나리오징어무침, 슈크림붕어빵, 쇠고기버섯전골",
-            "2026-04-14": "혼합잡곡밥, 단배추된장국, 감자채피망볶음, 배추김치, 추억의도시락, 소떡소떡",
-            "2026-04-15": "칼슘밥, 마라탕, 꿔바로우, 스크램블에그, 배추김치, 오리훈제, 콩나물무침",
-            "2026-04-16": "된장찌개, 오꼬노미볶음우동, 감자조림, 온두부/김치볶음, 토마토꿀절임, 삼겹살구이",
-            "2026-04-17": "카레, 불닭볶음/또띠아, 양상추샐러드, 육개장, 연어스테이크, 계란말이",
-            "2026-04-20": "현미밥, 곤약탕국, 간장불고기, 참치두부조림, 우엉잡채, 치킨마요덮밥",
-            "2026-04-21": "칼슘밥, 부대찌개, 계란장조림, 가자미버터구이, 깍두기, 돈코츠라면, 치킨스테이크",
-            "2026-04-22": "현미밥, 두부호박된장국, 간장찜닭, 건새우마늘쫑볶음, 고추장불고기덮밥, 감자크로켓",
-            "2026-04-23": "혼합잡곡밥, 쇠고기무국, 순살족발/무쌈, 버섯계란찜, 갈릭크림시카고피자, 알리오올리오",
-            "2026-04-24": "나물비빔밥, 청국장찌개, 계란후라이, 애플파이, 불막창닭어깨살볶음, 생선까스",
-            "2026-04-27": "도시락 컵밥, 북어채무국, 초코꽈배기",
-            "2026-04-28": "우동, 비빔만두강정, 배추김치",
-            "2026-04-29": "감자튀김, 달콤한 흑당버블티",
-            "2026-04-30": "채소볶음밥, 유부장국, 떡볶이, 깍두기, 유산균음료"
-        };
+        const lunchData = {"2026-03-23": "한우불고기덮밥, 유부콩나물국, 건새우마늘쫑볶음, 양념어묵꼬치, 배추김치, 치즈타르트", "2026-03-24": "칼슘밥, 자장소스, 계란후라이, 배추김치, 유기농주스", "2026-03-25": "현미밥, 만두국, 치즈닭구이, 감자전/양파고추소스, 취나물무침, 배추김치", "2026-03-26": "칼슘밥, 나주곰탕, 김치오징어전, 찰도그/시즈닝, 깍두기, 바나나", "2026-03-27": "혼합잡곡밥, 동태국, 콩나물잡채, 동그랑땡계란부침, 햄감자조림, 배추김치", "2026-03-30": "마파두부덮밥, 봄동된장국, 탕수육, 돌나물, 새우치즈구이, 배추김치", "2026-03-31": "현미밥, 호박수제비국, 고구마함박스테이크, 계란장조림, 콥샐러드", "2026-04-01": "백미밥, 북어채콩나물국, 궁중갈비찜, 브로콜리두부무침, 생크림딸기오믈렛", "2026-04-02": "혼합잡곡밥, 청국장찌개, 오징어주꾸미볶음, 순두부계란찜, 미니돈까스, 사과치커리초무침", "2026-04-06": "현미밥, 쇠고기미역국, 대패오리불고기, 두부구이, 김말이튀김, 취나물무침", "2026-04-07": "칼슘밥, 우거지등뼈감자탕, 계란말이, 고등어구이, 콩나물무침, 배추김치", "2026-04-08": "곤드레밥, 두부호박된장국, 오향장육, 무쌈, 고구마롤, 배추김치, 호두정과", "2026-04-09": "흑미밥, 어묵국, 메추리알쇠고기볶음, 소시지계란부침, 마늘쫑멸치볶음", "2026-04-10": "칼슘밥, 계란찜, 탕평채, 배추김치, 파인애플", "2026-04-13": "국수, 백미밥/김가루, 떡갈비, 미나리오징어무침, 배추김치, 슈크림붕어빵", "2026-04-14": "혼합잡곡밥, 단배추된장국, 감자채피망볶음, 배추김치", "2026-04-15": "칼슘밥, 마라탕, 꿔바로우, 스크램블에그, 배추김치, 맛김", "2026-04-16": "된장찌개, 오꼬노미볶음우동, 감자조림, 온두부/김치볶음, 토마토꿀절임", "2026-04-17": "카레, 불닭볶음/또띠아, 양상추샐러드, 맛김치, 비요뜨", "2026-04-20": "현미밥, 곤약탕국, 간장불고기, 참치두부조림, 우엉잡채, 배추김치", "2026-04-21": "칼슘밥, 부대찌개, 계란장조림, 열무된장무침, 가자미버터구이, 깍두기", "2026-04-22": "현미밥, 두부호박된장국, 간장찜닭, 동그랑땡계란부침, 건새우마늘쫑볶음", "2026-04-23": "혼합잡곡밥, 쇠고기무국, 순살족발/무쌈, 버섯계란찜, 숙주미나리무침, 배추김치", "2026-04-24": "나물비빔밥, 청국장찌개, 계란후라이, 배추김치, 애플파이", "2026-04-27": "컵밥, 북어채무국, 초코꽈배기", "2026-04-28": "우동, 비빔만두강정, 배추김치", "2026-04-29": "감자튀김, 흑당버블티", "2026-04-30": "채소볶음밥, 유부장국, 떡볶이, 깍두기, 유산균음료"};
+        const dinnerData = {"2026-03-23": "우동, 치즈반달돈까스, 브로콜리/초장, 깍두기, 딸기", "2026-03-25": "오징어주꾸미비빔밥, 단배추된장국, 계란찜, 떡갈비떡꼬치", "2026-03-26": "칼슘밥/김자반, 우대갈비구이, 국물떡볶이, 양상추샐러드, 아이스크림", "2026-03-27": "칼슘밥, 나가사끼짬뽕국, 곤약메추리알조림, 배추김치", "2026-03-30": "혼합잡곡밥, 부대찌개, 삼치구이, 고추튀김, 깍두기, 베이비슈", "2026-03-31": "지코바치밥, 단배추된장국, 크림떡볶음, 명엽채조림, 배추김치", "2026-04-01": "차수수밥, 떡국, 깐쇼새우조림, 호박베이컨볶음, 참나물전, 배추김치", "2026-04-02": "라면, 모듬튀김, 순대/쌈장, 구슬아이스크림", "2026-04-06": "김치말이국수, 백미밥, 도끼떡갈비, 시금치나물, 갈릭파이", "2026-04-07": "나시고랭볶음밥, 시금치된장국, 불고기분짜, 춘권, 깍두기", "2026-04-08": "칼슘밥, 닭곰탕/당면사리, 스팸구이, 쥐포채조림, 깍두기, 요구르트", "2026-04-09": "통닭구이, 양배추마요케첩무침, 무절임, 자몽에이드", "2026-04-10": "현미밥, 들깨가루무채국, 칼비빔면, 함박스테이크, 깍두기, 요거트", "2026-04-13": "기장밥, 쇠고기버섯전골, 생선까스, 도토리묵, 배추김치", "2026-04-14": "추억의도시락, 유부장국, 연근조림, 소떡소떡, 깍두기, 쿨피스", "2026-04-15": "혼합잡곡밥, 고추장찌개, 오리훈제, 콩나물무침, 해물파전, 배추김치", "2026-04-16": "칼슘밥/ 맛김치, 삼겹살구이, 물쫄면, 상추/쌈장, 후룻볼", "2026-04-17": "혼합잡곡밥, 육개장, 연어스테이크, 계란말이, 김치오징어전, 바스크초코케익", "2026-04-20": "치킨마요덮밥, 팽이버섯된장국, 일미도라지무침, 배추김치, 회오리감자, 딸기주스", "2026-04-21": "돈코츠라면, 백미밥, 치킨스테이크, 깍두기, 바나나우유", "2026-04-22": "고추장불고기덮밥, 유부콩나물국, 감자크로켓, 연두부, 배추김치, 푸딩", "2026-04-23": "갈릭크림시카고피자, 알리오올리오스파게티, 양상추샐러드, 모듬피클, 사과주스", "2026-04-24": "율무밥, 들깨가루시락국, 불막창닭어깨살볶음, 생선까스, 오이참나물겉절이, 배추김치"};
 
-        function showMeal(offset) {
+        let currentType = 'lunch';
+        let currentDateOffset = 0;
+
+        function updateUI() {
             const targetDate = new Date();
-            targetDate.setDate(targetDate.getDate() + offset);
+            targetDate.setDate(targetDate.getDate() + currentDateOffset);
             
             const year = targetDate.getFullYear();
             const month = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -87,18 +77,38 @@
             const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
             document.getElementById('current-date').innerText = `${year}년 ${month}월 ${day}일 (${dayNames[targetDate.getDay()]})`;
             
-            const menu = mealData[dateStr];
-            const statusText = offset === 0 ? "오늘의 메뉴" : "내일의 메뉴";
-            document.getElementById('meal-status').innerText = statusText;
+            const data = currentType === 'lunch' ? lunchData : dinnerData;
+            const menu = data[dateStr];
+            
+            const typeText = currentType === 'lunch' ? "점심" : "저녁";
+            const timeText = currentDateOffset === 0 ? "오늘의" : "내일의";
+            document.getElementById('meal-status').innerText = `${timeText} ${typeText}`;
+
+            const card = document.getElementById('meal-card');
+            card.className = `meal-card ${currentType}`;
 
             if (menu) {
                 document.getElementById('menu-content').innerHTML = menu.split(', ').join('<br>');
             } else {
-                document.getElementById('menu-content').innerHTML = "<span class='no-meal'>정보가 없습니다. (주말/공휴일)</span>";
+                document.getElementById('menu-content').innerHTML = "<span class='no-meal'>급식 정보가 없습니다.</span>";
             }
         }
 
-        showMeal(0);
+        function changeMealType(type) {
+            currentType = type;
+            document.getElementById('tab-lunch').classList.toggle('active', type === 'lunch');
+            document.getElementById('tab-dinner').classList.toggle('active', type === 'dinner');
+            updateUI();
+        }
+
+        function changeDate(offset) {
+            currentDateOffset = offset;
+            document.getElementById('btn-today').classList.toggle('active', offset === 0);
+            document.getElementById('btn-tomorrow').classList.toggle('active', offset === 1);
+            updateUI();
+        }
+
+        updateUI();
     </script>
 </body>
 </html>
