@@ -3,122 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍱 배정고 급식 가이드</title>
+    <title>🍱 배정고 오늘의 급식!</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
         :root {
             --primary: #4CAF50; --primary-light: #E8F5E9;
             --secondary: #FF9800; --secondary-light: #FFF3E0;
-            --bg: #F0F2F5; --card-white: #FFFFFF;
+            --info: #2196F3; --bg: #F5F7FA; --card: #FFFFFF; --like: #FF5252;
         }
+        * { box-sizing: border-box; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg); margin: 0; padding: 15px 0; display: flex; justify-content: center; min-height: 100vh; color: #333; }
+        .app-container { width: 100%; max-width: 420px; padding: 0 10px; }
+        .main-card { background: var(--card); border-radius: 35px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); text-align: center; }
+        
+        /* 🏷️ 메인 제목 및 제작자 문구 수정 */
+        .header h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 800; letter-spacing: -1px; }
+        .header p { font-size: 0.9rem; color: #FF9800; margin: 5px 0 25px; font-weight: 700; }
 
-        body {
-            font-family: 'Pretendard', sans-serif; background-color: var(--bg);
-            margin: 0; padding: 20px 0; display: flex; justify-content: center; min-height: 100vh;
-        }
-
-        .app-container {
-            width: 100%; max-width: 400px; padding: 0 15px;
-        }
-
-        /* 🏠 메인 카드 디자인 */
-        .main-card {
-            background: var(--card-white); border-radius: 30px; 
-            padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            text-align: center; overflow: hidden;
-        }
-
-        .header h1 { font-size: 1.5rem; color: #333; margin: 0; font-weight: 800; }
-        .header p { font-size: 0.85rem; color: #888; margin: 5px 0 25px; }
-
-        /* 📅 날짜 선택기 스타일 */
-        .date-box { margin-bottom: 25px; }
+        .date-box { margin-bottom: 20px; display: flex; justify-content: center; }
         input[type="date"] {
-            border: 2px solid #EEE; border-radius: 15px; padding: 12px 20px;
-            font-size: 1rem; font-weight: 700; color: #444; outline: none;
-            background: #F9F9F9; cursor: pointer; font-family: inherit; width: 100%; box-sizing: border-box;
-            transition: all 0.3s;
+            border: 2px solid #EEE; border-radius: 50px; padding: 10px 20px;
+            font-size: 0.95rem; font-weight: 700; color: #555; outline: none;
+            background: #FDFDFD; cursor: pointer; font-family: inherit; width: 85%; transition: 0.3s;
         }
-        input[type="date"]:focus { border-color: var(--secondary); background: #FFF; box-shadow: 0 0 10px rgba(255,152,0,0.15); }
 
-        /* ☀️🌙 탭 스위치 */
-        .tab-switch {
-            display: flex; background: #EEE; border-radius: 18px; padding: 5px; margin-bottom: 25px;
-        }
-        .tab-item {
-            flex: 1; padding: 12px; cursor: pointer; border-radius: 14px;
-            font-weight: 700; color: #888; transition: 0.3s; font-size: 0.95rem;
-        }
+        .tab-switch { display: flex; background: #EEE; border-radius: 20px; padding: 5px; margin-bottom: 20px; gap: 3px; }
+        .tab-item { flex: 1; padding: 12px 5px; cursor: pointer; border-radius: 16px; font-weight: 700; color: #888; transition: 0.3s; font-size: 0.85rem; }
         .tab-item.active.lunch { background: var(--primary); color: white; }
         .tab-item.active.dinner { background: var(--secondary); color: white; }
+        .tab-item.active.suggest { background: var(--info); color: white; }
 
-        /* 🍱 급식 메뉴 카드 */
-        .meal-content-card {
-            background: #FAFAFA; border-radius: 22px; padding: 25px;
-            min-height: 140px; border: 1px solid #F0F0F0; transition: 0.3s;
+        .meal-content-area {
+            background: #FAFAFA; border-radius: 25px; padding: 25px; min-height: 150px;
+            border: 1px solid #F0F0F0; transition: 0.3s; position: relative; margin-bottom: 20px;
         }
-        .meal-content-card.lunch { background: var(--primary-light); border-color: #C8E6C9; }
-        .meal-content-card.dinner { background: var(--secondary-light); border-color: #FFE0B2; }
-
-        .meal-status-label {
-            display: inline-block; padding: 4px 12px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 800; margin-bottom: 15px;
-        }
+        .meal-content-area.lunch { background: var(--primary-light); border-color: #C8E6C9; }
+        .meal-content-area.dinner { background: var(--secondary-light); border-color: #FFE0B2; }
+        
+        .meal-label-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .meal-status-label { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; }
         .lunch .meal-status-label { background: var(--primary); color: white; }
         .dinner .meal-status-label { background: var(--secondary); color: white; }
-
-        .menu-text {
-            line-height: 1.8; color: #444; font-size: 1.15rem; font-weight: 600; word-break: keep-all;
-        }
-
-        /* ✨ 특식 효과 */
-        @keyframes pulse-special {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .special-meal {
-            animation: pulse-special 2s infinite ease-in-out;
-            border: 3px solid transparent;
-            background-image: linear-gradient(#fffdf9, #fffdf9), linear-gradient(to right, #f83a3a, #f19e18, #66bb6a);
-            background-origin: border-box; background-clip: content-box, border-box;
-        }
-
-        /* 💬 댓글 한줄평 섹션 */
-        .comments-section { text-align: left; margin-top: 35px; }
-        .comments-section h3 { font-size: 1.1rem; color: #333; margin-left: 5px; margin-bottom: 15px; }
         
-        .comment-input-row { display: flex; gap: 8px; margin-bottom: 20px; }
-        .comment-input-row input {
-            flex: 1; padding: 12px 18px; border-radius: 15px; border: 2px solid #EEE;
-            outline: none; font-size: 0.9rem; background: #F9F9F9;
+        .average-rating { font-size: 0.85rem; color: #777; font-weight: 600; }
+        .average-rating span { color: #FFB300; font-size: 1rem; }
+
+        /* ✨ 특식 글자 크기 강조 */
+        @keyframes special-glow {
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,152,0,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,152,0,0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,152,0,0.3); }
         }
-        .comment-input-row button {
-            background: #333; color: white; border: none; padding: 0 18px;
-            border-radius: 15px; cursor: pointer; font-weight: 700;
+        .special-meal-card { animation: special-glow 2s infinite ease-in-out; border: 4px solid #FF9800 !important; background: #FFFDF0 !important; }
+        .special-meal-card .meal-status-label { 
+            font-size: 1.35rem !important; 
+            padding: 12px 24px !important; 
+            background: linear-gradient(45deg, #FF5252, #FF9800) !important;
+            box-shadow: 0 5px 15px rgba(255,82,82,0.3);
+            margin-bottom: 20px;
+            border-radius: 12px !important;
         }
 
-        .comment-bubble {
-            background: #FFF; padding: 15px; border-radius: 18px; margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #F0F0F0; position: relative;
-        }
-        .comment-text { font-size: 0.95rem; color: #444; line-height: 1.5; font-weight: 500; }
-        .comment-info { font-size: 0.7rem; color: #BBB; margin-top: 8px; display: block; }
-        .del-btn { position: absolute; top: 10px; right: 10px; color: #DDD; cursor: pointer; border: none; background: none; font-size: 0.8rem; }
-        .del-btn:hover { color: #FF5252; }
+        .menu-text { line-height: 1.8; color: #444; font-size: 1.25rem; font-weight: 700; word-break: keep-all; }
 
-        footer { margin-top: 30px; font-size: 0.75rem; color: #BBB; text-align: center; padding-bottom: 20px; }
+        .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
+        .star-radio-group input { display: none; }
+        .star-radio-group label { font-size: 2rem; color: #DDD; cursor: pointer; transition: 0.2s; }
+        .star-radio-group label:hover, .star-radio-group label:hover ~ label,
+        .star-radio-group input:checked ~ label { color: #FFC107; }
+
+        .poll-section { margin-top: 25px; text-align: left; background: #FDFDFD; padding: 20px; border-radius: 20px; border: 1px solid #EEE; }
+        .poll-section h3 { font-size: 1rem; color: #333; margin-bottom: 12px; font-weight: 800; }
+        .poll-item-row { display: flex; align-items: center; justify-content: space-between; background: #F9F9F9; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #F0F0F0; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
+
+        .comments-section { text-align: left; margin-top: 30px; }
+        .comment-input-row { display: flex; gap: 8px; margin-bottom: 18px; }
+        .comment-input-row input { flex: 1; padding: 12px 18px; border-radius: 15px; border: 2px solid #EEE; outline: none; font-size: 0.9rem; }
+        .comment-input-row button { background: #333; color: white; border: none; padding: 0 18px; border-radius: 15px; cursor: pointer; font-weight: 700; }
+
+        .comment-bubble { background: #FFF; padding: 15px; border-radius: 20px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #F0F0F0; position: relative; }
+        .comment-text { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
+        .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
+        .like-badge { cursor: pointer; border: none; background: rgba(255,82,82,0.1); color: var(--like); padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+        
+        .del-btn { position: absolute; top: 12px; right: 12px; color: #EEE; border: none; background: none; cursor: pointer; }
+        .del-btn:hover { color: var(--like); }
+
+        .scroll-area { max-height: 300px; overflow-y: auto; padding-right: 5px; }
+        .scroll-area::-webkit-scrollbar { width: 4px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #DDD; border-radius: 10px; }
+        
+        footer { margin-top: 25px; font-size: 0.75rem; color: #BBB; text-align: center; padding-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="main-card">
             <div class="header">
-                <h1>🍱 배정 급식 포털</h1>
-                <p>KIM HYEON JEOUNG PRINTS</p>
+                <h1>🍱 배정고 오늘의 급식!</h1>
+                <p>현정T가 만들었음.</p>
             </div>
 
             <div class="date-box">
@@ -126,25 +111,53 @@
             </div>
 
             <div class="tab-switch">
-                <div id="tab-lunch" class="tab-item active lunch" onclick="changeMealType('lunch')">☀️ 점심</div>
-                <div id="tab-dinner" class="tab-item dinner" onclick="changeMealType('dinner')">🌙 저녁</div>
+                <div id="tab-lunch" class="tab-item active lunch" onclick="changeTab('lunch')">☀️ 점심</div>
+                <div id="tab-dinner" class="tab-item dinner" onclick="changeTab('dinner')">🌙 저녁</div>
+                <div id="tab-suggest" class="tab-item suggest" onclick="changeTab('suggest')">💡 건의함</div>
             </div>
 
-            <div id="meal-card" class="meal-content-card lunch">
-                <div class="meal-status-label" id="meal-status">오늘의 점심</div>
-                <div class="menu-text" id="menu-content">식단을 불러오는 중...</div>
-            </div>
-
-            <div class="comments-section">
-                <h3>💬 실시간 한줄평</h3>
-                <div class="comment-input-row">
-                    <input type="text" id="comment-input" placeholder="급식 어땠나요?">
-                    <button onclick="saveComment()">등록</button>
+            <div id="meal-view-container">
+                <div id="meal-card" class="meal-content-area lunch">
+                    <div class="meal-label-row">
+                        <div class="meal-status-label" id="meal-status">오늘의 점심</div>
+                        <div id="avg-rating-display" class="average-rating"><span>★</span> 0.0</div>
+                    </div>
+                    <div class="menu-text" id="menu-content">식단 로딩 중...</div>
                 </div>
-                <div id="comment-list" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
+
+                <div class="star-radio-group">
+                    <input type="radio" id="star5" name="rating" value="5" onclick="submitRating(5)"><label for="star5">★</label>
+                    <input type="radio" id="star4" name="rating" value="4" onclick="submitRating(4)"><label for="star4">★</label>
+                    <input type="radio" id="star3" name="rating" value="3" onclick="submitRating(3)"><label for="star3">★</label>
+                    <input type="radio" id="star2" name="rating" value="2" onclick="submitRating(2)"><label for="star2">★</label>
+                    <input type="radio" id="star1" name="rating" value="1" onclick="submitRating(1)"><label for="star1">★</label>
+                </div>
+
+                <div class="poll-section" id="poll-box" style="display:none;">
+                    <h3>🔥 내일 메뉴 중 가장 기대되는 것은?</h3>
+                    <div id="poll-items-list"></div>
+                </div>
+
+                <div class="comments-section">
+                    <h3>💬 실시간 한줄평</h3>
+                    <div class="comment-input-row">
+                        <input type="text" id="comment-input" placeholder="급식 후기 한마디!">
+                        <button onclick="saveComment()">등록</button>
+                    </div>
+                    <div id="comment-list" class="scroll-area"></div>
+                </div>
+            </div>
+
+            <div id="suggestion-view-container" style="display:none; text-align:left;">
+                <h3 style="font-size:1.1rem; color:var(--info); font-weight:800; margin-bottom:15px;">💡 건의함</h3>
+                <div class="comment-input-row">
+                    <input type="text" id="suggest-input" placeholder="기능 요청이나 건의사항을 적어주세요!">
+                    <button onclick="saveSuggestion()" style="background:var(--info);">건의</button>
+                </div>
+                <div id="suggest-list" class="scroll-area"></div>
             </div>
         </div>
-        <footer>배정고 학생들의 밥심을 응원합니다 ❤️</footer>
+        <footer>남고생의 밥심을 책임지는 김현정 선생님 ❤️</footer>
     </div>
 
     <script>
@@ -161,72 +174,137 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const lunchData = {"2026-03-23": "한우불고기덮밥, 유부콩나물국, 건새우마늘쫑볶음, 양념 어묵 꼬치, 배추김치, 치즈 타르트", "2026-03-24": "칼슘밥, 자장 소스, 계란 후라이, 배추김치, 유기농 주스", "2026-03-25": "현미밥, 만두국, 치즈 닭구이, 감자전, 취나물 무침, 배추김치", "2026-03-26": "칼슘밥, 나주곰탕, 김치 오징어 전, 찰도그, 깍두기, 바나나", "2026-03-27": "혼합잡곡밥, 동태국, 콩나물 잡채, 동그랑땡 계란 부침, 햄 감자 조림, 배추김치", "2026-03-30": "마파두부 덮밥, 봄동 된장국, 탕수육, 돌나물, 새우 치즈 구이, 배추김치", "2026-03-31": "현미밥, 호박 수제비국, 고구마 함박 스테이크, 계란 장조림, 콥 샐러드", "2026-04-01": "백미밥, 북어채 콩나물국, 궁중 갈비찜, 브로콜리 두부 무침, 생크림 딸기 오믈렛", "2026-04-02": "혼합잡곡밥, 청국장찌개, 오징어 주꾸미 볶음, 순두부 계란찜, 미니 돈가스, 사과 치커리 초무침", "2026-04-06": "현미밥, 쇠고기 미역국, 대패 오리 불고기, 두부 구이, 김말이 튀김, 취나물 무침", "2026-04-07": "칼슘밥, 우거지 등뼈 감자탕, 계란말이, 고등어구이, 콩나물 무침, 배추김치", "2026-04-08": "곤드레밥, 두부 호박 된장국, 오향장육, 무쌈, 고구마 롤, 배추김치, 호두 정과", "2026-04-09": "흑미밥, 어묵국, 메추리알 쇠고기 볶음, 소시지 계란 부침, 마늘쫑 멸치 볶음", "2026-04-10": "칼슘밥, 계란찜, 탕평채, 배추김치, 파인애플", "2026-04-13": "국수, 백미밥/김가루, 떡갈비, 미나리 오징어 무침, 배추김치, 슈크림 붕어빵", "2026-04-14": "혼합잡곡밥, 단배추 된장국, 감자채 피망 볶음, 배추김치", "2026-04-15": "칼슘밥, 마라탕, 꿔바로우, 스크램블 에그, 배추김치, 맛김", "2026-04-16": "된장찌개, 오꼬노미 볶음 우동, 감자 조림, 온두부/김치 볶음, 토마토 꿀 절임", "2026-04-17": "카레, 불닭 볶음/또띠아, 양상추 샐러드, 맛김치, 비요뜨", "2026-04-20": "현미밥, 곤약 탕국, 간장 불고기, 참치 두부 조림, 우엉 잡채, 배추김치", "2026-04-21": "칼슘밥, 부대찌개, 계란 장조림, 열무 된장 무침, 가자미 버터구이, 깍두기", "2026-04-22": "현미밥, 두부 호박 된장국, 간장 찜닭, 동그랑땡 계란 부침, 건새우 마늘쫑 볶음", "2026-04-23": "혼합잡곡밥, 쇠고기 무국, 순살 족발/무쌈, 버섯 계란찜, 숙주 미나리 무침, 배추김치", "2026-04-24": "나물 비빔밥, 청국장찌개, 계란후라이, 배추김치, 애플파이", "2026-04-27": "컵밥, 북어채 무국, 초코 꽈배기", "2026-04-28": "우동, 비빔만두 강정, 배추김치", "2026-04-29": "감자튀김, 흑당 버블티", "2026-04-30": "채소 볶음밥, 유부 장국, 떡볶이, 깍두기, 유산균 음료"};
-        const dinnerData = {"2026-03-23": "우동, 치즈 반달 돈가스, 브로콜리/초장, 깍두기, 딸기", "2026-03-25": "오징어 주꾸미 비빔밥, 단배추 된장국, 계란찜, 떡갈비 떡꼬치, 배추김치", "2026-03-26": "칼슘밥/김자반, 우대 갈비 구이, 국물 떡볶이, 양상추 샐러드, 아이스크림", "2026-03-27": "칼슘밥, 나가사끼 짬뽕국, 곤약 메추리알 조림, 배추김치", "2026-03-30": "혼합잡곡밥, 부대찌개, 삼치구이, 고추 튀김, 깍두기, 베이비슈", "2026-03-31": "지코바 치밥, 단배추 된장국, 크림 떡볶음, 명엽채 조림, 배추김치", "2026-04-01": "차수수밥, 떡국, 깐쇼새우 조림, 호박 베이컨 볶음, 참나물 전, 배추김치", "2026-04-02": "라면, 모듬 튀김, 순대/쌈장, 구슬 아이스크림", "2026-04-06": "김치말이 국수, 백미밥, 도끼 떡갈비, 시금치 나물, 갈릭 파이", "2026-04-07": "나시고랭 볶음밥, 시금치 된장국, 불고기 분짜, 춘권, 깍두기", "2026-04-08": "칼슘밥, 닭곰탕/당면 사리, 스팸구이, 쥐포채 조림, 깍두기, 요구르트", "2026-04-09": "통닭구이, 양배추 마요 케첩 무침, 무절임, 자몽 에이드", "2026-04-10": "현미밥, 들깨가루 무채국, 칼 비빔면, 함박 스테이크, 깍두기, 요거트/블루베리", "2026-04-13": "기장밥, 쇠고기 버섯 전골, 생선까스, 도토리묵, 배추김치", "2026-04-14": "추억의 도시락, 유부 장국, 연근 조림, 소떡소떡, 깍두기, 쿨피스", "2026-04-15": "혼합잡곡밥, 고추장찌개, 오리훈제, 콩나물 무침, 해물파전, 배추김치", "2026-04-16": "칼슘밥/ 맛김치, 삼겹살 구이, 물쫄면, 상추/쌈장, 후룻볼", "2026-04-17": "혼합잡곡밥, 육개장, 연어 스테이크, 계란말이, 김치 오징어 전, 바스크 초코 케익", "2026-04-20": "치킨마요 덮밥, 팽이버섯 된장국, 일미 도라지 무침, 배추김치, 회오리감자, 딸기 주스", "2026-04-21": "돈코츠 라면, 백미밥, 치킨 스테이크, 깍두기, 바나나우유", "2026-04-22": "고추장 불고기 덮밥, 유부 콩나물국, 감자 크로켓, 연두부/쪽파 양념장, 배추김치, 푸딩", "2026-04-23": "갈릭 크림 시카고 피자, 알리오 올리오 스파게티, 양상추 샐러드, 모듬 피클, 사과 주스", "2026-04-24": "율무밥, 들깨가루 시락국, 불막창 닭 어깨살 볶음, 생선까스, 오이 참나물 겉절이, 배추김치"};
+        const lunchData = {"2026-03-23": "한우불고기덮밥,유부콩나물국,건새우마늘쫑볶음,양념어묵꼬치,배추김치,치즈타르트", "2026-03-24": "칼슘밥,자장소스,계란후라이,배추김치,유기농주스", "2026-03-25": "현미밥,만두국,치즈닭구이,감자전,취나물무침,배추김치", "2026-03-26": "칼슘밥,나주곰탕,김치오징어전,찰도그,깍두기,바나나", "2026-03-27": "혼합잡곡밥,동태국,콩나물잡채,동그랑땡계란부침,햄감자조림,배추김치", "2026-03-30": "마파두부덮밥,봄동된장국,탕수육,돌나물,새우치즈구이,배추김치", "2026-03-31": "현미밥,호박수제비국,고구마함박스테이크,계란장조림,콥샐러드", "2026-04-01": "백미밥,북어채콩나물국,궁중갈비찜,브로콜리두부무침,생크림딸기오믈렛", "2026-04-02": "혼합잡곡밥,청국장찌개,오징어주꾸미볶음,순두부계란찜,미니돈가스,사과치커리초무침", "2026-04-06": "현미밥,쇠고기미역국,대패오리불고기,두부구이,김말이튀김,취나물무침", "2026-04-07": "칼슘밥,우거지등뼈감자탕,계란말이,고등어구이,콩나물무침,배추김치", "2026-04-08": "곤드레밥,두부호박된장국,오향장육,무쌈,고구마롤,배추김치,호두정과", "2026-04-09": "흑미밥,어묵국,메추리알쇠고기볶음,소시지계란부침,마늘쫑멸치볶음", "2026-04-10": "칼슘밥,계란찜,탕평채,배추김치,파인애플", "2026-04-13": "국수,백미밥,떡갈비,미나리오징어무침,배추김치,슈크림붕어빵", "2026-04-14": "혼합잡곡밥,단배추된장국,감자채피망볶음,배추김치", "2026-04-15": "칼슘밥,마라탕,꿔바로우,스크램블에그,배추김치,맛김", "2026-04-16": "된장찌개,오꼬노미볶음우동,감자조림,온두부,김치볶음,토마토꿀절임", "2026-04-17": "카레,불닭볶음,또띠아,양상추샐러드,맛김치,비요뜨", "2026-04-20": "현미밥,곤약탕국,간장불고기,참치두부조림,우엉잡채,배추김치", "2026-04-21": "칼슘밥,부대찌개,계란장조림,열무된장무침,가자미버터구이,깍두기", "2026-04-22": "현미밥,두부호박된장국,간장찜닭,동그랑땡계란부침,건새우마늘쫑볶음", "2026-04-23": "혼합잡곡밥,쇠고기무국,순살족발,무쌈,버섯계란찜,숙주미나리무침,배추김치", "2026-04-24": "나물비빔밥,청국장찌개,계란후라이,배추김치,애플파이", "2026-04-27": "컵밥,북어채무국,초코꽈배기", "2026-04-28": "우동,비빔만두강정,배추김치", "2026-04-29": "감자튀김,흑당버블티", "2026-04-30": "채소볶음밥,유부장국,떡볶이,깍두기,유산균음료"};
+        const dinnerData = {"2026-03-23": "우동,치즈반달돈가스,브로콜리,초장,깍두기,딸기", "2026-03-25": "오징어주꾸미비빔밥,단배추된장국,계란찜,떡갈비떡꼬치", "2026-03-26": "칼슘밥,김자반,우대갈비구이,국물떡볶이,양상추샐러드,아이스크림", "2026-03-27": "칼슘밥,나가사끼짬뽕국,곤약메추리알조림,배추김치", "2026-03-30": "혼합잡곡밥,부대찌개,삼치구이,고추튀김,깍두기,베이비슈", "2026-03-31": "지코바치밥,단배추된장국,크림떡볶음,명엽채조림,배추김치", "2026-04-01": "차수수밥,떡국,깐쇼새우조림,호박베이컨볶음,참나물전,배추김치", "2026-04-02": "라면,모듬튀김,순대,쌈장,구슬아이스크림", "2026-04-06": "김치말이국수,백미밥,도끼떡갈비,시금치나물,갈릭파이", "2026-04-07": "나시고랭볶음밥,시금치된장국,불고기분짜,춘권,깍두기", "2026-04-08": "칼슘밥,닭곰탕,당면사리,스팸구이,쥐포채조림,깍두기,요구르트", "2026-04-09": "통닭구이,양배추마요케첩무침,무절임,자몽에이드", "2026-04-10": "현미밥,들깨가루무채국,칼비빔면,함박스테이크,깍두기,요거트", "2026-04-13": "기장밥,쇠고기버섯전골,생선까스,도토리묵,배추김치", "2026-04-14": "추억의도시락,유부장국,연근조림,소떡소떡,깍두기,쿨피스", "2026-04-15": "혼합잡곡밥,고추장찌개,오리훈제,콩나물무침,해물파전,배추김치", "2026-04-16": "칼슘밥,맛김치,삼겹살구이,물쫄면,상추,쌈장,후룻볼", "2026-04-17": "혼합잡곡밥,육개장,연어스테이크,계란말이,김치오징어전,바스크초코케익", "2026-04-20": "치킨마요덮밥,팽이버섯된장국,일미도라지무침,배추김치,회오리감자,딸기주스", "2026-04-21": "돈코츠라면,백미밥,치킨스테이크,깍두기,바나나우유", "2026-04-22": "고추장불고기덮밥,유부콩나물국,감자크로켓,연두부,푸딩", "2026-04-23": "시카고피자,알리오올리오스파게티,양상추샐러드,모듬피클,사과주스", "2026-04-24": "율무밥,들깨가루시락국,불막창닭어깨살볶음,생선까스,오이참나물겉절이,배추김치"};
 
         const specialDinnerDates = ["2026-03-26", "2026-04-02", "2026-04-16", "2026-04-23"];
-        let currentType = 'lunch';
+        let currentTab = 'lunch';
         const dateInput = document.getElementById('date-selector');
-        dateInput.value = new Date().toISOString().split('T')[0];
 
         function updateUI() {
             const date = dateInput.value;
-            const menu = currentType === 'lunch' ? lunchData[date] : dinnerData[date];
             const card = document.getElementById('meal-card');
-            const status = document.getElementById('meal-status');
+            const statusLabel = document.getElementById('meal-status');
+            const suggestView = document.getElementById('suggestion-view-container');
+            const mealView = document.getElementById('meal-view-container');
             
-            card.className = `meal-content-card ${currentType}`;
-            status.innerText = `${currentType === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
+            if (currentTab === 'suggest') {
+                mealView.style.display = 'none'; suggestView.style.display = 'block'; loadSuggestions();
+            } else {
+                mealView.style.display = 'block'; suggestView.style.display = 'none';
+                const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
+                statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
+                card.className = `meal-content-area ${currentTab}`;
 
-            if (currentType === 'dinner' && specialDinnerDates.includes(date)) {
-                card.classList.add('special-meal');
-                status.innerText = "✨ 밥심 충전 특식! ✨";
+                if (currentTab === 'dinner' && specialDinnerDates.includes(date)) {
+                    card.classList.add('special-meal-card');
+                    statusLabel.innerText = "✨ 밥 심 충 전 특 식 ! 🧡 ✨";
+                } else { card.classList.remove('special-meal-card'); }
+
+                document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴";
+                loadRating(); loadComments(); loadPollData();
             }
+        }
 
-            document.getElementById('menu-content').innerHTML = menu ? menu.split(', ').join('<br>') : "정보가 없습니다 😴";
-            loadComments();
+        function submitRating(score) {
+            const date = dateInput.value;
+            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("오늘 별점은 이미 남기셨습니다! 😊");
+            database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
+                if (!data) return { totalScore: score, voterCount: 1, average: score.toFixed(1) };
+                const newTotal = (data.totalScore || 0) + score;
+                const newCount = (data.voterCount || 0) + 1;
+                return { totalScore: newTotal, voterCount: newCount, average: (newTotal / newCount).toFixed(1) };
+            }).then(() => { localStorage.setItem(`voted_${date}_${currentTab}`, true); alert("별점 감사합니다! ❤️"); });
+        }
+
+        function loadRating() {
+            database.ref(`meals/${dateInput.value}/${currentTab}/rating`).on('value', (s) => {
+                const d = s.val(); document.getElementById('avg-rating-display').innerHTML = `<span>★</span> ${d ? d.average : '0.0'}`;
+            });
         }
 
         function saveComment() {
-            const date = dateInput.value;
-            const input = document.getElementById('comment-input');
+            const date = dateInput.value; const input = document.getElementById('comment-input');
             if (!input.value.trim()) return;
-            database.ref(`meals/${date}/${currentType}`).push({
-                text: input.value, timestamp: new Date().toLocaleString()
-            });
+            database.ref(`meals/${date}/${currentTab}/comments`).push({ text: input.value, timestamp: new Date().toLocaleString(), likes: 0 });
             input.value = "";
         }
 
-        function deleteComment(key) {
-            if (prompt("관리자 비밀번호:") === ADMIN_PASSWORD) {
-                database.ref(`meals/${dateInput.value}/${currentType}/${key}`).remove();
-            } else { alert("비밀번호 오류!"); }
+        function likeComment(key) {
+            if (localStorage.getItem(`liked_${key}`)) return alert("이미 하트를 눌렀습니다! ❤️");
+            database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}/likes`).transaction(l => (l || 0) + 1).then(() => localStorage.setItem(`liked_${key}`, true));
         }
 
         function loadComments() {
-            const date = dateInput.value;
-            const list = document.getElementById('comment-list');
-            database.ref(`meals/${date}/${currentType}`).off();
-            database.ref(`meals/${date}/${currentType}`).on('value', (snapshot) => {
-                list.innerHTML = "";
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).reverse().forEach(key => {
-                        const item = data[key];
-                        const div = document.createElement('div');
-                        div.className = 'comment-bubble';
-                        div.innerHTML = `<div class="comment-text">${item.text}</div><span class="comment-info">${item.timestamp}</span><button class="del-btn" onclick="deleteComment('${key}')">x</button>`;
-                        list.appendChild(div);
-                    });
-                } else { list.innerHTML = "<p style='text-align:center; color:#CCC; font-size:0.8rem;'>첫 한줄평을 남겨주세요! 😊</p>"; }
+            const date = dateInput.value; const list = document.getElementById('comment-list');
+            database.ref(`meals/${date}/${currentTab}/comments`).on('value', (s) => {
+                list.innerHTML = ""; const data = s.val();
+                if (data) Object.keys(data).reverse().forEach(k => {
+                    const item = data[k]; const div = document.createElement('div');
+                    div.className = 'comment-bubble';
+                    div.innerHTML = `<div class="comment-text">${item.text}</div><div class="comment-meta"><span>${item.timestamp}</span><button class="like-badge" onclick="likeComment('${k}')">❤️ ${item.likes || 0}</button></div><button class="del-btn" onclick="deleteItem('comments', '${k}')">x</button>`;
+                    list.appendChild(div);
+                }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>첫 한줄평을 남겨주세요! 😊</p>";
             });
         }
 
-        function changeMealType(type) {
-            currentType = type;
-            document.getElementById('tab-lunch').classList.toggle('active', type === 'lunch');
-            document.getElementById('tab-dinner').classList.toggle('active', type === 'dinner');
-            updateUI();
+        function loadPollData() {
+            const box = document.getElementById('poll-box');
+            const tomorrow = new Date(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const menu = (currentTab === 'lunch') ? lunchData[tomorrowStr] : dinnerData[tomorrowStr];
+            if (!menu) { box.style.display = 'none'; return; }
+            const items = menu.split(','); const list = document.getElementById('poll-items-list');
+            box.style.display = 'block';
+            database.ref(`polls/${tomorrowStr}/${currentTab}`).on('value', (s) => {
+                const votes = s.val() || {}; list.innerHTML = "";
+                items.forEach((m, i) => {
+                    const div = document.createElement('div'); div.className = 'poll-item-row';
+                    div.onclick = () => submitVote(tomorrowStr, i, m);
+                    div.innerHTML = `<span>${m}</span><b style="color:var(--info)">${votes[i] || 0}명</b>`;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function submitVote(date, idx, name) {
+            if (localStorage.getItem(`poll_${date}_${currentTab}`)) return alert("내일 투표는 이미 하셨습니다! 😊");
+            if (confirm(`"${name}"에 투표할까요?`)) {
+                database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
+                    localStorage.setItem(`poll_${date}_${currentTab}`, true); alert("투표 완료! 🔥");
+                });
+            }
+        }
+
+        function saveSuggestion() {
+            const input = document.getElementById('suggest-input'); if (!input.value.trim()) return;
+            database.ref(`suggestions`).push({ text: input.value, timestamp: new Date().toLocaleString() });
+            input.value = "";
+        }
+
+        function loadSuggestions() {
+            const list = document.getElementById('suggest-list');
+            database.ref(`suggestions`).on('value', (s) => {
+                list.innerHTML = ""; const data = s.val();
+                if (data) Object.keys(data).reverse().forEach(k => {
+                    const item = data[k]; const div = document.createElement('div');
+                    div.className = 'comment-bubble'; div.style.borderColor = "#D1E9FF";
+                    div.innerHTML = `<div class="comment-text" style="color:var(--info)">💡 ${item.text}</div><span class="comment-meta">${item.timestamp}</span><button class="del-btn" onclick="deleteItem('suggestions', '${k}')">x</button>`;
+                    list.appendChild(div);
+                }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>건의사항을 남겨주세요! 😊</p>";
+            });
+        }
+
+        function deleteItem(type, key) {
+            if (prompt("관리자 비밀번호:") === ADMIN_PASSWORD) {
+                if (type === 'comments') database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}`).remove();
+                else database.ref(`suggestions/${key}`).remove();
+            } else alert("틀렸습니다!");
+        }
+
+        function changeTab(tab) {
+            currentTab = tab; document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active'); updateUI();
         }
         updateUI();
     </script>
