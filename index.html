@@ -8,41 +8,44 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root { --primary-color: #4CAF50; --secondary-color: #FF9800; --bg-color: #f4f7f6; }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 0; display: flex; justify-content: center; min-height: 100vh; }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 0; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: white; width: 95%; max-width: 420px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        .school-name { font-size: 0.9rem; color: #666; margin-bottom: 15px; }
-        input[type="date"] { padding: 10px; border-radius: 10px; border: 1px solid #ddd; width: 80%; margin-bottom: 20px; font-family: inherit; }
+        h1 { font-size: 1.5rem; color: #333; margin-bottom: 5px; }
+        .school-name { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+        input[type="date"] { padding: 12px; border-radius: 12px; border: 1px solid #ddd; width: 85%; margin-bottom: 20px; font-size: 1rem; outline: none; cursor: pointer; }
         
         .tab-group { display: flex; background: #eee; border-radius: 12px; margin-bottom: 20px; padding: 5px; }
-        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #777; transition: 0.3s; }
+        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #777; transition: 0.3s; }
         .tab.active.lunch { background: var(--primary-color); color: white; }
         .tab.active.dinner { background: var(--secondary-color); color: white; }
 
-        .meal-card { background: #fff; padding: 25px; border-radius: 15px; border: 2px solid #eee; margin-bottom: 20px; min-height: 150px; position: relative; }
+        .meal-card { background: #fff; padding: 25px; border-radius: 15px; border: 2px solid #eee; margin-bottom: 20px; min-height: 160px; position: relative; display: flex; flex-direction: column; justify-content: center; transition: 0.3s; }
         .meal-card.lunch { border-color: var(--primary-color); background: #f1f8e9; }
         .meal-card.dinner { border-color: var(--secondary-color); background: #fff3e0; }
         .meal-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; }
-        .menu-list { line-height: 1.8; color: #444; font-size: 1.1rem; margin-bottom: 10px; }
+        .lunch .meal-title { color: var(--primary-color); }
+        .dinner .meal-title { color: var(--secondary-color); }
+        .menu-list { line-height: 1.8; color: #444; font-size: 1.1rem; word-break: keep-all; }
 
         /* ✨ 특식 반짝이 효과 */
-        @keyframes sparkle-glow { 0%, 100% { box-shadow: 0 0 5px rgba(255,152,0,0.4); } 50% { box-shadow: 0 0 20px rgba(255,152,0,0.8); } }
-        .special-meal-card { animation: sparkle-glow 1.5s infinite; border-width: 3px !important; }
+        @keyframes sparkle-glow { 0%, 100% { box-shadow: 0 0 5px rgba(255,152,0,0.4); border-color: #ff9800; } 50% { box-shadow: 0 0 20px rgba(255,152,0,0.8); border-color: #ffeb3b; } }
+        .special-meal-card { animation: sparkle-glow 1.5s infinite; border-width: 3px !important; background-color: #fffde7 !important; }
 
-        /* 💬 댓글 섹션 스타일 */
-        .comment-section { text-align: left; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px; }
-        .comment-form { display: flex; gap: 5px; margin-bottom: 15px; }
-        .comment-form input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; flex: 1; }
-        .comment-form button { background: #333; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
-        .comment-list { max-height: 250px; overflow-y: auto; }
-        .comment-item { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; position: relative; }
-        .comment-date { font-size: 0.7rem; color: #aaa; display: block; margin-top: 5px; }
+        /* 💬 댓글 섹션 */
+        .comment-section { text-align: left; margin-top: 25px; border-top: 1px solid #eee; padding-top: 25px; }
+        .comment-form { display: flex; gap: 8px; margin-bottom: 20px; }
+        .comment-form input { padding: 12px; border-radius: 10px; border: 1px solid #ddd; flex: 1; outline: none; }
+        .comment-form button { background: #333; color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .comment-list { max-height: 300px; overflow-y: auto; }
+        .comment-item { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; font-size: 0.95rem; border: 1px solid #f0f0f0; }
+        .comment-date { font-size: 0.75rem; color: #aaa; display: block; margin-top: 6px; }
         
-        footer { margin-top: 20px; font-size: 0.8rem; color: #ccc; }
+        footer { margin-top: 25px; font-size: 0.8rem; color: #bbb; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🍱 배정고 급식 & 소통창</h1>
+        <h1>🍱 배정고 급식 가이드</h1>
         <div class="school-name">김현정 선생님이 만든 실시간 급식게시판</div>
 
         <input type="date" id="date-selector" onchange="updateUI()">
@@ -54,32 +57,32 @@
 
         <div id="meal-card" class="meal-card">
             <div class="meal-title" id="meal-status">오늘의 메뉴</div>
-            <div class="menu-list" id="menu-content">로딩 중...</div>
+            <div class="menu-list" id="menu-content">메뉴를 불러오는 중...</div>
         </div>
 
         <div class="comment-section">
-            <h3 id="comment-title">💬 한줄평</h3>
+            <h3>💬 한줄평 남기기</h3>
             <div class="comment-form">
-                <input type="text" id="comment-input" placeholder="급식 후기를 남겨주세요!">
+                <input type="text" id="comment-input" placeholder="오늘 급식 어때요?">
                 <button onclick="saveComment()">등록</button>
             </div>
-            <div id="comment-list" class="comment-list">
-                </div>
+            <div id="comment-list" class="comment-list"></div>
         </div>
 
-        <footer>1학년 학생들의 즐거운 급식 시간을 위하여 ❤️</footer>
+        <footer>1학년 학생들을 응원합니다 ❤️</footer>
     </div>
 
     <script>
-       const firebaseConfig = {
-  apiKey: "AIzaSyBuUIzRhnj2lohiMZiXWmIosJDluEqp0-o",
-  authDomain: "baejeong-lunch.firebaseapp.com",
-  projectId: "baejeong-lunch",
-  storageBucket: "baejeong-lunch.firebasestorage.app",
-  messagingSenderId: "297041913628",
-  appId: "1:297041913628:web:dca35b9917a5c2888ffcd9"
-};
-
+        // 1. 파이어베이스 설정 (선생님 키값 적용 완료)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuUIzRhnj2lohiMZiXWmIosJDluEqp0-o",
+            authDomain: "baejeong-lunch.firebaseapp.com",
+            databaseURL: "https://baejeong-lunch-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "baejeong-lunch",
+            storageBucket: "baejeong-lunch.firebasestorage.app",
+            messagingSenderId: "297041913628",
+            appId: "1:297041913628:web:dca35b9917a5c2888ffcd9"
+        };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
@@ -106,31 +109,24 @@
             }
 
             document.getElementById('menu-content').innerHTML = menu ? menu.split(', ').join('<br>') : "정보가 없습니다.";
-            loadComments(); // 메뉴 바뀔 때마다 해당 메뉴의 댓글 로드
+            loadComments();
         }
 
-        // 3. 댓글 저장 기능
         function saveComment() {
             const date = dateInput.value;
             const input = document.getElementById('comment-input');
             if (!input.value) return;
 
-            const commentData = {
+            database.ref(`meals/${date}/${currentType}`).push({
                 text: input.value,
                 timestamp: new Date().toLocaleString()
-            };
-
-            // 데이터베이스 경로 예: meals/2026-03-26/lunch/
-            database.ref(`meals/${date}/${currentType}`).push(commentData);
+            });
             input.value = "";
         }
 
-        // 4. 댓글 불러오기 (실시간 리스너)
         function loadComments() {
             const date = dateInput.value;
             const commentList = document.getElementById('comment-list');
-            
-            // 이전 리스너 해제 및 초기화
             database.ref(`meals/${date}/${currentType}`).off();
             commentList.innerHTML = "댓글 로딩 중...";
 
