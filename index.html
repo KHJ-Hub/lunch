@@ -18,15 +18,16 @@
         .app-container { width: 100%; max-width: 420px; padding: 0 10px; }
         .main-card { background: var(--card); border-radius: 35px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); text-align: center; }
         
-        /* 🏷️ 메인 제목 및 제작자 문구 수정 */
         .header h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 800; letter-spacing: -1px; }
         .header p { font-size: 0.9rem; color: #FF9800; margin: 5px 0 25px; font-weight: 700; }
 
-        .date-box { margin-bottom: 20px; display: flex; justify-content: center; }
+        .date-box { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
         input[type="date"] {
             border: 2px solid #EEE; border-radius: 50px; padding: 10px 20px;
             font-size: 0.95rem; font-weight: 700; color: #555; outline: none;
             background: #FDFDFD; cursor: pointer; font-family: inherit; width: 85%; transition: 0.3s;
+            text-align: center;
         }
 
         .tab-switch { display: flex; background: #EEE; border-radius: 20px; padding: 5px; margin-bottom: 20px; gap: 3px; }
@@ -50,20 +51,21 @@
         .average-rating { font-size: 0.85rem; color: #777; font-weight: 600; }
         .average-rating span { color: #FFB300; font-size: 1rem; }
 
-        /* ✨ 특식 글자 크기 강조 */
+        /* ✨ (수정) 오늘의 특식 강조 효과 */
         @keyframes special-glow {
             0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,152,0,0.3); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,152,0,0.6); }
+            50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(255,152,0,0.6); }
             100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,152,0,0.3); }
         }
         .special-meal-card { animation: special-glow 2s infinite ease-in-out; border: 4px solid #FF9800 !important; background: #FFFDF0 !important; }
         .special-meal-card .meal-status-label { 
-            font-size: 1.35rem !important; 
-            padding: 12px 24px !important; 
+            font-size: 1.4rem !important; /* 글자 크기 시원하게! */
+            padding: 10px 25px !important; 
             background: linear-gradient(45deg, #FF5252, #FF9800) !important;
             box-shadow: 0 5px 15px rgba(255,82,82,0.3);
             margin-bottom: 20px;
-            border-radius: 12px !important;
+            border-radius: 15px !important;
+            font-weight: 900 !important;
         }
 
         .menu-text { line-height: 1.8; color: #444; font-size: 1.25rem; font-weight: 700; word-break: keep-all; }
@@ -107,6 +109,7 @@
             </div>
 
             <div class="date-box">
+                <span class="date-label">다른 날짜 메뉴 확인 📅</span>
                 <input type="date" id="date-selector" onchange="updateUI()">
             </div>
 
@@ -181,6 +184,15 @@
         let currentTab = 'lunch';
         const dateInput = document.getElementById('date-selector');
 
+        // ✅ 한국 시간 기준으로 오늘 날짜 세팅 (중요!)
+        function setToday() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+
         function updateUI() {
             const date = dateInput.value;
             const card = document.getElementById('meal-card');
@@ -198,7 +210,7 @@
 
                 if (currentTab === 'dinner' && specialDinnerDates.includes(date)) {
                     card.classList.add('special-meal-card');
-                    statusLabel.innerText = "✨ 밥 심 충 전 특 식 ! 🧡 ✨";
+                    statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
                 } else { card.classList.remove('special-meal-card'); }
 
                 document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴";
@@ -289,7 +301,7 @@
                 if (data) Object.keys(data).reverse().forEach(k => {
                     const item = data[k]; const div = document.createElement('div');
                     div.className = 'comment-bubble'; div.style.borderColor = "#D1E9FF";
-                    div.innerHTML = `<div class="comment-text" style="color:var(--info)">💡 ${item.text}</div><span class="comment-meta">${item.timestamp}</span><button class="del-btn" onclick="deleteItem('suggestions', '${k}')">x</button>`;
+                    div.innerHTML = `<div class="comment-text" style="color:var(--info)">💡 ${item.text}</div><span class="comment-meta">${item.timestamp}</span><button class="del-btn" onclick="deleteItem('suggestions', '${key}')">x</button>`;
                     list.appendChild(div);
                 }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>건의사항을 남겨주세요! 😊</p>";
             });
@@ -306,7 +318,10 @@
             currentTab = tab; document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active'); updateUI();
         }
-        updateUI();
+
+        // ✅ 초기 로드 시 실행 순서
+        setToday(); // 1. 오늘 날짜를 자동으로 입력창에 넣음
+        updateUI(); // 2. 그 날짜의 메뉴를 즉시 불러옴
     </script>
 </body>
 </html>
