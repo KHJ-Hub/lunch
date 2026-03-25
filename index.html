@@ -3,82 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍴 배정고 급식 가이드 & 소통창</title>
+    <title>🍴 배정고 급식 & 소통창</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        /* 🎨 기본 스타일 (둥글둥글하고 따뜻한 느낌) */
-        :root { --primary-color: #4CAF50; --secondary-color: #FF9800; --bg-color: #f4f7f6; --text-color: #333; }
-        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 0; display: flex; justify-content: center; min-height: 100vh; color: var(--text-color); }
-        .container { background: white; width: 95%; max-width: 420px; padding: 25px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; }
-        h1 { font-size: 1.6rem; color: #333; margin-bottom: 5px; margin-top: 10px; }
-        .school-name { font-size: 0.9rem; color: #888; margin-bottom: 25px; }
+        :root { --primary-color: #66bb6a; --secondary-color: #ffa726; --bg-color: #fdfcf0; --card-bg: #ffffff; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 0; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: var(--card-bg); width: 95%; max-width: 400px; padding: 30px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); text-align: center; border: 4px solid #fff; }
+        h1 { font-size: 1.6rem; color: #444; margin-bottom: 5px; }
+        .school-name { font-size: 0.85rem; color: #aaa; margin-bottom: 25px; letter-spacing: 1px; }
 
-        /* 📅 둥글둥글 귀여운 날짜 선택창 스타일 */
-        .date-picker-container { margin-bottom: 25px; position: relative; display: flex; justify-content: center; }
+        /* 📅 둥글둥글 귀여운 날짜 선택창 */
+        .date-container { margin-bottom: 25px; }
         input[type="date"] {
-            appearance: none; -webkit-appearance: none;
-            padding: 12px 20px; border-radius: 50px; /* 👈 아주 둥글게 */
-            border: 2px solid #e0e0e0;
-            background-color: #fff;
-            font-family: inherit; font-size: 1rem; font-weight: bold;
-            color: #555; outline: none; cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            width: 80%; text-align: center;
+            border: 3px solid #eee; border-radius: 50px; padding: 10px 20px; font-size: 1rem; font-weight: bold; color: #555; outline: none; transition: 0.3s; background: #fafafa; cursor: pointer; font-family: inherit;
         }
-        input[type="date"]:focus { border-color: var(--secondary-color); box-shadow: 0 0 10px rgba(255,152,0,0.2); }
-        /* 아이폰/안드로이드 날짜 아이콘 스타일 (선택사항) */
-        input[type="date"]::-webkit-calendar-picker-indicator { background: transparent; bottom: 0; color: transparent; cursor: pointer; height: auto; left: 0; position: absolute; right: 0; top: 0; width: auto; }
+        input[type="date"]:focus { border-color: var(--secondary-color); background: #fff; }
 
-        /* ☀️🌙 점심/저녁 탭 스타일 */
-        .tab-group { display: flex; background: #eee; border-radius: 15px; margin-bottom: 25px; padding: 5px; }
-        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 12px; font-weight: bold; color: #777; transition: 0.3s; font-size: 0.95rem; }
+        .tab-group { display: flex; background: #f0f0f0; border-radius: 20px; margin-bottom: 25px; padding: 6px; }
+        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 15px; font-weight: bold; color: #999; transition: 0.3s; }
         .tab.active.lunch { background: var(--primary-color); color: white; }
         .tab.active.dinner { background: var(--secondary-color); color: white; }
 
-        /* 🍱 급식 카드 스타일 */
-        .meal-card { background: #fff; padding: 30px; border-radius: 20px; border: 2px solid #eee; margin-bottom: 25px; min-height: 180px; position: relative; display: flex; flex-direction: column; justify-content: center; transition: 0.3s; box-shadow: 0 3px 6px rgba(0,0,0,0.03); }
-        .meal-card.lunch { border-color: var(--primary-color); background: #f1f8e9; }
-        .meal-card.dinner { border-color: var(--secondary-color); background: #fff3e0; }
-        .meal-title { font-weight: bold; font-size: 1.3rem; margin-bottom: 18px; }
-        .lunch .meal-title { color: var(--primary-color); }
-        .dinner .meal-title { color: var(--secondary-color); }
-        .menu-list { line-height: 2; color: #444; font-size: 1.1rem; word-break: keep-all; font-weight: 500; }
+        .meal-card { background: #fff; padding: 30px; border-radius: 25px; border: 2px solid #f0f0f0; margin-bottom: 25px; min-height: 160px; position: relative; transition: 0.3s; }
+        .meal-card.lunch { border-color: #e8f5e9; background: #f9fff9; }
+        .meal-card.dinner { border-color: #fff3e0; background: #fffdf9; }
+        .meal-title { font-weight: bold; font-size: 1.3rem; margin-bottom: 15px; color: #555; }
+        .menu-list { line-height: 2; color: #666; font-size: 1.05rem; word-break: keep-all; }
 
-        /* ✨ 특식 반짝이 효과 */
-        @keyframes sparkle-glow { 0%, 100% { box-shadow: 0 0 5px rgba(255,152,0,0.4); border-color: #ff9800; } 50% { box-shadow: 0 0 20px rgba(255,152,0,0.8), 0 0 10px rgba(255,235,59,0.5); border-color: #ffeb3b; } }
-        .special-meal-card { animation: sparkle-glow 1.5s infinite ease-in-out; border-width: 3px !important; background-color: #fffde7 !important; }
+        /* ✨ 특식 반짝반짝 효과 */
+        @keyframes rainbow-glow { 0% { box-shadow: 0 0 5px #ffd54f; border-color: #ffd54f; } 50% { box-shadow: 0 0 20px #ffb300; border-color: #ffb300; } 100% { box-shadow: 0 0 5px #ffd54f; border-color: #ffd54f; } }
+        .special-meal-card { animation: rainbow-glow 1.5s infinite; border-width: 4px !important; }
 
-        /* 💬 댓글 섹션 스타일 */
-        .comment-section { text-align: left; margin-top: 25px; border-top: 1px solid #eee; padding-top: 25px; }
-        .comment-section h3 { font-size: 1.1rem; color: #333; margin-bottom: 15px; }
+        /* 💬 댓글창 디자인 */
+        .comment-section { text-align: left; margin-top: 20px; border-top: 2px dashed #eee; padding-top: 25px; }
         .comment-form { display: flex; gap: 8px; margin-bottom: 20px; }
-        .comment-form input { padding: 12px 15px; border-radius: 50px; border: 1px solid #e0e0e0; flex: 1; outline: none; font-size: 0.95rem; background: #fafafa; }
-        .comment-form input:focus { border-color: #bbb; background: #fff; }
-        .comment-form button { background: #333; color: white; border: none; padding: 10px 18px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 0.9rem; flex-shrink: 0; }
-        .comment-list { max-height: 350px; overflow-y: auto; padding-right: 5px; }
-        .comment-item { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 12px; position: relative; border: 1px solid #f0f0f0; transition: 0.2s; }
-        .comment-item:hover { background: #f4f4f4; }
-        .comment-text { color: #444; font-size: 0.95rem; line-height: 1.5; margin-right: 40px; }
-        .comment-date { font-size: 0.75rem; color: #aaa; display: block; margin-top: 8px; }
-        .delete-btn { position: absolute; top: 12px; right: 12px; color: #ccc; cursor: pointer; font-size: 0.8rem; border: none; background: none; transition: 0.2s; padding: 2px 5px; }
-        .delete-btn:hover { color: #ff5252; background: rgba(255,82,82,0.1); border-radius: 5px; }
+        .comment-form input { flex: 1; padding: 12px 18px; border-radius: 50px; border: 2px solid #eee; outline: none; font-size: 0.9rem; background: #fafafa; }
+        .comment-form button { background: #555; color: white; border: none; padding: 10px 18px; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .comment-form button:hover { background: #000; }
+        .comment-item { background: #f8f9fa; padding: 15px; border-radius: 18px; margin-bottom: 12px; position: relative; border: 1px solid #f1f1f1; }
+        .comment-text { font-size: 0.95rem; color: #444; line-height: 1.4; margin-right: 35px; }
+        .comment-date { font-size: 0.7rem; color: #ccc; margin-top: 8px; display: block; }
+        .delete-btn { position: absolute; top: 12px; right: 12px; border: none; background: none; color: #ddd; cursor: pointer; font-size: 0.75rem; }
+        .delete-btn:hover { color: #ff8a80; }
 
-        /* 📱 댓글 목록 스크롤바 디자인 */
-        .comment-list::-webkit-scrollbar { width: 5px; }
-        .comment-list::-webkit-scrollbar-track { background: transparent; }
-        .comment-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
-        
-        footer { margin-top: 30px; font-size: 0.8rem; color: #bbb; border-top: 1px solid #eee; padding-top: 20px; padding-bottom: 10px; }
+        footer { margin-top: 30px; font-size: 0.75rem; color: #ccc; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🍱 배정고 급식 포털</h1>
-        <div class="school-name">김현정 선생님이 만든 실시간 소통창</div>
+        <h1>🍱 배정 급식 포털</h1>
+        <div class="school-name">KIM HYEON JEOUNG PRINTS</div>
 
-        <div class="date-picker-container">
+        <div class="date-container">
             <input type="date" id="date-selector" onchange="updateUI()">
         </div>
 
@@ -89,32 +66,29 @@
 
         <div id="meal-card" class="meal-card">
             <div class="meal-title" id="meal-status">오늘의 메뉴</div>
-            <div class="menu-list" id="menu-content">메뉴를 불러오는 중...</div>
+            <div class="menu-list" id="menu-content">로딩 중...</div>
         </div>
 
         <div class="comment-section">
-            <h3>💬 한줄평 남기기 (매너 채팅!)</h3>
+            <h3 style="font-size:1rem; color:#666; margin-left:10px;">💬 실시간 한줄평</h3>
             <div class="comment-form">
-                <input type="text" id="comment-input" placeholder="오늘 급식 어때요? 후기를 남겨주세요!">
+                <input type="text" id="comment-input" placeholder="오늘 급식 어때요?">
                 <button onclick="saveComment()">등록</button>
             </div>
-            <div id="comment-list" class="comment-list">
-                </div>
+            <div id="comment-list" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
 
-        <footer>1학년 학생들을 응원합니다 ❤️ (삭제는 선생님만 가능)</footer>
+        <footer>1학년 학생들을 응원합니다 ❤️</footer>
     </div>
 
     <script>
-        // 🔒 관리자 비밀번호 (원하시는 비밀번호로 바꾸셔도 됩니다!)
         const ADMIN_PASSWORD = "배정고1234";
 
-        // 1. 파이어베이스 설정 (선생님의 실제 키값 + 데이터베이스 주소 포함 완료)
+        // 💡 선생님의 미국 서버 주소를 직접 반영했습니다!
         const firebaseConfig = {
             apiKey: "AIzaSyBuUIzRhnj2lohiMZiXWmIosJDluEqp0-o",
             authDomain: "baejeong-lunch.firebaseapp.com",
-            // 👇 이 줄이 꼭 있어야 댓글이 저장됩니다! (주소 적용 완료)
-            databaseURL: "https://baejeong-lunch-default-rtdb.asia-southeast1.firebasedatabase.app", 
+            databaseURL: "https://baejeong-lunch-default-rtdb.firebaseio.com", 
             projectId: "baejeong-lunch",
             storageBucket: "baejeong-lunch.firebasestorage.app",
             messagingSenderId: "297041913628",
@@ -123,90 +97,66 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 2. 급식 데이터
         const lunchData = {"2026-03-23": "한우불고기덮밥, 유부콩나물국, 건새우마늘쫑볶음, 양념 어묵 꼬치, 배추김치, 치즈 타르트", "2026-03-24": "칼슘밥, 자장 소스, 계란 후라이, 배추김치, 유기농 주스", "2026-03-25": "현미밥, 만두국, 치즈 닭구이, 감자전, 취나물 무침, 배추김치", "2026-03-26": "칼슘밥, 나주곰탕, 김치 오징어 전, 찰도그, 깍두기, 바나나", "2026-03-27": "혼합잡곡밥, 동태국, 콩나물 잡채, 동그랑땡 계란 부침, 햄 감자 조림, 배추김치", "2026-03-30": "마파두부 덮밥, 봄동 된장국, 탕수육, 돌나물, 새우 치즈 구이, 배추김치", "2026-03-31": "현미밥, 호박 수제비국, 고구마 함박 스테이크, 계란 장조림, 콥 샐러드", "2026-04-01": "백미밥, 북어채 콩나물국, 궁중 갈비찜, 브로콜리 두부 무침, 생크림 딸기 오믈렛", "2026-04-02": "혼합잡곡밥, 청국장찌개, 오징어 주꾸미 볶음, 순두부 계란찜, 미니 돈가스, 사과 치커리 초무침", "2026-04-06": "현미밥, 쇠고기 미역국, 대패 오리 불고기, 두부 구이, 김말이 튀김, 취나물 무침", "2026-04-07": "칼슘밥, 우거지 등뼈 감자탕, 계란말이, 고등어구이, 콩나물 무침, 배추김치", "2026-04-08": "곤드레밥, 두부 호박 된장국, 오향장육, 무쌈, 고구마 롤, 배추김치, 호두 정과", "2026-04-09": "흑미밥, 어묵국, 메추리알 쇠고기 볶음, 소시지 계란 부침, 마늘쫑 멸치 볶음", "2026-04-10": "칼슘밥, 계란찜, 탕평채, 배추김치, 파인애플", "2026-04-13": "국수, 백미밥/김가루, 떡갈비, 미나리 오징어 무침, 배추김치, 슈크림 붕어빵", "2026-04-14": "혼합잡곡밥, 단배추 된장국, 감자채 피망 볶음, 배추김치", "2026-04-15": "칼슘밥, 마라탕, 꿔바로우, 스크램블 에그, 배추김치, 맛김", "2026-04-16": "된장찌개, 오꼬노미 볶음 우동, 감자 조림, 온두부/김치 볶음, 토마토 꿀 절임", "2026-04-17": "카레, 불닭 볶음/또띠아, 양상추 샐러드, 맛김치, 비요뜨", "2026-04-20": "현미밥, 곤약 탕국, 간장 불고기, 참치 두부 조림, 우엉 잡채, 배추김치", "2026-04-21": "칼슘밥, 부대찌개, 계란 장조림, 열무 된장 무침, 가자미 버터구이, 깍두기", "2026-04-22": "현미밥, 두부 호박 된장국, 간장 찜닭, 동그랑땡 계란 부침, 건새우 마늘쫑 볶음", "2026-04-23": "혼합잡곡밥, 쇠고기 무국, 순살 족발/무쌈, 버섯 계란찜, 숙주 미나리 무침, 배추김치", "2026-04-24": "나물 비빔밥, 청국장찌개, 계란후라이, 배추김치, 애플파이", "2026-04-27": "컵밥, 북어채 무국, 초코 꽈배기", "2026-04-28": "우동, 비빔만두 강정, 배추김치", "2026-04-29": "감자튀김, 흑당 버블티", "2026-04-30": "채소 볶음밥, 유부 장국, 떡볶이, 깍두기, 유산균 음료"};
-        const dinnerData = {"2026-03-23": "우동, 치즈 반달 돈가스, 브로콜리/초장, 깍두기, 딸기", "2026-03-25": "오징어 주꾸미 비빔밥, 단배추 된장국, 계란찜, 떡갈비 떡꼬치", "2026-03-26": "칼슘밥/김자반, 우대 갈비 구이, 국물 떡볶이, 양상추 샐러드, 아이스크림", "2026-03-27": "칼슘밥, 나가사끼 짬뽕국, 곤약 메추리알 조림, 배추김치", "2026-03-30": "혼합잡곡밥, 부대찌개, 삼치구이, 고추 튀김, 깍두기, 베이비슈", "2026-03-31": "지코바 치밥, 단배추 된장국, 크림 떡볶음, 명엽채 조림, 배추김치", "2026-04-01": "차수수밥, 떡국, 깐쇼새우 조림, 호박 베이컨 볶음, 참나물 전, 배추김치", "2026-04-02": "라면, 모듬 튀김, 순대/쌈장, 구슬 아이스크림", "2026-04-06": "김치말이 국수, 백미밥, 도끼 떡갈비, 시금치 나물, 갈릭 파이", "2026-04-07": "나시고랭 볶음밥, 시금치 된장국, 불고기 분짜, 춘권, 깍두기", "2026-04-08": "칼슘밥, 닭곰탕/당면 사리, 스팸 구이, 쥐포채 조림, 깍두기, 요구르트", "2026-04-09": "통닭구이, 양배추 마요 케첩 무침, 무절임, 자몽 에이드", "2026-04-10": "현미밥, 들깨가루 무채국, 칼 비빔면, 함박 스테이크, 깍두기, 요거트/블루베리", "2026-04-13": "기장밥, 쇠고기 버섯 전골, 생선까스, 도토리묵, 배추김치", "2026-04-14": "추억의 도시락, 유부 장국, 연근 조림, 소떡소떡, 깍두기, 쿨피스", "2026-04-15": "혼합잡곡밥, 고추장찌개, 오리훈제, 콩나물 무침, 해물파전, 배추김치", "2026-04-16": "칼슘밥/ 맛김치, 삼겹살 구이, 물쫄면, 상추/쌈장, 후룻볼", "2026-04-17": "혼합잡곡밥, 육개장, 연어 스테이크, 계란말이, 김치 오징어 전, 바스크 초코 케익", "2026-04-20": "치킨마요 덮밥, 팽이버섯 된장국, 일미 도라지 무침, 배추김치, 회오리감자, 딸기 주스", "2026-04-21": "돈코츠 라면, 백미밥, 치킨 스테이크, 깍두기, 바나나우유", "2026-04-22": "고추장 불고기 덮밥, 유부 콩나물국, 감자 크로켓, 연두부/쪽파 양념장, 배추김치, 푸딩", "2026-04-23": "갈릭 크림 시카고 피자, 알리오 올리오 스파게티, 양상추 샐러드, 모듬 피클, 사과 주스", "2026-04-24": "율무밥, 들깨가루 시락국, 불막창 닭 어깨살 볶음, 생선까스, 오이 참나물 겉절이, 배추김치"};
+        const dinnerData = {"2026-03-23": "우동, 치즈 반달 돈가스, 브로콜리/초장, 깍두기, 딸기", "2026-03-25": "오징어 주꾸미 비빔밥, 단배추 된장국, 계란찜, 떡갈비 떡꼬치", "2026-03-26": "칼슘밥/김자반, 우대 갈비 구이, 국물 떡볶이, 양상추 샐러드, 아이스크림", "2026-03-27": "칼슘밥, 나가사끼 짬뽕국, 곤약 메추리알 조림, 배추김치", "2026-03-30": "혼합잡곡밥, 부대찌개, 삼치구이, 고추 튀김, 깍두기, 베이비슈", "2026-03-31": "지코바 치밥, 단배추 된장국, 크림 떡볶음, 명엽채 조림, 배추김치", "2026-04-01": "차수수밥, 떡국, 깐쇼새우 조림, 호박 베이컨 볶음, 참나물 전, 배추김치", "2026-04-02": "라면, 모듬 튀김, 순대/쌈장, 구슬 아이스크림", "2026-04-06": "김치말이 국수, 백미밥, 도끼 떡갈비, 시금치 나물, 갈릭 파이", "2026-04-07": "나시고랭 볶음밥, 시금치 된장국, 불고기 분짜, 춘권, 깍두기", "2026-04-08": "칼슘밥, 닭곰탕/당면 사리, 스팸구이, 쥐포채 조림, 깍두기, 요구르트", "2026-04-09": "통닭구이, 양배추 마요 케첩 무침, 무절임, 자몽 에이드", "2026-04-10": "현미밥, 들깨가루 무채국, 칼 비빔면, 함박 스테이크, 깍두기, 요거트/블루베리", "2026-04-13": "기장밥, 쇠고기 버섯 전골, 생선까스, 도토리묵, 배추김치", "2026-04-14": "추억의 도시락, 유부 장국, 연근 조림, 소떡소떡, 깍두기, 쿨피스", "2026-04-15": "혼합잡곡밥, 고추장찌개, 오리훈제, 콩나물 무침, 해물파전, 배추김치", "2026-04-16": "칼슘밥/ 맛김치, 삼겹살 구이, 물쫄면, 상추/쌈장, 후룻볼", "2026-04-17": "혼합잡곡밥, 육개장, 연어 스테이크, 계란말이, 김치 오징어 전, 바스크 초코 케익", "2026-04-20": "치킨마요 덮밥, 팽이버섯 된장국, 일미 도라지 무침, 배추김치, 회오리감자, 딸기 주스", "2026-04-21": "돈코츠 라면, 백미밥, 치킨 스테이크, 깍두기, 바나나우유", "2026-04-22": "고추장 불고기 덮밥, 유부 콩나물국, 감자 크로켓, 연두부/쪽파 양념장, 배추김치, 푸딩", "2026-04-23": "갈릭 크림 시카고 피자, 알리오 올리오 스파게티, 양상추 샐러드, 모듬 피클, 사과 주스", "2026-04-24": "율무밥, 들깨가루 시락국, 불막창 닭 어깨살 볶음, 생선까스, 오이 참나물 겉절이, 배추김치"};
 
         const specialDinnerDates = ["2026-03-26", "2026-04-02", "2026-04-16", "2026-04-23"];
         let currentType = 'lunch';
         const dateInput = document.getElementById('date-selector');
-        
-        // 초기 날짜 설정 (오늘)
         dateInput.value = new Date().toISOString().split('T')[0];
 
         function updateUI() {
             const date = dateInput.value;
             const menu = currentType === 'lunch' ? lunchData[date] : dinnerData[date];
             const card = document.getElementById('meal-card');
-            
             card.className = `meal-card ${currentType}`;
-            document.getElementById('meal-status').innerText = `${currentType === 'lunch' ? '점심' : '저녁'} 메뉴`;
+            document.getElementById('meal-status').innerText = `${currentType === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
 
-            // ✨ 특식 반짝이 효과 적용
             if (currentType === 'dinner' && specialDinnerDates.includes(date)) {
                 card.classList.add('special-meal-card');
-                document.getElementById('meal-status').innerText = "✨밥심 충전 특식!🧡✨";
+                document.getElementById('meal-status').innerText = "✨밥심 충전 특식!✨";
             }
 
-            document.getElementById('menu-content').innerHTML = menu ? menu.split(', ').join('<br>') : "😴 급식 정보가 없습니다.";
-            loadComments(); // 메뉴 바뀔 때마다 해당 메뉴의 댓글 로드
+            document.getElementById('menu-content').innerHTML = menu ? menu.split(', ').join('<br>') : "정보가 없습니다. 😴";
+            loadComments();
         }
 
-        // 3. 댓글 저장 기능
         function saveComment() {
             const date = dateInput.value;
             const input = document.getElementById('comment-input');
-            if (!input.value.trim()) return; // 빈 댓글 방지
-
-            const commentData = {
+            if (!input.value.trim()) return;
+            database.ref(`meals/${date}/${currentType}`).push({
                 text: input.value,
                 timestamp: new Date().toLocaleString()
-            };
-
-            // 데이터베이스 경로 예: meals/2026-03-26/lunch/
-            database.ref(`meals/${date}/${currentType}`).push(commentData);
+            });
             input.value = "";
         }
 
-        // 🔒 관리자 삭제 기능
         function deleteComment(key) {
-            const password = prompt("선생님, 관리자 비밀번호를 입력하세요:");
+            const password = prompt("비밀번호를 입력하세요:");
             if (password === ADMIN_PASSWORD) {
                 const date = dateInput.value;
                 database.ref(`meals/${date}/${currentType}/${key}`).remove();
-            } else if (password !== null) {
-                alert("비밀번호가 틀렸습니다!");
-            }
+            } else if (password !== null) alert("틀렸습니다!");
         }
 
-        // 4. 댓글 불러오기 (실시간 리스너)
         function loadComments() {
             const date = dateInput.value;
             const commentList = document.getElementById('comment-list');
-            
-            // 이전 리스너 해제 및 로딩 표시
             database.ref(`meals/${date}/${currentType}`).off();
-            commentList.innerHTML = "<p style='color:#ccc; text-align:center;'>댓글 불러오는 중...</p>";
-
-            // 실시간 데이터 가져오기
             database.ref(`meals/${date}/${currentType}`).on('value', (snapshot) => {
                 commentList.innerHTML = "";
                 const data = snapshot.val();
                 if (data) {
-                    // 최신 댓글이 위로 오도록 역순 정렬
                     Object.keys(data).reverse().forEach(key => {
                         const item = data[key];
                         const div = document.createElement('div');
                         div.className = 'comment-item';
-                        div.innerHTML = `
-                            <div class="comment-text">${item.text}</div>
-                            <button class="delete-btn" onclick="deleteComment('${key}')">삭제</button>
-                            <span class="comment-date">${item.timestamp}</span>
-                        `;
+                        div.innerHTML = `<div class="comment-text">${item.text}</div><button class="delete-btn" onclick="deleteComment('${key}')">x</button><span class="comment-date">${item.timestamp}</span>`;
                         commentList.appendChild(div);
                     });
                 } else {
-                    commentList.innerHTML = "<p style='color:#bbb; text-align:center; margin-top:30px; font-size:0.9rem;'>첫 번째 한줄평을 남겨주세요! 😊</p>";
+                    commentList.innerHTML = "<p style='color:#ccc; text-align:center; font-size:0.8rem; margin-top:20px;'>첫 번째 한줄평을 남겨주세요! 😊</p>";
                 }
             });
         }
@@ -217,8 +167,6 @@
             document.getElementById('tab-dinner').classList.toggle('active', type === 'dinner');
             updateUI();
         }
-
-        // 초기 화면 업데이트
         updateUI();
     </script>
 </body>
