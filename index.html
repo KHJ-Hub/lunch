@@ -51,7 +51,7 @@
 
         .meal-content-area {
             background: #FAFAFA; border-radius: 25px; padding: 25px; min-height: 150px;
-            border: 1px solid #F0F0F0; transition: 0.3s; relative; margin-bottom: 20px;
+            border: 1px solid #F0F0F0; transition: 0.3s; position: relative; margin-bottom: 20px;
         }
         .meal-content-area.lunch { background: var(--primary-light); border-color: #C8E6C9; }
         .meal-content-area.dinner { background: var(--secondary-light); border-color: #FFE0B2; }
@@ -184,6 +184,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // 🔑 선생님의 나이스 공공데이터 API 인증키 연동
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
         let lunchData = {};
@@ -192,7 +193,6 @@
         const bapsimExceptions = []; 
         const specialDinnerDates = [];
 
-        // 🛠️ 크로스 브라우저 안전 날짜 파싱 내장 함수
         function parseSafeDate(dateStr) {
             if (!dateStr) return new Date();
             const parts = dateStr.split('-');
@@ -280,14 +280,12 @@
             } else {
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 
-                // 🚀 안전하게 나이스 데이터를 연동합니다.
                 await fetchNeisMeals(date);
                 
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
                 statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
                 card.className = `meal-content-area ${currentTab}`;
 
-                // 💡 날짜 오류 우회 안전 연산 패치
                 const parsedDate = parseSafeDate(date);
                 const isThursdayDinner = (currentTab === 'dinner' && parsedDate.getDay() === 4);
                 const isException = bapsimExceptions.includes(date);
@@ -302,7 +300,6 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                // 🛡️ 에러 및 주말 데이터가 없을 시 절대 멈추지 않고 명확한 안내 멘트를 표출합니다.
                 document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴<br><small style='font-size:0.75rem; color:#AAA; font-weight:500;'>(주말·방학이거나 나이스 API 인증키 승인 대기 중)</small>";
                 
                 try {
