@@ -187,6 +187,10 @@
         // 🔑 선생님의 나이스 공공데이터 API 인증키 연동
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
+        // 🛠️ [긴급 수리] 누락되었던 핵심 요소를 상단에 명확히 선언해 줍니다!
+        const dateInput = document.getElementById('date-selector');
+        let currentTab = 'lunch';
+
         let lunchData = {};
         let dinnerData = {};
         
@@ -254,10 +258,11 @@
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
             const d = String(now.getDate()).padStart(2, '0');
-            dateInput.value = `${y}-${m}-${d}`;
+            if(dateInput) dateInput.value = `${y}-${m}-${d}`;
         }
 
         function changeDate(offset) {
+            if(!dateInput) return;
             const current = parseSafeDate(dateInput.value);
             current.setDate(current.getDate() + offset);
             const y = current.getFullYear();
@@ -268,6 +273,7 @@
         }
 
         async function updateUI() {
+            if(!dateInput) return;
             const date = dateInput.value;
             const card = document.getElementById('meal-card');
             const statusLabel = document.getElementById('meal-status');
@@ -309,6 +315,7 @@
         }
 
         function loadPreVoteResult() {
+            if(!dateInput) return;
             const winnerBox = document.getElementById('yesterday-winner-box');
             const targetDate = dateInput.value;
             const menu = (currentTab === 'lunch') ? lunchData[targetDate] : dinnerData[targetDate];
@@ -330,6 +337,7 @@
         }
 
         function submitRating(score) {
+            if(!dateInput) return;
             const date = dateInput.value;
             if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
@@ -341,12 +349,14 @@
         }
 
         function loadRating() {
+            if(!dateInput) return;
             database.ref(`meals/${dateInput.value}/${currentTab}/rating`).on('value', (s) => {
                 const d = s.val(); document.getElementById('avg-rating-display').innerHTML = `<span>★</span> ${d ? d.average : '0.0'}`;
             });
         }
 
         function saveComment() {
+            if(!dateInput) return;
             const date = dateInput.value; const input = document.getElementById('comment-input');
             if (!input.value.trim()) return;
             database.ref(`meals/${date}/${currentTab}/comments`).push({ text: input.value, timestamp: new Date().toLocaleString(), likes: 0 });
@@ -354,11 +364,13 @@
         }
 
         function likeComment(key) {
+            if(!dateInput) return;
             if (localStorage.getItem(`liked_${key}`)) return alert("이미 하트를 눌렀습니다! ❤️");
             database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}/likes`).transaction(l => (l || 0) + 1).then(() => localStorage.setItem(`liked_${key}`, true));
         }
 
         function loadComments() {
+            if(!dateInput) return;
             const date = dateInput.value; const list = document.getElementById('comment-list');
             database.ref(`meals/${date}/${currentTab}/comments`).on('value', (s) => {
                 list.innerHTML = ""; const data = s.val();
@@ -372,6 +384,7 @@
         }
 
         function loadPollData() {
+            if(!dateInput) return;
             const box = document.getElementById('poll-box');
             const tomorrow = parseSafeDate(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
             
@@ -427,6 +440,7 @@
         }
 
         function deleteItem(type, key) {
+            if(!dateInput) return;
             if (prompt("비밀번호:") === ADMIN_PASSWORD) {
                 if (type === 'comments') database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}`).remove();
                 else database.ref(`suggestions/${key}`).remove();
@@ -443,4 +457,3 @@
     </script>
 </body>
 </html>
-
