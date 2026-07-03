@@ -29,6 +29,7 @@
             color: #999; display: flex; align-items: center; justify-content: center;
             transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0;
         }
+        .date-nav-btn:hover { background: #f0f0f0; color: var(--secondary); border-color: var(--secondary); }
         input[type="date"] {
             border: 2px solid #EEE; border-radius: 50px; padding: 10px 20px;
             font-size: 0.95rem; font-weight: 700; color: #555; outline: none;
@@ -41,7 +42,6 @@
         .tab-item.active.dinner { background: var(--secondary); color: white; }
         .tab-item.active.suggest { background: var(--info); color: white; }
 
-        /* 👑 오늘의 기대 1위 배너 디자인 */
         #yesterday-winner-box {
             background: linear-gradient(to right, #FFF9E1, #FFF2CC);
             border: 1px solid #FFE599; border-radius: 15px;
@@ -167,7 +167,7 @@
                 <div id="suggest-list" class="scroll-area"></div>
             </div>
         </div>
-        <footer>배정고 1학년 화이팅 ❤️</footer>
+        <footer>배정고 화이팅 ❤️</footer>
     </div>
 
     <script>
@@ -184,61 +184,54 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // ☀️ 6월 중식 데이터 업데이트 완료
-        const lunchData = {
-            "2026-06-01": "현미밥,들깨가루시락국,매운돼지갈비찜,명태엿장조림,김말이튀김,콩나물무침,배추김치",
-            "2026-06-02": "세계음식의 날 베트남쌀국수,수제 반미샌드위치 불고기,춘권,배추김치,열대과일 망고,파인애플,파파야,용과",
-            "2026-06-03": "지방선거일",
-            "2026-06-04": "큐브스테이크덮밥 스테이크,스크램블,숙주,쪽파,알단무지,들깨가루무채국,충무식어묵무침,해쉬브라운,케첩,깍두기,초코과자,쿠키",
-            "2026-06-05": "칼슘밥,오이미역냉국,닭볶음탕,우엉잡채,스팸구이,머스터드소스,배추김치,사과",
-            "2026-06-08": "현미밥,순두부찌개,삼치구이 저염,유자청소스,함박스테이크,소스,일미도라지무침,깍두기,맛김,요거트,블루베리",
-            "2026-06-09": "김치말이국수 오이,배,김치,메추리알,백미밥,돼지갈비구이,마늘,쌈장,고추튀김,루비레드키위",
-            "2026-06-10": "오징어주꾸미비빔밥 무생채,콩나물,두부호박된장국,맛살햄계란말이,미니돈까스,케첩,수제 나박물김치",
-            "2026-06-11": "카레,칼슘밥,옥수수맛살전,닭다리후라이드 교촌스타일,열무액젓무침,깍두기,토마토꿀절임",
-            "2026-06-12": "수육국밥 칼슘밥,국밥용 부추양파생채,해물파전,양파절임소스,순대,쌈장,석박지,런요구르트",
-            "2026-06-15": "기장밥,도토리묵채국 지단,김가루,연어스테이크,어니언소스,꽈리고추감자조림,김치메밀전병,배추김치",
-            "2026-06-16": "백미밥,물쫄면 배,오이,당근,메추리알,통돼지바베큐,마늘소스,고로케,케첩,배추김치",
-            "2026-06-17": "굴소스베이컨볶음밥,페스츄리양송이스프,등심스테이크,파인애플구이,계란후라이,깍두기,양상추샐러드,흑임자갈릭드레싱,쇼콜라마카다미아",
-            "2026-06-18": "혼합잡곡밥,쇠고기미역국,칼비빔면 삶은계란,비엔나브로콜리조림,가자미살튀김,배추김치",
-            "2026-06-19": "현미밥,들깨가루시락국,치즈닭구이 데리야끼,감자전,양파고추소스,시금치나물,배추김치,단오 수리취납작꿀떡",
-            "2026-06-22": "칼슘밥,우거지등뼈감자탕,참치두부조림,마늘쫑햄볶음,생선까스 청대구 ,포테이토,타르타르소스,배추김치",
-            "2026-06-23": "혼합잡곡밥,배추김치,순두부찌개,치킨찹스테이크,새우튀김,청포묵김가루무침,오븐 찰소보로빵",
-            "2026-06-24": "초계칼국수 닭가슴살채,오이채,무절임,칼슘밥,미니돈까스,소스,알감자버터구이,배추김치,수박",
-            "2026-06-25": "추억의 도시락1,단배추된장국,명엽채조림,찰도그,허니버터시즈닝,깍두기,요구르트",
-            "2026-06-26": "기장밥,고추장찌개,검은깨두부,김치볶음,고등어구이,치킨가라아게,채소샐러드 머스터드소스",
-            "2026-06-29": "현미밥,배추김치,조랭이떡국,불고기분짜,짜조,새우치즈구이,캐슈넛멸치볶음",
-            "2026-06-30": "김치베이컨볶음밥,북어채콩나물국,깐쇼새우조림,계란후라이,오렌지"
-        };
+        // 🔑 선생님의 나이스 공공데이터 API 인증키가 완벽히 연동되었습니다!
+        const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
-        // 🌙 6월 석식 데이터 업데이트 완료
-        const dinnerData = {
-            "2026-06-01": "치킨마요덮밥,쇠고기미역국,연두부 1인,쪽파양념장,소떡떡구이,시즈닝,깍두기,딸기우유",
-            "2026-06-02": "혼합잡곡밥,순두부찌개,오리훈제,머스터드소스,무쌈,파스타샐러드,배추김치,베이비슈 쿠키앤크림",
-            "2026-06-04": "전국연합학력평가 1,2학년 수능모의평가 3학년",
-            "2026-06-05": "오므라이스,시금치된장국,대왕닭꼬치 데리야끼매콤소스,배추김치,프렌치토스트",
-            "2026-06-08": "한우불고기덮밥,유부콩나물국,건새우마늘쫑볶음,양념어묵꼬치,배추김치,수제 에그타르트",
-            "2026-06-09": "혼합잡곡밥,부대찌개,왕만두,동태살강정,숙주맛살무침,감자채전,깍두기",
-            "2026-06-10": "백미밥,나가사끼짬뽕국,미트볼강정,부들어묵곤약조림,배추김치,사과",
-            "2026-06-11": "장어덮밥 장어구이,스크램블에그,초생강,쪽파,우동 물떡어묵꼬치,콘샐러드 사우전아일랜드드레싱,해쉬브라운,케첩,맛김치,나뚜루 바닐라,스트로베리",
-            "2026-06-12": "칼슘밥,돈가스김치나베,타코야끼,양상추샐러드,딸기드레싱,웰치스에이드 포도",
-            "2026-06-15": "현미밥,실파계란국,떡갈비,마파두부,새송이호박볶음,배추김치,맛김",
-            "2026-06-16": "율무밥,곤약탕국,돈까스 남산식,소스,계란찜,감자채피망볶음,배추김치,바나나",
-            "2026-06-17": "흑미밥,떡국,안동식찜닭,동그랑땡계란부침,케첩,연두부,부추양념장,배추김치",
-            "2026-06-18": "칼슘밥,전복갈비탕 지단채,잔파,충무식어묵무침,햄에그까스,케첩,깍두기,미숫가루",
-            "2026-06-19": "삼색소보로덮밥,유부콩나물국,왕만두,채소무침,회오리감자,치즈맛시즈닝,요구르트",
-            "2026-06-22": "자장면,탕수육,소스,양상추망고샐러드 발사믹소스,단무지부추무침,인절미토스트,식혜",
-            "2026-06-23": "칼슘밥,대구식자박한물갈비,계란찜,탕평채,배추김치,파인애플 스틱",
-            "2026-06-24": "현미밥,북어채계란국,낙지오징어볶음,미트볼강정,배추김치,콘크러스트피자",
-            "2026-06-25": "돈마호크,베이컨크림우동,양상추샐러드 토마토,구슬치즈,발사믹소스,감자튀김 크링클컷 ,케첩,미니밥,스틱김자반,깍두기,아이스크림 설레임",
-            "2026-06-26": "혼합잡곡밥,호박수제비국,메추리알쇠고기다짐볶음,매콤김말이강정,배추김치,미니도넛",
-            "2026-06-29": "혼합잡곡밥,시금치된장국,로제찜닭 소시지,고구마떡,참치채소,무조미김,저염 삼치튀김,배추김치",
-            "2026-06-30": "중간고사"
-        };
-
-        // 👑 6월의 역대급 특식 날짜로 업데이트 완료
+        // 🌟 하드코딩 식단표 삭제 완료! 데이터를 실시간으로 채울 자동 버퍼 상자만 남깁니다.
+        let lunchData = {};
+        let dinnerData = {};
+        
+        // 🧡 특식 날짜 지정 (메뉴명에 '특식'이 포함되거나 이 날짜에 해당되면 자동 발광!)
         const specialDinnerDates = ["2026-06-11", "2026-06-25"];
-        let currentTab = 'lunch';
-        const dateInput = document.getElementById('date-selector');
+
+        // 🔄 나이스 서버에서 어제~내일 배정고 식단을 실시간으로 훔쳐오는 마법 함수
+        async function fetchNeisMeals(centerDateStr) {
+            const centerDate = new Date(centerDateStr);
+            const yesterday = new Date(centerDate); yesterday.setDate(yesterday.getDate() - 1);
+            const tomorrow = new Date(centerDate); tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const formatDate = (d) => {
+                return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+            };
+            
+            const fromYmd = formatDate(yesterday);
+            const toYmd = formatDate(tomorrow);
+            
+            // 부산교육청(C10) + 배정고등학교 고유코드(7150092) 조합
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=C10&SD_SCHUL_CODE=7150092&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.mealServiceDietInfo) {
+                    const rows = data.mealServiceDietInfo[1].row;
+                    rows.forEach(row => {
+                        const ymd = row.MLSV_YMD;
+                        const hyphenDate = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
+                        
+                        // 알레르기 숫자 및 불필요한 줄바꿈 공백 실시간 청소
+                        let menuClean = row.DDISH_NM
+                            .replace(/<br\s*\/?>/gi, ',')
+                            .replace(/\([\d\.]+\)/g, '')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        
+                        if (row.MMEAL_SC_CODE === "2") lunchData[hyphenDate] = menuClean;
+                        if (row.MMEAL_SC_CODE === "3") dinnerData[hyphenDate] = menuClean;
+                    });
+                }
+            } catch (e) { console.error("나이스 API 통신 오류:", e); }
+        }
 
         // ✅ 메뉴 필터링 (밥, 김치 등 제외)
         function filterMenuItems(menuStr) {
@@ -267,7 +260,7 @@
             updateUI();
         }
 
-        function updateUI() {
+        async function updateUI() {
             const date = dateInput.value;
             const card = document.getElementById('meal-card');
             const statusLabel = document.getElementById('meal-status');
@@ -279,25 +272,27 @@
                 document.getElementById('yesterday-winner-box').style.display = 'none';
             } else {
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
+                
+                // 🚀 UI를 그리기 직전에 교육청 서버에서 데이터를 쏙 긁어옵니다.
+                await fetchNeisMeals(date);
+                
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
                 statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
                 card.className = `meal-content-area ${currentTab}`;
 
-                if (currentTab === 'dinner' && specialDinnerDates.includes(date)) {
+                if ((currentTab === 'dinner' && specialDinnerDates.includes(date)) || (menu && menu.includes("특식"))) {
                     card.classList.add('special-meal-card');
                     statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
                 } else { card.classList.remove('special-meal-card'); }
 
                 document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴";
-                loadRating(); loadComments(); loadPollData(); 
-                loadPreVoteResult(); // ✅ 오늘 당일 메뉴의 투표 결과 로드
+                loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
             }
         }
 
-        // 🏆 오늘 메뉴의 미리 투표(어제 했던 투표) 결과 로드
         function loadPreVoteResult() {
             const winnerBox = document.getElementById('yesterday-winner-box');
-            const targetDate = dateInput.value; // ✅ 현재 보고 있는 날짜 그 자체를 조회
+            const targetDate = dateInput.value;
             const menu = (currentTab === 'lunch') ? lunchData[targetDate] : dinnerData[targetDate];
             
             if (!menu) { winnerBox.style.display = 'none'; return; }
@@ -318,7 +313,7 @@
 
         function submitRating(score) {
             const date = dateInput.value;
-            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 남기셨습니다! 😊");
+            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
                 if (!data) return { totalScore: score, voterCount: 1, average: score.toFixed(1) };
                 const newTotal = (data.totalScore || 0) + score;
@@ -408,7 +403,7 @@
             });
         }
 
-        box = document.getElementById('poll-box'); // 안전 장치
+        box = document.getElementById('poll-box');
 
         function deleteItem(type, key) {
             if (prompt("비밀번호:") === ADMIN_PASSWORD) {
