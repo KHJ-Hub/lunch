@@ -184,17 +184,15 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 🔑 선생님의 나이스 공공데이터 API 인증키가 완벽히 연동되었습니다!
+        // 연동 완료된 나이스 API 키
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
-        // 🌟 하드코딩 식단표 삭제 완료! 데이터를 실시간으로 채울 자동 버퍼 상자만 남깁니다.
         let lunchData = {};
         let dinnerData = {};
         
-        // 🧡 특식 날짜 지정 (메뉴명에 '특식'이 포함되거나 이 날짜에 해당되면 자동 발광!)
-        const specialDinnerDates = ["2026-06-11", "2026-06-25"];
+        // 목요일 외에 추가로 특식을 지정하고 싶은 날짜가 있다면 여기에 적어두시면 됩니다!
+        const specialDinnerDates = [];
 
-        // 🔄 나이스 서버에서 어제~내일 배정고 식단을 실시간으로 훔쳐오는 마법 함수
         async function fetchNeisMeals(centerDateStr) {
             const centerDate = new Date(centerDateStr);
             const yesterday = new Date(centerDate); yesterday.setDate(yesterday.getDate() - 1);
@@ -207,7 +205,6 @@
             const fromYmd = formatDate(yesterday);
             const toYmd = formatDate(tomorrow);
             
-            // 부산교육청(C10) + 배정고등학교 고유코드(7150092) 조합
             const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=C10&SD_SCHUL_CODE=7150092&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
             
             try {
@@ -219,7 +216,6 @@
                         const ymd = row.MLSV_YMD;
                         const hyphenDate = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
                         
-                        // 알레르기 숫자 및 불필요한 줄바꿈 공백 실시간 청소
                         let menuClean = row.DDISH_NM
                             .replace(/<br\s*\/?>/gi, ',')
                             .replace(/\([\d\.]+\)/g, '')
@@ -233,12 +229,17 @@
             } catch (e) { console.error("나이스 API 통신 오류:", e); }
         }
 
-        // ✅ 메뉴 필터링 (밥, 김치 등 제외)
         function filterMenuItems(menuStr) {
             if(!menuStr) return [];
-            const skipWords = ["밥", "김치", "깍두기", "석박지", "단무지", "맛김"];
             return menuStr.split(',').map(s=>s.trim()).filter(item => {
-                return !item.endsWith('밥') && !skipWords.some(skip => item.includes(skip)) && item !== "";
+                if (item === "") return false;
+                if (item.endsWith('밥')) return false; 
+                if (item.endsWith('김치') || item === '김치') return false; 
+                
+                const skipSides = ["깍두기", "석박지", "단무지", "맛김", "김자반", "쌈장", "마늘", "소스"];
+                if (skipSides.some(skip => item.includes(skip))) return false;
+                
+                return true;
             });
         }
 
@@ -273,16 +274,23 @@
             } else {
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 
-                // 🚀 UI를 그리기 직전에 교육청 서버에서 데이터를 쏙 긁어옵니다.
                 await fetchNeisMeals(date);
                 
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
                 statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
                 card.className = `meal-content-area ${currentTab}`;
 
-                if ((currentTab === 'dinner' && specialDinnerDates.includes(date)) || (menu && menu.includes("특식"))) {
+                // 💡 [목요 밥심데이 자동 감지 로직]
+                // 4는 자바스크립트에서 목요일을 뜻합니다. 목요일 저녁에 메뉴가 존재하면 무조건 발동!
+                const isThursdayDinner = (currentTab === 'dinner' && new Date(date).getDay() === 4);
+
+                if (menu && (isThursdayDinner || specialDinnerDates.includes(date) || menu.includes("특식"))) {
                     card.classList.add('special-meal-card');
-                    statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
+                    if (isThursdayDinner) {
+                        statusLabel.innerText = "✨ 목 요 밥 심 데 이 ! 💪 ✨"; // 전용 멘트 장착!
+                    } else {
+                        statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
+                    }
                 } else { card.classList.remove('special-meal-card'); }
 
                 document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴";
