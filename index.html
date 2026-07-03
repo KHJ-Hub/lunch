@@ -51,7 +51,7 @@
 
         .meal-content-area {
             background: #FAFAFA; border-radius: 25px; padding: 25px; min-height: 150px;
-            border: 1px solid #F0F0F0; transition: 0.3s; position: relative; margin-bottom: 20px;
+            border: 1px solid #F0F0F0; transition: 0.3s; relative; margin-bottom: 20px;
         }
         .meal-content-area.lunch { background: var(--primary-light); border-color: #C8E6C9; }
         .meal-content-area.dinner { background: var(--secondary-light); border-color: #FFE0B2; }
@@ -189,15 +189,18 @@
         let lunchData = {};
         let dinnerData = {};
         
-        // 🛡️ [밥심데이 제외 상자] 
-        // 목요일 저녁인데 밥심데이가 아닌 예외 날짜가 생기면 여기에 툭 적어주세요! (예: "2026-06-25")
         const bapsimExceptions = []; 
-
-        // 🧡 수동 지정 특식 날짜 상자 (목요일이 아닌데 강제로 번쩍이게 하고 싶을 때 사용)
         const specialDinnerDates = [];
 
+        // 🛠️ 크로스 브라우저 안전 날짜 파싱 내장 함수
+        function parseSafeDate(dateStr) {
+            if (!dateStr) return new Date();
+            const parts = dateStr.split('-');
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
         async function fetchNeisMeals(centerDateStr) {
-            const centerDate = new Date(centerDateStr);
+            const centerDate = parseSafeDate(centerDateStr);
             const yesterday = new Date(centerDate); yesterday.setDate(yesterday.getDate() - 1);
             const tomorrow = new Date(centerDate); tomorrow.setDate(tomorrow.getDate() + 1);
             
@@ -255,7 +258,7 @@
         }
 
         function changeDate(offset) {
-            const current = new Date(dateInput.value);
+            const current = parseSafeDate(dateInput.value);
             current.setDate(current.getDate() + offset);
             const y = current.getFullYear();
             const m = String(current.getMonth() + 1).padStart(2, '0');
@@ -277,17 +280,17 @@
             } else {
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 
+                // 🚀 안전하게 나이스 데이터를 연동합니다.
                 await fetchNeisMeals(date);
                 
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
                 statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
                 card.className = `meal-content-area ${currentTab}`;
 
-                // 💡 [지능형 밥심데이 판별]
-                const isThursdayDinner = (currentTab === 'dinner' && new Date(date).getDay() === 4);
+                // 💡 날짜 오류 우회 안전 연산 패치
+                const parsedDate = parseSafeDate(date);
+                const isThursdayDinner = (currentTab === 'dinner' && parsedDate.getDay() === 4);
                 const isException = bapsimExceptions.includes(date);
-                
-                // 메뉴에 '고사', '시험', '평가' 단어가 있으면 시험기간으로 인식해 자동 취소
                 const isExamDay = menu && (menu.includes("고사") || menu.includes("시험") || menu.includes("평가"));
 
                 if (menu && !isException && !isExamDay && (isThursdayDinner || specialDinnerDates.includes(date) || menu.includes("특식"))) {
@@ -299,8 +302,12 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴";
-                loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
+                // 🛡️ 에러 및 주말 데이터가 없을 시 절대 멈추지 않고 명확한 안내 멘트를 표출합니다.
+                document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴<br><small style='font-size:0.75rem; color:#AAA; font-weight:500;'>(주말·방학이거나 나이스 API 인증키 승인 대기 중)</small>";
+                
+                try {
+                    loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
+                } catch(err) { console.error("서브 기능 로드 에러 방어:", err); }
             }
         }
 
@@ -327,7 +334,7 @@
 
         function submitRating(score) {
             const date = dateInput.value;
-            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 남기셨습니다! 😊");
+            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
                 if (!data) return { totalScore: score, voterCount: 1, average: score.toFixed(1) };
                 const newTotal = (data.totalScore || 0) + score;
@@ -369,8 +376,13 @@
 
         function loadPollData() {
             const box = document.getElementById('poll-box');
-            const tomorrow = new Date(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const tomorrow = parseSafeDate(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const y = tomorrow.getFullYear();
+            const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const d = String(tomorrow.getDate()).padStart(2, '0');
+            const tomorrowStr = `${y}-${m}-${d}`;
+            
             const menu = (currentTab === 'lunch') ? lunchData[tomorrowStr] : dinnerData[tomorrowStr];
             if (!menu) { box.style.display = 'none'; return; }
             
@@ -416,8 +428,6 @@
                 }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>건의사항을 남겨주세요! 😊</p>";
             });
         }
-
-        box = document.getElementById('poll-box');
 
         function deleteItem(type, key) {
             if (prompt("비밀번호:") === ADMIN_PASSWORD) {
