@@ -75,7 +75,8 @@
             border-radius: 15px !important; font-weight: 900 !important;
         }
 
-        .menu-text { line-height: 1.9; color: #444; font-size: 1.15rem; font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
+        /* 👑 단어 단위 줄바꿈 가독성 폰트 세팅 */
+        .menu-text { line-height: 2.0; color: #444; font-size: 1.15rem; font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
 
         .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
         .star-radio-group input { display: none; }
@@ -259,9 +260,11 @@
             } catch (e) { console.error("나이스 API 통신 오류:", e); }
         }
 
+        // 🛡️ 투표 항목 생성용 외부 쉼표 전용 분리 함수
         function filterMenuItems(menuStr) {
             if(!menuStr) return [];
-            return menuStr.split(',').map(s=>s.trim()).filter(item => {
+            // 괄호 바깥의 쉼표로만 분리하여 투표 항목도 훼손되지 않게 보호!
+            return menuStr.split(/,(?![^(]*\))/).map(s=>s.trim()).filter(item => {
                 if (item === "") return false;
                 if (item.endsWith('밥')) return false; 
                 if (item.endsWith('김치') || item === '김치') return false; 
@@ -326,12 +329,20 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
+                // 🧠 [초정밀 정규식 정렬 엔진 장착]
                 if (menu) {
-                    const formattedLines = menu.split(',').map(item => {
-                        return item.replace(/\(/g, ' (')      
-                                   .replace(/,/g, ', ')        
-                                   .replace(/\s+/g, ' ')       
-                                   .trim();
+                    // 1. 괄호 바깥의 쉼표(,)로만 메뉴판 줄바꿈 단위를 쪼갭니다.
+                    const menuItems = menu.split(/,(?![^(]*\))/);
+                    
+                    const formattedLines = menuItems.map(item => {
+                        // 2. 괄호 내부의 쉼표 뒤에는 보기 좋게 띄어쓰기를 장착합니다.
+                        let processed = item.replace(/,/g, ', ');
+                        
+                        // 3. 괄호가 시작되는 지점을 딱 집어내어 그 자리에서 이쁘게 줄바꿈을 꽂아줍니다!
+                        if (processed.includes('(')) {
+                            processed = processed.replace(/\s*\(/, '<br><span style="font-size: 0.85rem; color: #888; font-weight: 500;">(') + '</span>';
+                        }
+                        return processed;
                     });
                     document.getElementById('menu-content').innerHTML = formattedLines.join('<br>');
                 } else {
