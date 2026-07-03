@@ -167,7 +167,7 @@
                 <div id="suggest-list" class="scroll-area"></div>
             </div>
         </div>
-        <footer>배정고 화이팅 ❤️</footer>
+        <footer>배정고 1학년 화이팅 ❤️</footer>
     </div>
 
     <script>
@@ -184,13 +184,16 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 연동 완료된 나이스 API 키
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
         let lunchData = {};
         let dinnerData = {};
         
-        // 목요일 외에 추가로 특식을 지정하고 싶은 날짜가 있다면 여기에 적어두시면 됩니다!
+        // 🛡️ [밥심데이 제외 상자] 
+        // 목요일 저녁인데 밥심데이가 아닌 예외 날짜가 생기면 여기에 툭 적어주세요! (예: "2026-06-25")
+        const bapsimExceptions = []; 
+
+        // 🧡 수동 지정 특식 날짜 상자 (목요일이 아닌데 강제로 번쩍이게 하고 싶을 때 사용)
         const specialDinnerDates = [];
 
         async function fetchNeisMeals(centerDateStr) {
@@ -280,14 +283,17 @@
                 statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
                 card.className = `meal-content-area ${currentTab}`;
 
-                // 💡 [목요 밥심데이 자동 감지 로직]
-                // 4는 자바스크립트에서 목요일을 뜻합니다. 목요일 저녁에 메뉴가 존재하면 무조건 발동!
+                // 💡 [지능형 밥심데이 판별]
                 const isThursdayDinner = (currentTab === 'dinner' && new Date(date).getDay() === 4);
+                const isException = bapsimExceptions.includes(date);
+                
+                // 메뉴에 '고사', '시험', '평가' 단어가 있으면 시험기간으로 인식해 자동 취소
+                const isExamDay = menu && (menu.includes("고사") || menu.includes("시험") || menu.includes("평가"));
 
-                if (menu && (isThursdayDinner || specialDinnerDates.includes(date) || menu.includes("특식"))) {
+                if (menu && !isException && !isExamDay && (isThursdayDinner || specialDinnerDates.includes(date) || menu.includes("특식"))) {
                     card.classList.add('special-meal-card');
                     if (isThursdayDinner) {
-                        statusLabel.innerText = "✨ 목 요 밥 심 데 이 ! 💪 ✨"; // 전용 멘트 장착!
+                        statusLabel.innerText = "✨ 목 요 밥 심 데 이 ! 💪 ✨";
                     } else {
                         statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
                     }
@@ -321,7 +327,7 @@
 
         function submitRating(score) {
             const date = dateInput.value;
-            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
+            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 남기셨습니다! 😊");
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
                 if (!data) return { totalScore: score, voterCount: 1, average: score.toFixed(1) };
                 const newTotal = (data.totalScore || 0) + score;
