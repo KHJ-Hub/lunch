@@ -75,7 +75,6 @@
             border-radius: 15px !important; font-weight: 900 !important;
         }
 
-        /* ✨ 단어 단위 줄바꿈(keep-all)과 혹시 모를 오버플로우 방어벽(break-word) 조합 */
         .menu-text { line-height: 1.9; color: #444; font-size: 1.15rem; font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
 
         .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
@@ -327,13 +326,11 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                // 🧠 [지능형 자구 분할 엔진 적용]
-                // 브라우저가 단어별로 예쁘게 줄바꿈을 유도할 수 있도록 괄호 앞과 쉼표 뒤에 강제로 스마트 공백을 주입합니다!
                 if (menu) {
                     const formattedLines = menu.split(',').map(item => {
-                        return item.replace(/\(/g, ' (')      // 괄호 열기 앞에 공백 추가
-                                   .replace(/,/g, ', ')        // 괄호 내부의 쉼표 뒤에 공백 추가
-                                   .replace(/\s+/g, ' ')       // 중복 공백 압축
+                        return item.replace(/\(/g, ' (')      
+                                   .replace(/,/g, ', ')        
+                                   .replace(/\s+/g, ' ')       
                                    .trim();
                     });
                     document.getElementById('menu-content').innerHTML = formattedLines.join('<br>');
@@ -473,7 +470,7 @@
         }
 
         function deleteItem(type, key) {
-            if (prompt("비秘密번호:") === ADMIN_PASSWORD) {
+            if (prompt("비밀번호:") === ADMIN_PASSWORD) {
                 if (type === 'comments') database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}`).remove();
                 else database.ref(`suggestions/${key}`).remove();
             } else alert("틀렸습니다!");
