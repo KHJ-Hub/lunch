@@ -184,10 +184,8 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 🔑 선생님의 나이스 공공데이터 API 인증키 연동
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
 
-        // 🛠️ [긴급 수리] 누락되었던 핵심 요소를 상단에 명확히 선언해 줍니다!
         const dateInput = document.getElementById('date-selector');
         let currentTab = 'lunch';
 
@@ -197,6 +195,29 @@
         const bapsimExceptions = []; 
         const specialDinnerDates = [];
 
+        // 🧠 진짜 고등학교 코드를 가져오기 위한 지능형 버퍼 변수
+        let officeCode = "";
+        let schoolCode = "";
+
+        // 🔍 나이스 데이터베이스에서 '배정고등학교'를 직접 검색해 고유 코드를 가져오는 추적 함수
+        async function initSchoolCode() {
+            if (officeCode && schoolCode) return;
+            const url = `https://open.neis.go.kr/hub/schoolInfo?Type=json&KEY=${NEIS_API_KEY}&SCHUL_NM=배정고등학교`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.schoolInfo) {
+                    // 첫 번째 검색 결과 행에서 시도교육청코드와 행정표준학교코드를 다이나믹하게 수집!
+                    const row = data.schoolInfo[1].row[0];
+                    officeCode = row.ATPT_OFCDC_SC_CODE;
+                    schoolCode = row.SD_SCHUL_CODE;
+                }
+            } catch (e) {
+                console.error("학교 코드 자동 조회 실패:", e);
+                officeCode = "C10"; schoolCode = "7150092"; // 실패 시 기존 폴백 백업
+            }
+        }
+
         function parseSafeDate(dateStr) {
             if (!dateStr) return new Date();
             const parts = dateStr.split('-');
@@ -204,6 +225,9 @@
         }
 
         async function fetchNeisMeals(centerDateStr) {
+            // UI를 그리기 전에 고유 코드 탐색 엔진을 먼저 발동시킵니다.
+            await initSchoolCode(); 
+            
             const centerDate = parseSafeDate(centerDateStr);
             const yesterday = new Date(centerDate); yesterday.setDate(yesterday.getDate() - 1);
             const tomorrow = new Date(centerDate); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -215,7 +239,8 @@
             const fromYmd = formatDate(yesterday);
             const toYmd = formatDate(tomorrow);
             
-            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=C10&SD_SCHUL_CODE=7150092&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
+            // 실시간으로 알아낸 교육청 코드와 고등학교 코드를 URL에 완벽히 이식합니다.
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
             
             try {
                 const res = await fetch(url);
