@@ -50,7 +50,7 @@
         }
 
         .meal-content-area {
-            background: #FAFAFA; border-radius: 25px; padding: 25px; min-height: 150px;
+            background: #FAFAFA; border-radius: 25px; padding: 25px 20px; min-height: 150px;
             border: 1px solid #F0F0F0; transition: 0.3s; position: relative; margin-bottom: 20px;
         }
         .meal-content-area.lunch { background: var(--primary-light); border-color: #C8E6C9; }
@@ -75,7 +75,8 @@
             border-radius: 15px !important; font-weight: 900 !important;
         }
 
-        .menu-text { line-height: 1.8; color: #444; font-size: 1.25rem; font-weight: 700; word-break: keep-all; }
+        /* ✨ 단어 단위 줄바꿈(keep-all)과 혹시 모를 오버플로우 방어벽(break-word) 조합 */
+        .menu-text { line-height: 1.9; color: #444; font-size: 1.15rem; font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
 
         .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
         .star-radio-group input { display: none; }
@@ -195,11 +196,9 @@
         const bapsimExceptions = []; 
         const specialDinnerDates = [];
 
-        // 🧠 진짜 고등학교 코드를 가져오기 위한 지능형 버퍼 변수
         let officeCode = "";
         let schoolCode = "";
 
-        // 🔍 나이스 데이터베이스에서 '배정고등학교'를 직접 검색해 고유 코드를 가져오는 추적 함수
         async function initSchoolCode() {
             if (officeCode && schoolCode) return;
             const url = `https://open.neis.go.kr/hub/schoolInfo?Type=json&KEY=${NEIS_API_KEY}&SCHUL_NM=배정고등학교`;
@@ -207,14 +206,13 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.schoolInfo) {
-                    // 첫 번째 검색 결과 행에서 시도교육청코드와 행정표준학교코드를 다이나믹하게 수집!
                     const row = data.schoolInfo[1].row[0];
                     officeCode = row.ATPT_OFCDC_SC_CODE;
                     schoolCode = row.SD_SCHUL_CODE;
                 }
             } catch (e) {
                 console.error("학교 코드 자동 조회 실패:", e);
-                officeCode = "C10"; schoolCode = "7150092"; // 실패 시 기존 폴백 백업
+                officeCode = "C10"; schoolCode = "7150092"; 
             }
         }
 
@@ -225,7 +223,6 @@
         }
 
         async function fetchNeisMeals(centerDateStr) {
-            // UI를 그리기 전에 고유 코드 탐색 엔진을 먼저 발동시킵니다.
             await initSchoolCode(); 
             
             const centerDate = parseSafeDate(centerDateStr);
@@ -239,7 +236,6 @@
             const fromYmd = formatDate(yesterday);
             const toYmd = formatDate(tomorrow);
             
-            // 실시간으로 알아낸 교육청 코드와 고등학교 코드를 URL에 완벽히 이식합니다.
             const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
             
             try {
@@ -325,13 +321,25 @@
                 if (menu && !isException && !isExamDay && (isThursdayDinner || specialDinnerDates.includes(date) || menu.includes("특식"))) {
                     card.classList.add('special-meal-card');
                     if (isThursdayDinner) {
-                        statusLabel.innerText = "✨ 밥 심 데 이 ! ✨";
+                        statusLabel.innerText = "✨ 목 요 밥 심 데 이 ! 💪 ✨";
                     } else {
                         statusLabel.innerText = "✨ 오 늘 의 특 식 ! 🧡 ✨";
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                document.getElementById('menu-content').innerHTML = menu ? menu.split(',').join('<br>') : "정보가 없습니다 😴<br><small style='font-size:0.75rem; color:#AAA; font-weight:500;'>(주말·방학이거나 나이스 API 인증키 승인 대기 중)</small>";
+                // 🧠 [지능형 자구 분할 엔진 적용]
+                // 브라우저가 단어별로 예쁘게 줄바꿈을 유도할 수 있도록 괄호 앞과 쉼표 뒤에 강제로 스마트 공백을 주입합니다!
+                if (menu) {
+                    const formattedLines = menu.split(',').map(item => {
+                        return item.replace(/\(/g, ' (')      // 괄호 열기 앞에 공백 추가
+                                   .replace(/,/g, ', ')        // 괄호 내부의 쉼표 뒤에 공백 추가
+                                   .replace(/\s+/g, ' ')       // 중복 공백 압축
+                                   .trim();
+                    });
+                    document.getElementById('menu-content').innerHTML = formattedLines.join('<br>');
+                } else {
+                    document.getElementById('menu-content').innerHTML = "정보가 없습니다 😴<br><small style='font-size:0.75rem; color:#AAA; font-weight:500;'>(주말·방학이거나 나이스 API 인증키 승인 대기 중)</small>";
+                }
                 
                 try {
                     loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
@@ -465,8 +473,7 @@
         }
 
         function deleteItem(type, key) {
-            if(!dateInput) return;
-            if (prompt("비밀번호:") === ADMIN_PASSWORD) {
+            if (prompt("비秘密번호:") === ADMIN_PASSWORD) {
                 if (type === 'comments') database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}`).remove();
                 else database.ref(`suggestions/${key}`).remove();
             } else alert("틀렸습니다!");
