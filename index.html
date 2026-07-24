@@ -25,6 +25,7 @@
 
         .date-box { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
+        .selected-date-label { font-size: 1rem; color: #444; font-weight: 800; }
         .date-nav-btn {
             background: #fff; border: 2px solid #EEE; border-radius: 50%;
             width: 38px; height: 38px; cursor: pointer; font-size: 0.8rem;
@@ -78,6 +79,12 @@
         }
 
         .menu-text { line-height: 2.0; color: #444; font-size: 1.15rem; font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
+        .menu-detail { display: block; color: #888; font-size: 0.85rem; font-weight: 500; }
+        .meal-state-detail { display: block; color: #888; font-size: 0.78rem; font-weight: 500; line-height: 1.5; margin-top: 6px; }
+        .retry-btn {
+            border: none; border-radius: 14px; margin-top: 14px; padding: 9px 15px;
+            background: #333; color: #FFF; cursor: pointer; font-weight: 700;
+        }
 
         .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
         .star-radio-group input { display: none; }
@@ -113,6 +120,7 @@
 
             <div class="date-box">
                 <span class="date-label">다른 날짜 메뉴 확인 📅</span>
+                <strong id="selected-date-label" class="selected-date-label" aria-live="polite"></strong>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
                     <button onclick="changeDate(-1)" class="date-nav-btn">◀</button>
                     <input type="date" id="date-selector" onchange="updateUI()">
@@ -134,7 +142,7 @@
                         <div class="meal-status-label" id="meal-status">오늘의 점심</div>
                         <div id="avg-rating-display" class="average-rating"><span>★</span> 0.0</div>
                     </div>
-                    <div class="menu-text" id="menu-content">식단 로딩 중...</div>
+                    <div class="menu-text" id="menu-content" aria-live="polite">식단 로딩 중...</div>
                 </div>
 
                 <div class="star-radio-group">
@@ -199,18 +207,38 @@
 
         let officeCode = "";
         let schoolCode = "";
+        const activeListeners = {};
+
+        function replaceFirebaseListener(name, ref, callback) {
+            removeFirebaseListener(name);
+            ref.on('value', callback);
+            activeListeners[name] = { ref, callback };
+        }
+
+        function removeFirebaseListener(name) {
+            const listener = activeListeners[name];
+            if (!listener) return;
+            listener.ref.off('value', listener.callback);
+            delete activeListeners[name];
+        }
+
+        function removeMealListeners() {
+            removeFirebaseListener('rating');
+            removeFirebaseListener('comments');
+            removeFirebaseListener('poll');
+        }
 
         async function initSchoolCode() {
             if (officeCode && schoolCode) return;
             const url = `https://open.neis.go.kr/hub/schoolInfo?Type=json&KEY=${NEIS_API_KEY}&SCHUL_NM=배정고등학교`;
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error(`학교 정보 요청 실패 (${res.status})`);
                 const data = await res.json();
-                if (data.schoolInfo) {
-                    const row = data.schoolInfo[1].row[0];
-                    officeCode = row.ATPT_OFCDC_SC_CODE;
-                    schoolCode = row.SD_SCHUL_CODE;
-                }
+                const row = data.schoolInfo?.[1]?.row?.[0];
+                if (!row) throw new Error("학교 정보를 찾을 수 없습니다.");
+                officeCode = row.ATPT_OFCDC_SC_CODE;
+                schoolCode = row.SD_SCHUL_CODE;
             } catch (e) {
                 console.error("학교 코드 자동 조회 실패:", e);
                 officeCode = "C10"; schoolCode = "7150092"; 
@@ -241,7 +269,20 @@
             
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error(`급식 정보 요청 실패 (${res.status})`);
                 const data = await res.json();
+                const apiResult = data.RESULT || data.mealServiceDietInfo?.[0]?.head?.find(item => item.RESULT)?.RESULT;
+                if (apiResult && !["INFO-000", "INFO-200"].includes(apiResult.CODE)) {
+                    throw new Error(apiResult.MESSAGE || "나이스 API 오류");
+                }
+
+                [yesterday, centerDate, tomorrow].forEach(day => {
+                    const ymd = formatDate(day);
+                    const dateKey = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
+                    delete lunchData[dateKey];
+                    delete dinnerData[dateKey];
+                });
+
                 if (data.mealServiceDietInfo) {
                     const rows = data.mealServiceDietInfo[1].row;
                     rows.forEach(row => {
@@ -258,7 +299,11 @@
                         if (row.MMEAL_SC_CODE === "3") dinnerData[hyphenDate] = menuClean;
                     });
                 }
-            } catch (e) { console.error("나이스 API 통신 오류:", e); }
+                return { ok: true };
+            } catch (e) {
+                console.error("나이스 API 통신 오류:", e);
+                return { ok: false, error: e };
+            }
         }
 
         function filterMenuItems(menuStr) {
@@ -273,6 +318,76 @@
                 
                 return true;
             });
+        }
+
+        function updateSelectedDateLabel(dateStr) {
+            const selectedDateLabel = document.getElementById('selected-date-label');
+            const selectedDate = parseSafeDate(dateStr);
+            const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+            selectedDateLabel.textContent = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${weekdays[selectedDate.getDay()]}요일`;
+        }
+
+        function renderMealState(type) {
+            const content = document.getElementById('menu-content');
+            content.replaceChildren();
+
+            const message = document.createElement('span');
+            const detail = document.createElement('small');
+            detail.className = 'meal-state-detail';
+
+            if (type === 'loading') {
+                message.textContent = "식단을 불러오는 중입니다... 🍽️";
+                content.appendChild(message);
+                return;
+            }
+
+            if (type === 'error') {
+                message.textContent = "급식 정보를 불러오지 못했습니다 😢";
+                detail.textContent = "인터넷 연결 또는 나이스 API 상태를 확인한 뒤 다시 시도해 주세요.";
+                const retryButton = document.createElement('button');
+                retryButton.type = 'button';
+                retryButton.className = 'retry-btn';
+                retryButton.textContent = "다시 시도";
+                retryButton.addEventListener('click', updateUI);
+                content.append(message, detail, retryButton);
+                return;
+            }
+
+            message.textContent = "등록된 급식이 없습니다 😴";
+            detail.textContent = "주말·방학 또는 급식을 운영하지 않는 날일 수 있습니다.";
+            content.append(message, detail);
+        }
+
+        function renderMenu(menu) {
+            const content = document.getElementById('menu-content');
+            content.replaceChildren();
+
+            menu.split(/,(?![^(]*\))/).forEach(item => {
+                const row = document.createElement('div');
+                const trimmedItem = item.trim();
+                const detailMatch = trimmedItem.match(/^(.+?[^\s(])\s*(\(.*)$/);
+
+                if (detailMatch) {
+                    row.appendChild(document.createTextNode(detailMatch[1]));
+                    const detail = document.createElement('span');
+                    detail.className = 'menu-detail';
+                    detail.textContent = detailMatch[2];
+                    row.appendChild(detail);
+                } else {
+                    row.textContent = trimmedItem;
+                }
+
+                content.appendChild(row);
+            });
+        }
+
+        function showEmptyListMessage(list, text) {
+            const message = document.createElement('p');
+            message.style.textAlign = 'center';
+            message.style.color = '#BBB';
+            message.style.fontSize = '0.8rem';
+            message.textContent = text;
+            list.replaceChildren(message);
         }
 
         function setToday() {
@@ -297,22 +412,32 @@
         async function updateUI() {
             if(!dateInput) return;
             const date = dateInput.value;
+            const requestedTab = currentTab;
             const card = document.getElementById('meal-card');
             const statusLabel = document.getElementById('meal-status');
             const suggestView = document.getElementById('suggestion-view-container');
             const mealView = document.getElementById('meal-view-container');
+            updateSelectedDateLabel(date);
             
             if (currentTab === 'suggest') {
+                removeMealListeners();
                 mealView.style.display = 'none'; suggestView.style.display = 'block'; loadSuggestions();
                 document.getElementById('yesterday-winner-box').style.display = 'none';
             } else {
+                removeFirebaseListener('suggestions');
+                removeMealListeners();
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
-                
-                await fetchNeisMeals(date);
+                card.className = `meal-content-area ${currentTab}`;
+                const now = new Date();
+                const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const mealName = currentTab === 'lunch' ? '점심' : '저녁';
+                statusLabel.innerText = date === today ? `오늘의 ${mealName}` : mealName;
+                renderMealState('loading');
+
+                const fetchResult = await fetchNeisMeals(date);
+                if (date !== dateInput.value || requestedTab !== currentTab) return;
                 
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
-                statusLabel.innerText = `${currentTab === 'lunch' ? '오늘의 점심' : '오늘의 저녁'}`;
-                card.className = `meal-content-area ${currentTab}`;
 
                 const parsedDate = parseSafeDate(date);
                 const isThursdayDinner = (currentTab === 'dinner' && parsedDate.getDay() === 4);
@@ -328,24 +453,9 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                // 🧠 [접두어 괄호 보호 필터 최적화 완료]
-                if (menu) {
-                    const menuItems = menu.split(/,(?![^(]*\))/);
-                    
-                    const formattedLines = menuItems.map(item => {
-                        let processed = item.replace(/,/g, ', ');
-                        
-                        // 💡 중요: 앞에 글자([^\s(])가 당당히 버티고 있는 진짜 부재료 괄호만 낚아챕니다.
-                        // 이 정밀 필터 덕분에 맨 앞에 혼자 나오는 (수제) 괄호는 상처받지 않고 그대로 살아남습니다!
-                        if (processed.match(/[^\s(]\s*\(/)) {
-                            processed = processed.replace(/([^\s(])\s*\(/, '$1<br><span style="font-size: 0.85rem; color: #888; font-weight: 500;">(') + '</span>';
-                        }
-                        return processed;
-                    });
-                    document.getElementById('menu-content').innerHTML = formattedLines.join('<br>');
-                } else {
-                    document.getElementById('menu-content').innerHTML = "정보가 없습니다 😴<br><small style='font-size:0.75rem; color:#AAA; font-weight:500;'>(주말·방학이거나 나이스 API 인증키 승인 대기 중)</small>";
-                }
+                if (!fetchResult.ok) renderMealState('error');
+                else if (menu) renderMenu(menu);
+                else renderMealState('empty');
                 
                 try {
                     loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
@@ -370,7 +480,10 @@
                     Object.keys(votes).forEach(i => { if(votes[i] > max){ max = votes[i]; winIdx = i; } });
                     if (winIdx !== -1 && max > 0 && menuItems[winIdx]) {
                         winnerBox.style.display = 'block';
-                        winnerBox.innerHTML = `👑 어제 우리가 뽑은 기대 메뉴 1위: <b>${menuItems[winIdx]}</b> (${max}표!)`;
+                        winnerBox.replaceChildren(document.createTextNode("👑 어제 우리가 뽑은 기대 메뉴 1위: "));
+                        const winner = document.createElement('b');
+                        winner.textContent = menuItems[winIdx];
+                        winnerBox.append(winner, document.createTextNode(` (${max}표!)`));
                     } else { winnerBox.style.display = 'none'; }
                 } else { winnerBox.style.display = 'none'; }
             });
@@ -390,9 +503,12 @@
 
         function loadRating() {
             if(!dateInput) return;
-            database.ref(`meals/${dateInput.value}/${currentTab}/rating`).on('value', (s) => {
-                const d = s.val(); document.getElementById('avg-rating-display').innerHTML = `<span>★</span> ${d ? d.average : '0.0'}`;
-            });
+            const ratingRef = database.ref(`meals/${dateInput.value}/${currentTab}/rating`);
+            const handleRating = (s) => {
+                const d = s.val();
+                document.getElementById('avg-rating-display').textContent = `★ ${d ? d.average : '0.0'}`;
+            };
+            replaceFirebaseListener('rating', ratingRef, handleRating);
         }
 
         function saveComment() {
@@ -412,19 +528,42 @@
         function loadComments() {
             if(!dateInput) return;
             const date = dateInput.value; const list = document.getElementById('comment-list');
-            database.ref(`meals/${date}/${currentTab}/comments`).on('value', (s) => {
-                list.innerHTML = ""; const data = s.val();
+            const commentsRef = database.ref(`meals/${date}/${currentTab}/comments`);
+            const handleComments = (s) => {
+                list.replaceChildren(); const data = s.val();
                 if (data) Object.keys(data).reverse().forEach(k => {
                     const item = data[k]; const div = document.createElement('div');
                     div.className = 'comment-bubble';
-                    div.innerHTML = `<div class="comment-text">${item.text}</div><div class="comment-meta"><span>${item.timestamp}</span><button class="like-badge" onclick="likeComment('${k}')">❤️ ${item.likes || 0}</button></div><button class="del-btn" onclick="deleteItem('comments', '${k}')">x</button>`;
+
+                    const text = document.createElement('div');
+                    text.className = 'comment-text';
+                    text.textContent = item.text || "";
+
+                    const meta = document.createElement('div');
+                    meta.className = 'comment-meta';
+                    const timestamp = document.createElement('span');
+                    timestamp.textContent = item.timestamp || "";
+                    const likeButton = document.createElement('button');
+                    likeButton.className = 'like-badge';
+                    likeButton.textContent = `❤️ ${item.likes || 0}`;
+                    likeButton.addEventListener('click', () => likeComment(k));
+                    meta.append(timestamp, likeButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'del-btn';
+                    deleteButton.textContent = 'x';
+                    deleteButton.addEventListener('click', () => deleteItem('comments', k));
+
+                    div.append(text, meta, deleteButton);
                     list.appendChild(div);
-                }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>첫 한줄평을 남겨주세요! 😊</p>";
-            });
+                }); else showEmptyListMessage(list, "첫 한줄평을 남겨주세요! 😊");
+            };
+            replaceFirebaseListener('comments', commentsRef, handleComments);
         }
 
         function loadPollData() {
             if(!dateInput) return;
+            removeFirebaseListener('poll');
             const box = document.getElementById('poll-box');
             const tomorrow = parseSafeDate(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
             
@@ -440,15 +579,22 @@
             const list = document.getElementById('poll-items-list');
             if (items.length === 0) { box.style.display = 'none'; return; }
             box.style.display = 'block';
-            database.ref(`polls/${tomorrowStr}/${currentTab}`).on('value', (s) => {
-                const votes = s.val() || {}; list.innerHTML = "";
+            const pollRef = database.ref(`polls/${tomorrowStr}/${currentTab}`);
+            const handlePoll = (s) => {
+                const votes = s.val() || {}; list.replaceChildren();
                 items.forEach((m, i) => {
                     const div = document.createElement('div'); div.className = 'poll-item-row';
                     div.onclick = () => submitVote(tomorrowStr, i, m);
-                    div.innerHTML = `<span>${m}</span><b style="color:var(--info)">${votes[i] || 0}명</b>`;
+                    const menuName = document.createElement('span');
+                    menuName.textContent = m;
+                    const voteCount = document.createElement('b');
+                    voteCount.style.color = 'var(--info)';
+                    voteCount.textContent = `${votes[i] || 0}명`;
+                    div.append(menuName, voteCount);
                     list.appendChild(div);
                 });
-            });
+            };
+            replaceFirebaseListener('poll', pollRef, handlePoll);
         }
 
         function submitVote(date, idx, name) {
@@ -468,15 +614,32 @@
 
         function loadSuggestions() {
             const list = document.getElementById('suggest-list');
-            database.ref(`suggestions`).on('value', (s) => {
-                list.innerHTML = ""; const data = s.val();
+            const suggestionsRef = database.ref(`suggestions`);
+            const handleSuggestions = (s) => {
+                list.replaceChildren(); const data = s.val();
                 if (data) Object.keys(data).reverse().forEach(key => {
                     const item = data[key]; const div = document.createElement('div');
                     div.className = 'comment-bubble'; div.style.borderColor = "#D1E9FF";
-                    div.innerHTML = `<div class="comment-text" style="color:var(--info)">💡 ${item.text}</div><span class="comment-meta">${item.timestamp}</span><button class="del-btn" onclick="deleteItem('suggestions', '${key}')">x</button>`;
+
+                    const text = document.createElement('div');
+                    text.className = 'comment-text';
+                    text.style.color = 'var(--info)';
+                    text.textContent = `💡 ${item.text || ""}`;
+
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'comment-meta';
+                    timestamp.textContent = item.timestamp || "";
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'del-btn';
+                    deleteButton.textContent = 'x';
+                    deleteButton.addEventListener('click', () => deleteItem('suggestions', key));
+
+                    div.append(text, timestamp, deleteButton);
                     list.appendChild(div);
-                }); else list.innerHTML = "<p style='text-align:center; color:#BBB; font-size:0.8rem;'>건의사항을 남겨주세요! 😊</p>";
-            });
+                }); else showEmptyListMessage(list, "건의사항을 남겨주세요! 😊");
+            };
+            replaceFirebaseListener('suggestions', suggestionsRef, handleSuggestions);
         }
 
         function deleteItem(type, key) {
@@ -490,6 +653,10 @@
             currentTab = tab; document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active'); updateUI();
         }
+
+        window.addEventListener('beforeunload', () => {
+            Object.keys(activeListeners).forEach(removeFirebaseListener);
+        });
 
         setToday();
         updateUI();
