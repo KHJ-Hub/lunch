@@ -105,7 +105,6 @@
         .comment-text { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
         .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
         .like-badge { cursor: pointer; border: none; background: rgba(255,82,82,0.1); color: var(--like); padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
-        .del-btn { position: absolute; top: 12px; right: 12px; color: #EEE; border: none; background: none; cursor: pointer; }
         .scroll-area { max-height: 300px; overflow-y: auto; padding-right: 5px; }
         footer { margin-top: 25px; font-size: 0.75rem; color: #BBB; text-align: center; padding-bottom: 15px; }
     </style>
@@ -161,7 +160,7 @@
                 <div class="comments-section">
                     <h3>💬 실시간 한줄평</h3>
                     <div class="comment-input-row">
-                        <input type="text" id="comment-input" placeholder="급식 후기 한마디!">
+                        <input type="text" id="comment-input" maxlength="300" placeholder="급식 후기 한마디!">
                         <button onclick="saveComment()">등록</button>
                     </div>
                     <div id="comment-list" class="scroll-area"></div>
@@ -171,7 +170,7 @@
             <div id="suggestion-view-container" style="display:none; text-align:left;">
                 <h3 style="font-size:1.1rem; color:var(--info); font-weight:800; margin-bottom:15px;">💡 건의함</h3>
                 <div class="comment-input-row">
-                    <input type="text" id="suggest-input" placeholder="기능 요청이나 건의사항을 적어주세요!">
+                    <input type="text" id="suggest-input" maxlength="300" placeholder="기능 요청이나 건의사항을 적어주세요!">
                     <button onclick="saveSuggestion()" style="background:var(--info);">건의</button>
                 </div>
                 <div id="suggest-list" class="scroll-area"></div>
@@ -181,7 +180,6 @@
     </div>
 
     <script>
-        const ADMIN_PASSWORD = "배정고1234";
         const firebaseConfig = {
             apiKey: "AIzaSyBuUIzRhnj2lohiMZiXWmIosJDluEqp0-o",
             authDomain: "baejeong-lunch.firebaseapp.com",
@@ -494,11 +492,17 @@
             const date = dateInput.value;
             if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
-                if (!data) return { totalScore: score, voterCount: 1, average: score.toFixed(1) };
+                if (!data) return { totalScore: score, voterCount: 1 };
                 const newTotal = (data.totalScore || 0) + score;
                 const newCount = (data.voterCount || 0) + 1;
-                return { totalScore: newTotal, voterCount: newCount, average: (newTotal / newCount).toFixed(1) };
-            }).then(() => { localStorage.setItem(`voted_${date}_${currentTab}`, true); alert("별점 감사합니다! ❤️"); });
+                return { totalScore: newTotal, voterCount: newCount };
+            }).then(() => {
+                localStorage.setItem(`voted_${date}_${currentTab}`, true);
+                alert("별점 감사합니다! ❤️");
+            }).catch((error) => {
+                console.error("별점 저장 실패:", error);
+                alert("별점을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+            });
         }
 
         function loadRating() {
@@ -506,7 +510,8 @@
             const ratingRef = database.ref(`meals/${dateInput.value}/${currentTab}/rating`);
             const handleRating = (s) => {
                 const d = s.val();
-                document.getElementById('avg-rating-display').textContent = `★ ${d ? d.average : '0.0'}`;
+                const average = d?.voterCount ? (d.totalScore / d.voterCount).toFixed(1) : '0.0';
+                document.getElementById('avg-rating-display').textContent = `★ ${average}`;
             };
             replaceFirebaseListener('rating', ratingRef, handleRating);
         }
@@ -514,15 +519,25 @@
         function saveComment() {
             if(!dateInput) return;
             const date = dateInput.value; const input = document.getElementById('comment-input');
-            if (!input.value.trim()) return;
-            database.ref(`meals/${date}/${currentTab}/comments`).push({ text: input.value, timestamp: new Date().toLocaleString(), likes: 0 });
-            input.value = "";
+            const text = input.value.trim();
+            if (!text) return;
+            database.ref(`meals/${date}/${currentTab}/comments`).push({ text, timestamp: new Date().toLocaleString(), likes: 0 })
+                .then(() => { input.value = ""; })
+                .catch((error) => {
+                    console.error("한줄평 저장 실패:", error);
+                    alert("한줄평을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                });
         }
 
         function likeComment(key) {
             if(!dateInput) return;
             if (localStorage.getItem(`liked_${key}`)) return alert("이미 하트를 눌렀습니다! ❤️");
-            database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}/likes`).transaction(l => (l || 0) + 1).then(() => localStorage.setItem(`liked_${key}`, true));
+            database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}/likes`).transaction(l => (l || 0) + 1)
+                .then(() => localStorage.setItem(`liked_${key}`, true))
+                .catch((error) => {
+                    console.error("좋아요 저장 실패:", error);
+                    alert("좋아요를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                });
         }
 
         function loadComments() {
@@ -549,12 +564,7 @@
                     likeButton.addEventListener('click', () => likeComment(k));
                     meta.append(timestamp, likeButton);
 
-                    const deleteButton = document.createElement('button');
-                    deleteButton.className = 'del-btn';
-                    deleteButton.textContent = 'x';
-                    deleteButton.addEventListener('click', () => deleteItem('comments', k));
-
-                    div.append(text, meta, deleteButton);
+                    div.append(text, meta);
                     list.appendChild(div);
                 }); else showEmptyListMessage(list, "첫 한줄평을 남겨주세요! 😊");
             };
@@ -602,14 +612,23 @@
             if (confirm(`"${name}"에 투표할까요?`)) {
                 database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
                     localStorage.setItem(`poll_${date}_${currentTab}`, true); alert("투표 완료! 🔥");
+                }).catch((error) => {
+                    console.error("투표 저장 실패:", error);
+                    alert("투표를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
                 });
             }
         }
 
         function saveSuggestion() {
-            const input = document.getElementById('suggest-input'); if (!input.value.trim()) return;
-            database.ref(`suggestions`).push({ text: input.value, timestamp: new Date().toLocaleString() });
-            input.value = "";
+            const input = document.getElementById('suggest-input');
+            const text = input.value.trim();
+            if (!text) return;
+            database.ref(`suggestions`).push({ text, timestamp: new Date().toLocaleString() })
+                .then(() => { input.value = ""; })
+                .catch((error) => {
+                    console.error("건의사항 저장 실패:", error);
+                    alert("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                });
         }
 
         function loadSuggestions() {
@@ -630,23 +649,11 @@
                     timestamp.className = 'comment-meta';
                     timestamp.textContent = item.timestamp || "";
 
-                    const deleteButton = document.createElement('button');
-                    deleteButton.className = 'del-btn';
-                    deleteButton.textContent = 'x';
-                    deleteButton.addEventListener('click', () => deleteItem('suggestions', key));
-
-                    div.append(text, timestamp, deleteButton);
+                    div.append(text, timestamp);
                     list.appendChild(div);
                 }); else showEmptyListMessage(list, "건의사항을 남겨주세요! 😊");
             };
             replaceFirebaseListener('suggestions', suggestionsRef, handleSuggestions);
-        }
-
-        function deleteItem(type, key) {
-            if (prompt("비밀번호:") === ADMIN_PASSWORD) {
-                if (type === 'comments') database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}`).remove();
-                else database.ref(`suggestions/${key}`).remove();
-            } else alert("틀렸습니다!");
         }
 
         function changeTab(tab) {
