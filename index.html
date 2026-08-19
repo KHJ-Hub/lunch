@@ -396,6 +396,16 @@
             if(dateInput) dateInput.value = `${y}-${m}-${d}`;
         }
 
+        function getDefaultMealTab(now = new Date()) {
+            return now.getHours() >= 13 ? 'dinner' : 'lunch';
+        }
+
+        function setInitialMealTab() {
+            currentTab = getDefaultMealTab();
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${currentTab}`).classList.add('active');
+        }
+
         function changeDate(offset) {
             if(!dateInput) return;
             const current = parseSafeDate(dateInput.value);
@@ -666,6 +676,7 @@
         });
 
         setToday();
+        setInitialMealTab();
         updateUI();
     </script>
 </body>
