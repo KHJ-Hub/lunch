@@ -17,7 +17,9 @@
         }
         * { box-sizing: border-box; }
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg); margin: 0; padding: 15px 0; display: flex; justify-content: center; min-height: 100vh; color: #333; }
-        .app-container { width: 100%; max-width: 420px; padding: 0 10px; }
+        button, input { font: inherit; }
+        button:focus-visible, input:focus-visible { outline: 3px solid rgba(33,150,243,0.35); outline-offset: 2px; }
+        .app-container { width: min(100%, 460px); padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left)); }
         .main-card { background: var(--card); border-radius: 35px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); text-align: center; }
         
         .header h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 800; letter-spacing: -1px; }
@@ -26,21 +28,27 @@
         .date-box { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
         .selected-date-label { font-size: 1rem; color: #444; font-weight: 800; }
+        .date-context-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; background: #EEF2F7; color: #667085; }
+        .date-context-badge.today { background: #E8F5E9; color: #2E7D32; }
+        .date-context-badge.past { background: #F2F4F7; color: #667085; }
+        .date-context-badge.future { background: #E3F2FD; color: #1565C0; }
+        .date-controls { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
         .date-nav-btn {
             background: #fff; border: 2px solid #EEE; border-radius: 50%;
-            width: 38px; height: 38px; cursor: pointer; font-size: 0.8rem;
+            width: 44px; height: 44px; cursor: pointer; font-size: 0.8rem;
             color: #999; display: flex; align-items: center; justify-content: center;
             transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0;
         }
         .date-nav-btn:hover { background: #f0f0f0; color: var(--secondary); border-color: var(--secondary); }
+        .today-btn { min-height: 38px; border: 0; border-radius: 999px; padding: 7px 13px; background: #333; color: #FFF; cursor: pointer; font-size: 0.78rem; font-weight: 800; }
         input[type="date"] {
-            border: 2px solid #EEE; border-radius: 50px; padding: 10px 20px;
+            border: 2px solid #EEE; border-radius: 50px; padding: 10px 12px; min-height: 44px;
             font-size: 0.95rem; font-weight: 700; color: #555; outline: none;
-            background: #FDFDFD; cursor: pointer; width: 60%; text-align: center;
+            background: #FDFDFD; cursor: pointer; width: min(64%, 210px); text-align: center;
         }
 
         .tab-switch { display: flex; background: #EEE; border-radius: 20px; padding: 5px; margin-bottom: 20px; gap: 3px; }
-        .tab-item { flex: 1; padding: 12px 5px; cursor: pointer; border-radius: 16px; font-weight: 700; color: #888; transition: 0.3s; font-size: 0.85rem; }
+        .tab-item { flex: 1; min-height: 44px; padding: 10px 5px; border: 0; background: transparent; cursor: pointer; border-radius: 16px; font-weight: 700; color: #777; transition: 0.3s; font-size: 0.85rem; }
         .tab-item.active.lunch { background: var(--primary); color: white; }
         .tab-item.active.dinner { background: var(--secondary); color: white; }
         .tab-item.active.suggest { background: var(--info); color: white; }
@@ -82,31 +90,67 @@
         .menu-detail { display: block; color: #888; font-size: 0.85rem; font-weight: 500; }
         .meal-state-detail { display: block; color: #888; font-size: 0.78rem; font-weight: 500; line-height: 1.5; margin-top: 6px; }
         .retry-btn {
-            border: none; border-radius: 14px; margin-top: 14px; padding: 9px 15px;
+            border: none; border-radius: 14px; margin-top: 14px; padding: 9px 15px; min-height: 44px;
             background: #333; color: #FFF; cursor: pointer; font-weight: 700;
         }
+        .skeleton { display: grid; gap: 10px; padding: 8px 5px; }
+        .skeleton-line { height: 18px; border-radius: 10px; background: linear-gradient(90deg, #E9ECEF 25%, #F8F9FA 50%, #E9ECEF 75%); background-size: 200% 100%; animation: skeleton-wave 1.4s infinite; }
+        .skeleton-line:nth-child(2) { width: 82%; margin-inline: auto; }
+        .skeleton-line:nth-child(3) { width: 68%; margin-inline: auto; }
+        @keyframes skeleton-wave { to { background-position: -200% 0; } }
 
         .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
-        .star-radio-group input { display: none; }
-        .star-radio-group label { font-size: 2rem; color: #DDD; cursor: pointer; transition: 0.2s; }
+        .star-radio-group input { position: absolute; opacity: 0; pointer-events: none; }
+        .star-radio-group label { display: grid; place-items: center; min-width: 44px; min-height: 44px; font-size: 2rem; color: #DDD; cursor: pointer; transition: 0.2s; }
         .star-radio-group label:hover, .star-radio-group label:hover ~ label,
         .star-radio-group input:checked ~ label { color: #FFC107; }
+        .star-radio-group input:focus-visible + label { outline: 3px solid rgba(33,150,243,0.35); border-radius: 10px; }
+        .rating-selection { margin: -12px 0 20px; min-height: 18px; color: #8A6D00; font-size: 0.78rem; font-weight: 700; }
 
         .poll-section { margin-top: 25px; text-align: left; background: #FDFDFD; padding: 20px; border-radius: 20px; border: 1px solid #EEE; }
         .poll-section h3 { font-size: 1rem; color: #333; margin-bottom: 12px; font-weight: 800; }
-        .poll-item-row { display: flex; align-items: center; justify-content: space-between; background: #F9F9F9; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #F0F0F0; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
+        .poll-item-row { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; color: #333; background: #F9F9F9; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #F0F0F0; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
+        .poll-item-row.selected { background: #E3F2FD; border-color: #64B5F6; box-shadow: inset 0 0 0 1px #64B5F6; }
 
         .comments-section { text-align: left; margin-top: 30px; }
         .comment-input-row { display: flex; gap: 8px; margin-bottom: 18px; }
-        .comment-input-row input { flex: 1; padding: 12px 18px; border-radius: 15px; border: 2px solid #EEE; outline: none; font-size: 0.9rem; }
-        .comment-input-row button { background: #333; color: white; border: none; padding: 0 18px; border-radius: 15px; cursor: pointer; font-weight: 700; }
+        .comment-input-row input { min-width: 0; min-height: 44px; flex: 1; padding: 12px 18px; border-radius: 15px; border: 2px solid #EEE; outline: none; font-size: 0.9rem; }
+        .comment-input-row button { min-width: 64px; min-height: 44px; background: #333; color: white; border: none; padding: 0 18px; border-radius: 15px; cursor: pointer; font-weight: 700; }
 
         .comment-bubble { background: #FFF; padding: 15px; border-radius: 20px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #F0F0F0; position: relative; }
         .comment-text { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
         .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
-        .like-badge { cursor: pointer; border: none; background: rgba(255,82,82,0.1); color: var(--like); padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+        .like-badge { min-height: 36px; cursor: pointer; border: none; background: rgba(255,82,82,0.1); color: var(--like); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
         .scroll-area { max-height: 300px; overflow-y: auto; padding-right: 5px; }
+        .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 1000; width: min(calc(100% - 32px), 390px); padding: 13px 16px; border-radius: 14px; background: #333; color: #FFF; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 0.9rem; font-weight: 700; text-align: center; opacity: 0; transform: translate(-50%, 16px); pointer-events: none; transition: 0.25s; }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { background: #C62828; }
+        .toast.info { background: #1565C0; }
+        .modal-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 20px; background: rgba(15,23,42,0.48); }
+        .modal-backdrop[hidden] { display: none; }
+        .confirm-dialog { width: min(100%, 360px); padding: 24px; border-radius: 22px; background: #FFF; box-shadow: 0 20px 60px rgba(0,0,0,0.22); text-align: center; }
+        .confirm-dialog h2 { margin: 0 0 8px; font-size: 1.15rem; }
+        .confirm-dialog p { margin: 0 0 20px; color: #555; line-height: 1.5; overflow-wrap: anywhere; }
+        .modal-actions { display: flex; gap: 8px; }
+        .modal-actions button { flex: 1; min-height: 44px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 800; }
+        .modal-cancel { background: #EEF0F3; color: #555; }
+        .modal-confirm { background: var(--info); color: #FFF; }
         footer { margin-top: 25px; font-size: 0.75rem; color: #BBB; text-align: center; padding-bottom: 15px; }
+
+        @media (max-width: 600px) {
+            body { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: env(safe-area-inset-bottom); }
+            .app-container { padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+            .main-card { border-radius: 26px; padding: 20px 16px; }
+            .navigation-panel { position: sticky; top: max(0px, env(safe-area-inset-top)); z-index: 20; margin: 0 -8px 16px; padding: 8px; border-radius: 20px; background: rgba(255,255,255,0.96); box-shadow: 0 8px 20px rgba(15,23,42,0.07); backdrop-filter: blur(10px); }
+            .date-box, .tab-switch { margin-bottom: 10px; }
+            .tab-switch { margin-bottom: 0; }
+            .menu-text { font-size: clamp(0.98rem, 4.3vw, 1.12rem); line-height: 1.85; word-break: normal; overflow-wrap: anywhere; }
+            .comment-text, .poll-item-row span { overflow-wrap: anywhere; word-break: normal; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
     </style>
 </head>
 <body>
@@ -117,20 +161,24 @@
                 <p>현정T가 만들었음.</p>
             </div>
 
-            <div class="date-box">
-                <span class="date-label">다른 날짜 메뉴 확인 📅</span>
-                <strong id="selected-date-label" class="selected-date-label" aria-live="polite"></strong>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
-                    <button onclick="changeDate(-1)" class="date-nav-btn">◀</button>
-                    <input type="date" id="date-selector" onchange="updateUI()">
-                    <button onclick="changeDate(1)" class="date-nav-btn">▶</button>
+            <div class="navigation-panel">
+                <div class="date-box">
+                    <span class="date-label">다른 날짜 메뉴 확인 📅</span>
+                    <strong id="selected-date-label" class="selected-date-label" aria-live="polite"></strong>
+                    <span id="date-context-badge" class="date-context-badge"></span>
+                    <div class="date-controls">
+                        <button type="button" onclick="changeDate(-1)" class="date-nav-btn" aria-label="이전 날짜">◀</button>
+                        <input type="date" id="date-selector" onchange="updateUI()" aria-label="급식 날짜 선택">
+                        <button type="button" onclick="changeDate(1)" class="date-nav-btn" aria-label="다음 날짜">▶</button>
+                    </div>
+                    <button type="button" id="today-button" class="today-btn" onclick="goToday()" hidden>오늘로 이동</button>
                 </div>
-            </div>
 
-            <div class="tab-switch">
-                <div id="tab-lunch" class="tab-item active lunch" onclick="changeTab('lunch')">☀️ 점심</div>
-                <div id="tab-dinner" class="tab-item dinner" onclick="changeTab('dinner')">🌙 저녁</div>
-                <div id="tab-suggest" class="tab-item suggest" onclick="changeTab('suggest')">💡 건의함</div>
+                <div class="tab-switch" role="tablist" aria-label="급식 종류 선택">
+                    <button type="button" role="tab" aria-selected="true" id="tab-lunch" class="tab-item active lunch" onclick="changeTab('lunch')">☀️ 점심</button>
+                    <button type="button" role="tab" aria-selected="false" id="tab-dinner" class="tab-item dinner" onclick="changeTab('dinner')">🌙 저녁</button>
+                    <button type="button" role="tab" aria-selected="false" id="tab-suggest" class="tab-item suggest" onclick="changeTab('suggest')">💡 건의함</button>
+                </div>
             </div>
 
             <div id="yesterday-winner-box">👑 어제 우리가 뽑은 기대 메뉴 1위: 로딩 중...</div>
@@ -144,13 +192,14 @@
                     <div class="menu-text" id="menu-content" aria-live="polite">식단 로딩 중...</div>
                 </div>
 
-                <div class="star-radio-group">
-                    <input type="radio" id="star5" name="rating" value="5" onclick="submitRating(5)"><label for="star5">★</label>
-                    <input type="radio" id="star4" name="rating" value="4" onclick="submitRating(4)"><label for="star4">★</label>
-                    <input type="radio" id="star3" name="rating" value="3" onclick="submitRating(3)"><label for="star3">★</label>
-                    <input type="radio" id="star2" name="rating" value="2" onclick="submitRating(2)"><label for="star2">★</label>
-                    <input type="radio" id="star1" name="rating" value="1" onclick="submitRating(1)"><label for="star1">★</label>
+                <div class="star-radio-group" aria-label="별점 선택">
+                    <input type="radio" id="star5" name="rating" value="5" onclick="submitRating(5)"><label for="star5" aria-label="5점">★</label>
+                    <input type="radio" id="star4" name="rating" value="4" onclick="submitRating(4)"><label for="star4" aria-label="4점">★</label>
+                    <input type="radio" id="star3" name="rating" value="3" onclick="submitRating(3)"><label for="star3" aria-label="3점">★</label>
+                    <input type="radio" id="star2" name="rating" value="2" onclick="submitRating(2)"><label for="star2" aria-label="2점">★</label>
+                    <input type="radio" id="star1" name="rating" value="1" onclick="submitRating(1)"><label for="star1" aria-label="1점">★</label>
                 </div>
+                <p id="rating-selection" class="rating-selection" aria-live="polite"></p>
 
                 <div class="poll-section" id="poll-box" style="display:none;">
                     <h3>🔥 내일 메뉴 중 가장 기대되는 것은?</h3>
@@ -160,8 +209,8 @@
                 <div class="comments-section">
                     <h3>💬 실시간 한줄평</h3>
                     <div class="comment-input-row">
-                        <input type="text" id="comment-input" maxlength="300" placeholder="급식 후기 한마디!">
-                        <button onclick="saveComment()">등록</button>
+                        <input type="text" id="comment-input" maxlength="300" placeholder="급식 후기 한마디!" aria-label="급식 한줄평">
+                        <button type="button" onclick="saveComment()">등록</button>
                     </div>
                     <div id="comment-list" class="scroll-area"></div>
                 </div>
@@ -170,13 +219,24 @@
             <div id="suggestion-view-container" style="display:none; text-align:left;">
                 <h3 style="font-size:1.1rem; color:var(--info); font-weight:800; margin-bottom:15px;">💡 건의함</h3>
                 <div class="comment-input-row">
-                    <input type="text" id="suggest-input" maxlength="300" placeholder="기능 요청이나 건의사항을 적어주세요!">
-                    <button onclick="saveSuggestion()" style="background:var(--info);">건의</button>
+                    <input type="text" id="suggest-input" maxlength="300" placeholder="기능 요청이나 건의사항을 적어주세요!" aria-label="건의사항">
+                    <button type="button" onclick="saveSuggestion()" style="background:var(--info);">건의</button>
                 </div>
                 <div id="suggest-list" class="scroll-area"></div>
             </div>
         </div>
         <footer>배정고 1학년 화이팅 ❤️</footer>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="confirm-modal" class="modal-backdrop" hidden>
+        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+            <h2 id="confirm-title">투표 확인</h2>
+            <p id="confirm-message"></p>
+            <div class="modal-actions">
+                <button type="button" id="confirm-cancel" class="modal-cancel">취소</button>
+                <button type="button" id="confirm-ok" class="modal-confirm">투표하기</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -192,7 +252,11 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad"; 
+        const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad";
+        const OFFICE_CODE = "C10";
+        const SCHOOL_CODE = "7150136";
+        const MEAL_CACHE_PREFIX = "baejeong-meals-v1:";
+        const MEAL_CACHE_TTL = 15 * 60 * 1000;
 
         const dateInput = document.getElementById('date-selector');
         let currentTab = 'lunch';
@@ -203,9 +267,9 @@
         const bapsimExceptions = []; 
         const specialDinnerDates = [];
 
-        let officeCode = "";
-        let schoolCode = "";
         const activeListeners = {};
+        let activeMealController = null;
+        let toastTimer = null;
 
         function replaceFirebaseListener(name, ref, callback) {
             removeFirebaseListener(name);
@@ -226,21 +290,41 @@
             removeFirebaseListener('poll');
         }
 
-        async function initSchoolCode() {
-            if (officeCode && schoolCode) return;
-            const url = `https://open.neis.go.kr/hub/schoolInfo?Type=json&KEY=${NEIS_API_KEY}&SCHUL_NM=배정고등학교`;
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`학교 정보 요청 실패 (${res.status})`);
-                const data = await res.json();
-                const row = data.schoolInfo?.[1]?.row?.[0];
-                if (!row) throw new Error("학교 정보를 찾을 수 없습니다.");
-                officeCode = row.ATPT_OFCDC_SC_CODE;
-                schoolCode = row.SD_SCHUL_CODE;
-            } catch (e) {
-                console.error("학교 코드 자동 조회 실패:", e);
-                officeCode = "C10"; schoolCode = "7150092"; 
-            }
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            clearTimeout(toastTimer);
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2800);
+        }
+
+        function showConfirm(message) {
+            const modal = document.getElementById('confirm-modal');
+            const messageElement = document.getElementById('confirm-message');
+            const confirmButton = document.getElementById('confirm-ok');
+            const cancelButton = document.getElementById('confirm-cancel');
+            messageElement.textContent = message;
+            modal.hidden = false;
+            confirmButton.focus();
+
+            return new Promise(resolve => {
+                const close = result => {
+                    modal.hidden = true;
+                    confirmButton.removeEventListener('click', onConfirm);
+                    cancelButton.removeEventListener('click', onCancel);
+                    modal.removeEventListener('click', onBackdrop);
+                    document.removeEventListener('keydown', onKeydown);
+                    resolve(result);
+                };
+                const onConfirm = () => close(true);
+                const onCancel = () => close(false);
+                const onBackdrop = event => { if (event.target === modal) close(false); };
+                const onKeydown = event => { if (event.key === 'Escape') close(false); };
+                confirmButton.addEventListener('click', onConfirm);
+                cancelButton.addEventListener('click', onCancel);
+                modal.addEventListener('click', onBackdrop);
+                document.addEventListener('keydown', onKeydown);
+            });
         }
 
         function parseSafeDate(dateStr) {
@@ -249,58 +333,122 @@
             return new Date(parts[0], parts[1] - 1, parts[2]);
         }
 
+        function getCachedMeals(cacheKey) {
+            try {
+                const cached = JSON.parse(sessionStorage.getItem(`${MEAL_CACHE_PREFIX}${cacheKey}`));
+                if (!cached || cached.expiresAt < Date.now()) return null;
+                return cached.rows;
+            } catch {
+                return null;
+            }
+        }
+
+        function cacheMeals(cacheKey, rows) {
+            try {
+                sessionStorage.setItem(`${MEAL_CACHE_PREFIX}${cacheKey}`, JSON.stringify({
+                    expiresAt: Date.now() + MEAL_CACHE_TTL,
+                    rows
+                }));
+            } catch (error) {
+                console.warn("급식 캐시 저장 실패:", error);
+            }
+        }
+
+        async function fetchJsonWithRetry(url, externalSignal, retries = 1, timeoutMs = 8000) {
+            let lastError;
+            for (let attempt = 0; attempt <= retries; attempt += 1) {
+                if (externalSignal.aborted) throw new DOMException("요청이 취소되었습니다.", "AbortError");
+                const attemptController = new AbortController();
+                const abortAttempt = () => attemptController.abort();
+                externalSignal.addEventListener('abort', abortAttempt, { once: true });
+                let timedOut = false;
+                const timeoutId = setTimeout(() => {
+                    timedOut = true;
+                    attemptController.abort();
+                }, timeoutMs);
+                try {
+                    const response = await fetch(url, { signal: attemptController.signal });
+                    if (!response.ok) {
+                        const httpError = new Error(`급식 정보 요청 실패 (${response.status})`);
+                        httpError.retryable = response.status === 429 || response.status >= 500;
+                        throw httpError;
+                    }
+                    return await response.json();
+                } catch (error) {
+                    if (externalSignal.aborted) throw new DOMException("요청이 취소되었습니다.", "AbortError");
+                    lastError = timedOut ? new Error("급식 정보 요청 시간이 초과되었습니다.") : error;
+                    const retryable = timedOut || error instanceof TypeError || error.retryable;
+                    if (attempt === retries || !retryable) throw lastError;
+                } finally {
+                    clearTimeout(timeoutId);
+                    externalSignal.removeEventListener('abort', abortAttempt);
+                }
+            }
+            throw lastError;
+        }
+
+        function applyMealRows(rows, days) {
+            days.forEach(day => {
+                const ymd = `${day.getFullYear()}${String(day.getMonth() + 1).padStart(2, '0')}${String(day.getDate()).padStart(2, '0')}`;
+                const dateKey = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
+                delete lunchData[dateKey];
+                delete dinnerData[dateKey];
+            });
+
+            rows.forEach(row => {
+                const ymd = row.MLSV_YMD;
+                const hyphenDate = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
+                const menuClean = row.DDISH_NM
+                    .replace(/<br\s*\/?>/gi, ',')
+                    .replace(/\([\d\.]+\)/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                if (row.MMEAL_SC_CODE === "2") lunchData[hyphenDate] = menuClean;
+                if (row.MMEAL_SC_CODE === "3") dinnerData[hyphenDate] = menuClean;
+            });
+        }
+
         async function fetchNeisMeals(centerDateStr) {
-            await initSchoolCode(); 
-            
+            if (activeMealController) activeMealController.abort();
+            const requestController = new AbortController();
+            activeMealController = requestController;
+
             const centerDate = parseSafeDate(centerDateStr);
             const yesterday = new Date(centerDate); yesterday.setDate(yesterday.getDate() - 1);
             const tomorrow = new Date(centerDate); tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            const formatDate = (d) => {
-                return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-            };
-            
+
+            const formatDate = d => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
             const fromYmd = formatDate(yesterday);
             const toYmd = formatDate(tomorrow);
-            
-            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
-            
+            const cacheKey = `${fromYmd}-${toYmd}`;
+            const cachedRows = getCachedMeals(cacheKey);
+
+            if (cachedRows) {
+                applyMealRows(cachedRows, [yesterday, centerDate, tomorrow]);
+                if (activeMealController === requestController) activeMealController = null;
+                return { ok: true, source: 'cache' };
+            }
+
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
+
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`급식 정보 요청 실패 (${res.status})`);
-                const data = await res.json();
+                const data = await fetchJsonWithRetry(url, requestController.signal);
                 const apiResult = data.RESULT || data.mealServiceDietInfo?.[0]?.head?.find(item => item.RESULT)?.RESULT;
                 if (apiResult && !["INFO-000", "INFO-200"].includes(apiResult.CODE)) {
-                    throw new Error(apiResult.MESSAGE || "나이스 API 오류");
+                    return { ok: false, type: 'api', error: new Error(apiResult.MESSAGE || "나이스 API 오류") };
                 }
 
-                [yesterday, centerDate, tomorrow].forEach(day => {
-                    const ymd = formatDate(day);
-                    const dateKey = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
-                    delete lunchData[dateKey];
-                    delete dinnerData[dateKey];
-                });
-
-                if (data.mealServiceDietInfo) {
-                    const rows = data.mealServiceDietInfo[1].row;
-                    rows.forEach(row => {
-                        const ymd = row.MLSV_YMD;
-                        const hyphenDate = `${ymd.substring(0,4)}-${ymd.substring(4,6)}-${ymd.substring(6,8)}`;
-                        
-                        let menuClean = row.DDISH_NM
-                            .replace(/<br\s*\/?>/gi, ',')
-                            .replace(/\([\d\.]+\)/g, '')
-                            .replace(/\s+/g, ' ')
-                            .trim();
-                        
-                        if (row.MMEAL_SC_CODE === "2") lunchData[hyphenDate] = menuClean;
-                        if (row.MMEAL_SC_CODE === "3") dinnerData[hyphenDate] = menuClean;
-                    });
-                }
-                return { ok: true };
+                const rows = data.mealServiceDietInfo?.[1]?.row || [];
+                applyMealRows(rows, [yesterday, centerDate, tomorrow]);
+                cacheMeals(cacheKey, rows);
+                return { ok: true, source: 'network' };
             } catch (e) {
+                if (e.name === 'AbortError') return { ok: false, aborted: true, error: e };
                 console.error("나이스 API 통신 오류:", e);
-                return { ok: false, error: e };
+                return { ok: false, type: 'network', error: e };
+            } finally {
+                if (activeMealController === requestController) activeMealController = null;
             }
         }
 
@@ -308,21 +456,32 @@
             if(!menuStr) return [];
             return menuStr.split(/,(?![^(]*\))/).map(s=>s.trim()).filter(item => {
                 if (item === "") return false;
-                if (item.endsWith('밥')) return false; 
-                if (item.endsWith('김치') || item === '김치') return false; 
-                
+                const baseName = item.replace(/\([^)]*\)/g, '').trim();
+                if (baseName.endsWith('밥')) return false;
+                if (baseName.endsWith('김치') || baseName === '김치') return false;
                 const skipSides = ["깍두기", "석박지", "단무지", "맛김", "김자반", "쌈장", "마늘", "소스"];
-                if (skipSides.some(skip => item.includes(skip))) return false;
-                
+                if (skipSides.includes(baseName)) return false;
                 return true;
             });
         }
 
+        function getTodayString() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
         function updateSelectedDateLabel(dateStr) {
             const selectedDateLabel = document.getElementById('selected-date-label');
+            const contextBadge = document.getElementById('date-context-badge');
+            const todayButton = document.getElementById('today-button');
             const selectedDate = parseSafeDate(dateStr);
             const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
             selectedDateLabel.textContent = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${weekdays[selectedDate.getDay()]}요일`;
+            const today = getTodayString();
+            const context = dateStr === today ? 'today' : (dateStr < today ? 'past' : 'future');
+            contextBadge.className = `date-context-badge ${context}`;
+            contextBadge.textContent = context === 'today' ? '오늘' : (context === 'past' ? '지난 급식' : '예정 급식');
+            todayButton.hidden = context === 'today';
         }
 
         function renderMealState(type) {
@@ -334,14 +493,24 @@
             detail.className = 'meal-state-detail';
 
             if (type === 'loading') {
-                message.textContent = "식단을 불러오는 중입니다... 🍽️";
-                content.appendChild(message);
+                message.textContent = "식단을 불러오는 중입니다 🍽️";
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton';
+                skeleton.setAttribute('aria-hidden', 'true');
+                for (let i = 0; i < 3; i += 1) {
+                    const line = document.createElement('div');
+                    line.className = 'skeleton-line';
+                    skeleton.appendChild(line);
+                }
+                content.append(message, skeleton);
                 return;
             }
 
-            if (type === 'error') {
-                message.textContent = "급식 정보를 불러오지 못했습니다 😢";
-                detail.textContent = "인터넷 연결 또는 나이스 API 상태를 확인한 뒤 다시 시도해 주세요.";
+            if (type === 'error' || type === 'api-error') {
+                message.textContent = type === 'api-error' ? "급식 API 설정을 확인해 주세요 ⚙️" : "급식 정보를 불러오지 못했습니다 😢";
+                detail.textContent = type === 'api-error'
+                    ? "학교 정보 또는 나이스 API 응답에 문제가 있습니다. 관리자에게 알려주세요."
+                    : "인터넷 연결 또는 나이스 API 상태를 확인한 뒤 다시 시도해 주세요.";
                 const retryButton = document.createElement('button');
                 retryButton.type = 'button';
                 retryButton.className = 'retry-btn';
@@ -389,11 +558,12 @@
         }
 
         function setToday() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            if(dateInput) dateInput.value = `${y}-${m}-${d}`;
+            if(dateInput) dateInput.value = getTodayString();
+        }
+
+        function goToday() {
+            setToday();
+            updateUI();
         }
 
         function getDefaultMealTab(now = new Date()) {
@@ -404,6 +574,7 @@
             currentTab = getDefaultMealTab();
             document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${currentTab}`).classList.add('active');
+            document.querySelectorAll('.tab-item').forEach(el => el.setAttribute('aria-selected', String(el.id === `tab-${currentTab}`)));
         }
 
         function changeDate(offset) {
@@ -428,6 +599,7 @@
             updateSelectedDateLabel(date);
             
             if (currentTab === 'suggest') {
+                if (activeMealController) activeMealController.abort();
                 removeMealListeners();
                 mealView.style.display = 'none'; suggestView.style.display = 'block'; loadSuggestions();
                 document.getElementById('yesterday-winner-box').style.display = 'none';
@@ -436,14 +608,17 @@
                 removeMealListeners();
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 card.className = `meal-content-area ${currentTab}`;
-                const now = new Date();
-                const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const today = getTodayString();
                 const mealName = currentTab === 'lunch' ? '점심' : '저녁';
-                statusLabel.innerText = date === today ? `오늘의 ${mealName}` : mealName;
+                const selectedDate = parseSafeDate(date);
+                statusLabel.innerText = date === today
+                    ? `오늘의 ${mealName}`
+                    : `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${mealName}`;
                 renderMealState('loading');
 
                 const fetchResult = await fetchNeisMeals(date);
                 if (date !== dateInput.value || requestedTab !== currentTab) return;
+                if (fetchResult.aborted) return;
                 
                 const menu = (currentTab === 'lunch') ? lunchData[date] : dinnerData[date];
 
@@ -461,11 +636,12 @@
                     }
                 } else { card.classList.remove('special-meal-card'); }
 
-                if (!fetchResult.ok) renderMealState('error');
+                if (!fetchResult.ok) renderMealState(fetchResult.type === 'api' ? 'api-error' : 'error');
                 else if (menu) renderMenu(menu);
                 else renderMealState('empty');
                 
                 try {
+                    updateRatingSelection();
                     loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
                 } catch(err) { console.error("서브 기능 로드 에러 방어:", err); }
             }
@@ -497,21 +673,37 @@
             });
         }
 
+        function updateRatingSelection(score = null) {
+            const date = dateInput?.value;
+            const stored = score ?? Number(localStorage.getItem(`voted_${date}_${currentTab}`));
+            document.querySelectorAll('input[name="rating"]').forEach(input => {
+                input.checked = Number(input.value) === stored;
+            });
+            document.getElementById('rating-selection').textContent = stored >= 1 && stored <= 5
+                ? `내가 선택한 별점: ${stored}점`
+                : '';
+        }
+
         function submitRating(score) {
             if(!dateInput) return;
             const date = dateInput.value;
-            if (localStorage.getItem(`voted_${date}_${currentTab}`)) return alert("이미 별점을 남기셨습니다! 😊");
+            if (localStorage.getItem(`voted_${date}_${currentTab}`)) {
+                updateRatingSelection();
+                return showToast("이미 별점을 남기셨습니다! 😊", "info");
+            }
             database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
                 if (!data) return { totalScore: score, voterCount: 1 };
                 const newTotal = (data.totalScore || 0) + score;
                 const newCount = (data.voterCount || 0) + 1;
                 return { totalScore: newTotal, voterCount: newCount };
             }).then(() => {
-                localStorage.setItem(`voted_${date}_${currentTab}`, true);
-                alert("별점 감사합니다! ❤️");
+                localStorage.setItem(`voted_${date}_${currentTab}`, String(score));
+                updateRatingSelection(score);
+                showToast("별점 감사합니다! ❤️");
             }).catch((error) => {
                 console.error("별점 저장 실패:", error);
-                alert("별점을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                updateRatingSelection();
+                showToast("별점을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
             });
         }
 
@@ -532,21 +724,27 @@
             const text = input.value.trim();
             if (!text) return;
             database.ref(`meals/${date}/${currentTab}/comments`).push({ text, timestamp: new Date().toLocaleString(), likes: 0 })
-                .then(() => { input.value = ""; })
+                .then(() => {
+                    input.value = "";
+                    showToast("한줄평을 등록했습니다! 💬");
+                })
                 .catch((error) => {
                     console.error("한줄평 저장 실패:", error);
-                    alert("한줄평을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                    showToast("한줄평을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
                 });
         }
 
         function likeComment(key) {
             if(!dateInput) return;
-            if (localStorage.getItem(`liked_${key}`)) return alert("이미 하트를 눌렀습니다! ❤️");
+            if (localStorage.getItem(`liked_${key}`)) return showToast("이미 하트를 눌렀습니다! ❤️", "info");
             database.ref(`meals/${dateInput.value}/${currentTab}/comments/${key}/likes`).transaction(l => (l || 0) + 1)
-                .then(() => localStorage.setItem(`liked_${key}`, true))
+                .then(() => {
+                    localStorage.setItem(`liked_${key}`, true);
+                    showToast("하트를 눌렀습니다! ❤️");
+                })
                 .catch((error) => {
                     console.error("좋아요 저장 실패:", error);
-                    alert("좋아요를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                    showToast("좋아요를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
                 });
         }
 
@@ -602,8 +800,13 @@
             const pollRef = database.ref(`polls/${tomorrowStr}/${currentTab}`);
             const handlePoll = (s) => {
                 const votes = s.val() || {}; list.replaceChildren();
+                const selectedVoteValue = localStorage.getItem(`poll_${tomorrowStr}_${currentTab}`);
+                const selectedVote = /^\d+$/.test(selectedVoteValue || '') ? Number(selectedVoteValue) : -1;
                 items.forEach((m, i) => {
-                    const div = document.createElement('div'); div.className = 'poll-item-row';
+                    const div = document.createElement('button');
+                    div.type = 'button';
+                    div.className = `poll-item-row${selectedVote === i ? ' selected' : ''}`;
+                    div.setAttribute('aria-pressed', String(selectedVote === i));
                     div.onclick = () => submitVote(tomorrowStr, i, m);
                     const menuName = document.createElement('span');
                     menuName.textContent = m;
@@ -617,16 +820,20 @@
             replaceFirebaseListener('poll', pollRef, handlePoll);
         }
 
-        function submitVote(date, idx, name) {
-            if (localStorage.getItem(`poll_${date}_${currentTab}`)) return alert("내일 투표는 이미 하셨습니다! 😊");
-            if (confirm(`"${name}"에 투표할까요?`)) {
-                database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
-                    localStorage.setItem(`poll_${date}_${currentTab}`, true); alert("투표 완료! 🔥");
-                }).catch((error) => {
-                    console.error("투표 저장 실패:", error);
-                    alert("투표를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
-                });
-            }
+        async function submitVote(date, idx, name) {
+            if (localStorage.getItem(`poll_${date}_${currentTab}`)) return showToast("내일 투표는 이미 하셨습니다! 😊", "info");
+            const selectedTab = currentTab;
+            const selectedDate = dateInput.value;
+            const confirmed = await showConfirm(`"${name}" 메뉴에 투표할까요?`);
+            if (!confirmed || selectedTab !== currentTab || selectedDate !== dateInput.value) return;
+            database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
+                localStorage.setItem(`poll_${date}_${currentTab}`, String(idx));
+                showToast("투표 완료! 🔥");
+                loadPollData();
+            }).catch((error) => {
+                console.error("투표 저장 실패:", error);
+                showToast("투표를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
+            });
         }
 
         function saveSuggestion() {
@@ -634,10 +841,13 @@
             const text = input.value.trim();
             if (!text) return;
             database.ref(`suggestions`).push({ text, timestamp: new Date().toLocaleString() })
-                .then(() => { input.value = ""; })
+                .then(() => {
+                    input.value = "";
+                    showToast("건의사항을 등록했습니다! 💡");
+                })
                 .catch((error) => {
                     console.error("건의사항 저장 실패:", error);
-                    alert("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                    showToast("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
                 });
         }
 
@@ -668,10 +878,13 @@
 
         function changeTab(tab) {
             currentTab = tab; document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active'); updateUI();
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.querySelectorAll('.tab-item').forEach(el => el.setAttribute('aria-selected', String(el.id === `tab-${tab}`)));
+            updateUI();
         }
 
         window.addEventListener('beforeunload', () => {
+            if (activeMealController) activeMealController.abort();
             Object.keys(activeListeners).forEach(removeFirebaseListener);
         });
 
