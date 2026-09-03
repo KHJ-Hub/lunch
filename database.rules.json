@@ -6,13 +6,20 @@
       "$date": {
         "$meal": {
           "rating": {
-            ".write": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner') && newData.exists() && ((!data.exists() && newData.child('voterCount').val() === 1 && newData.child('totalScore').val() >= 1 && newData.child('totalScore').val() <= 5) || (data.exists() && data.child('voterCount').isNumber() && data.child('totalScore').isNumber() && newData.child('voterCount').val() === data.child('voterCount').val() + 1 && newData.child('totalScore').val() >= data.child('totalScore').val() + 1 && newData.child('totalScore').val() <= data.child('totalScore').val() + 5))",
-            ".validate": "newData.hasChildren(['totalScore', 'voterCount'])",
             "totalScore": {
-              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5000000"
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5000000"
             },
             "voterCount": {
-              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000000"
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "users": {
+              "$uid": {
+                ".write": "auth != null && $uid === auth.uid && $date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner') && newData.exists()",
+                ".validate": "newData.hasChildren(['score', 'active']) && newData.child('score').isNumber() && newData.child('active').isBoolean() && ((newData.child('active').val() === true && newData.child('score').val() >= 1 && newData.child('score').val() <= 5) || (newData.child('active').val() === false && newData.child('score').val() === 0))",
+                "$other": {
+                  ".validate": false
+                }
+              }
             },
             "$other": {
               ".validate": false

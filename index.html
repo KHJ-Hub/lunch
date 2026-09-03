@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍱</text></svg>">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -25,7 +26,7 @@
         .header h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 800; letter-spacing: -1px; }
         .header p { font-size: 0.9rem; color: #666; margin: 5px 0 25px; font-weight: 700; opacity: 0.8; }
 
-        .date-box { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .date-box { margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
         .selected-date-label { font-size: 1rem; color: #444; font-weight: 800; }
         .date-context-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; background: #EEF2F7; color: #667085; }
@@ -33,6 +34,9 @@
         .date-context-badge.past { background: #F2F4F7; color: #667085; }
         .date-context-badge.future { background: #E3F2FD; color: #1565C0; }
         .date-controls { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .date-picker-shell { position: relative; width: min(48%, 150px); min-height: 42px; border: 2px solid #EEE; border-radius: 50px; background: #FDFDFD; }
+        .date-picker-shell:focus-within { outline: 3px solid rgba(33,150,243,0.35); outline-offset: 2px; }
+        .compact-date-label { display: grid; place-items: center; min-height: 38px; color: #555; font-size: 0.92rem; font-weight: 800; }
         .date-nav-btn {
             background: #fff; border: 2px solid #EEE; border-radius: 50%;
             width: 44px; height: 44px; cursor: pointer; font-size: 0.8rem;
@@ -41,11 +45,7 @@
         }
         .date-nav-btn:hover { background: #f0f0f0; color: var(--secondary); border-color: var(--secondary); }
         .today-btn { min-height: 38px; border: 0; border-radius: 999px; padding: 7px 13px; background: #333; color: #FFF; cursor: pointer; font-size: 0.78rem; font-weight: 800; }
-        input[type="date"] {
-            border: 2px solid #EEE; border-radius: 50px; padding: 10px 12px; min-height: 44px;
-            font-size: 0.95rem; font-weight: 700; color: #555; outline: none;
-            background: #FDFDFD; cursor: pointer; width: min(64%, 210px); text-align: center;
-        }
+        .date-picker-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
         .tab-switch { display: flex; background: #EEE; border-radius: 20px; padding: 5px; margin-bottom: 20px; gap: 3px; }
         .tab-item { flex: 1; min-height: 44px; padding: 10px 5px; border: 0; background: transparent; cursor: pointer; border-radius: 16px; font-weight: 700; color: #777; transition: 0.3s; font-size: 0.85rem; }
@@ -71,7 +71,9 @@
         .meal-status-label { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; }
         .lunch .meal-status-label { background: var(--primary); color: white; }
         .dinner .meal-status-label { background: var(--secondary); color: white; }
-        .average-rating { font-size: 0.85rem; color: #777; font-weight: 600; }
+        .average-rating { display: inline-flex; align-items: baseline; gap: 5px; color: #777; white-space: nowrap; }
+        .average-rating-value { font-size: 0.88rem; font-weight: 800; }
+        .rating-count { font-size: 0.72rem; font-weight: 600; color: #999; }
 
         @keyframes special-glow {
             0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,152,0,0.3); }
@@ -99,13 +101,21 @@
         .skeleton-line:nth-child(3) { width: 68%; margin-inline: auto; }
         @keyframes skeleton-wave { to { background-position: -200% 0; } }
 
-        .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 20px; border-top: 1px dashed #DDD; padding-top: 15px; }
+        .rating-panel { border-top: 1px dashed #DDD; padding-top: 15px; margin-bottom: 20px; }
+        .star-radio-group { display: flex; justify-content: center; flex-direction: row-reverse; gap: 3px; margin-bottom: 6px; }
+        .star-radio-group.disabled { opacity: 0.78; }
         .star-radio-group input { position: absolute; opacity: 0; pointer-events: none; }
         .star-radio-group label { display: grid; place-items: center; min-width: 44px; min-height: 44px; font-size: 2rem; color: #DDD; cursor: pointer; transition: 0.2s; }
         .star-radio-group label:hover, .star-radio-group label:hover ~ label,
         .star-radio-group input:checked ~ label { color: #FFC107; }
         .star-radio-group input:focus-visible + label { outline: 3px solid rgba(33,150,243,0.35); border-radius: 10px; }
-        .rating-selection { margin: -12px 0 20px; min-height: 18px; color: #8A6D00; font-size: 0.78rem; font-weight: 700; }
+        .rating-selection { margin: 0; min-height: 20px; color: #8A6D00; font-size: 0.78rem; font-weight: 700; }
+        .rating-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+        .rating-actions[hidden] { display: none; }
+        .rating-action-btn { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 12px; cursor: pointer; font-size: 0.8rem; font-weight: 800; }
+        .rating-edit-btn { background: #FFF3E0; color: #C76700; }
+        .rating-cancel-btn { background: #FFF0F0; color: #C62828; }
+        .rating-back-btn { background: #EEF0F3; color: #555; }
 
         .poll-section { margin-top: 25px; text-align: left; background: #FDFDFD; padding: 20px; border-radius: 20px; border: 1px solid #EEE; }
         .poll-section h3 { font-size: 1rem; color: #333; margin-bottom: 12px; font-weight: 800; }
@@ -146,6 +156,8 @@
             .tab-switch { margin-bottom: 0; }
             .menu-text { font-size: clamp(0.98rem, 4.3vw, 1.12rem); line-height: 1.85; word-break: normal; overflow-wrap: anywhere; }
             .comment-text, .poll-item-row span { overflow-wrap: anywhere; word-break: normal; }
+            .rating-actions { width: 100%; }
+            .rating-action-btn { flex: 1; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -168,7 +180,10 @@
                     <span id="date-context-badge" class="date-context-badge"></span>
                     <div class="date-controls">
                         <button type="button" onclick="changeDate(-1)" class="date-nav-btn" aria-label="이전 날짜">◀</button>
-                        <input type="date" id="date-selector" onchange="updateUI()" aria-label="급식 날짜 선택">
+                        <div class="date-picker-shell">
+                            <span id="compact-date-label" class="compact-date-label">날짜 선택</span>
+                            <input type="date" id="date-selector" class="date-picker-input" onchange="updateUI()" aria-label="급식 날짜 선택">
+                        </div>
                         <button type="button" onclick="changeDate(1)" class="date-nav-btn" aria-label="다음 날짜">▶</button>
                     </div>
                     <button type="button" id="today-button" class="today-btn" onclick="goToday()" hidden>오늘로 이동</button>
@@ -187,19 +202,31 @@
                 <div id="meal-card" class="meal-content-area lunch">
                     <div class="meal-label-row">
                         <div class="meal-status-label" id="meal-status">오늘의 점심</div>
-                        <div id="avg-rating-display" class="average-rating"><span>★</span> 0.0</div>
+                        <div id="avg-rating-display" class="average-rating" aria-live="polite">
+                            <span id="average-rating-value" class="average-rating-value">아직 평가 없음</span>
+                            <span id="rating-count" class="rating-count"></span>
+                        </div>
                     </div>
                     <div class="menu-text" id="menu-content" aria-live="polite">식단 로딩 중...</div>
                 </div>
 
-                <div class="star-radio-group" aria-label="별점 선택">
-                    <input type="radio" id="star5" name="rating" value="5" onclick="submitRating(5)"><label for="star5" aria-label="5점">★</label>
-                    <input type="radio" id="star4" name="rating" value="4" onclick="submitRating(4)"><label for="star4" aria-label="4점">★</label>
-                    <input type="radio" id="star3" name="rating" value="3" onclick="submitRating(3)"><label for="star3" aria-label="3점">★</label>
-                    <input type="radio" id="star2" name="rating" value="2" onclick="submitRating(2)"><label for="star2" aria-label="2점">★</label>
-                    <input type="radio" id="star1" name="rating" value="1" onclick="submitRating(1)"><label for="star1" aria-label="1점">★</label>
+                <div class="rating-panel">
+                    <div id="rating-stars" class="star-radio-group" aria-label="별점 선택">
+                        <input type="radio" id="star5" name="rating" value="5" onclick="submitRating(5)"><label for="star5" aria-label="5점">★</label>
+                        <input type="radio" id="star4" name="rating" value="4" onclick="submitRating(4)"><label for="star4" aria-label="4점">★</label>
+                        <input type="radio" id="star3" name="rating" value="3" onclick="submitRating(3)"><label for="star3" aria-label="3점">★</label>
+                        <input type="radio" id="star2" name="rating" value="2" onclick="submitRating(2)"><label for="star2" aria-label="2점">★</label>
+                        <input type="radio" id="star1" name="rating" value="1" onclick="submitRating(1)"><label for="star1" aria-label="1점">★</label>
+                    </div>
+                    <p id="rating-selection" class="rating-selection" aria-live="polite">별점을 선택해 주세요</p>
+                    <div id="rating-view-actions" class="rating-actions" hidden>
+                        <button type="button" class="rating-action-btn rating-edit-btn" onclick="startRatingEdit()">별점 수정</button>
+                        <button type="button" class="rating-action-btn rating-cancel-btn" onclick="cancelRating()">별점 취소</button>
+                    </div>
+                    <div id="rating-edit-actions" class="rating-actions" hidden>
+                        <button type="button" class="rating-action-btn rating-back-btn" onclick="stopRatingEdit()">수정 취소</button>
+                    </div>
                 </div>
-                <p id="rating-selection" class="rating-selection" aria-live="polite"></p>
 
                 <div class="poll-section" id="poll-box" style="display:none;">
                     <h3>🔥 내일 메뉴 중 가장 기대되는 것은?</h3>
@@ -250,6 +277,7 @@
             appId: "1:297041913628:web:dca35b9917a5c2888ffcd9"
         };
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
 
         const NEIS_API_KEY = "bf6e5aee52104b2e915676c9c6ac6fad";
@@ -270,6 +298,28 @@
         const activeListeners = {};
         let activeMealController = null;
         let toastTimer = null;
+        let currentUser = null;
+        let currentRatingData = null;
+        let ratingEditMode = false;
+        let resolveAuthReady;
+        let rejectAuthReady;
+        const authReady = new Promise((resolve, reject) => {
+            resolveAuthReady = resolve;
+            rejectAuthReady = reject;
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                resolveAuthReady(user);
+                return;
+            }
+            auth.signInAnonymously().catch(error => {
+                console.error("익명 인증 실패:", error);
+                rejectAuthReady(error);
+                showToast("별점 기능을 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
+            });
+        });
 
         function replaceFirebaseListener(name, ref, callback) {
             removeFirebaseListener(name);
@@ -298,12 +348,16 @@
             toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2800);
         }
 
-        function showConfirm(message) {
+        function showConfirm(message, title = "확인", confirmText = "확인", cancelText = "돌아가기") {
             const modal = document.getElementById('confirm-modal');
+            const titleElement = document.getElementById('confirm-title');
             const messageElement = document.getElementById('confirm-message');
             const confirmButton = document.getElementById('confirm-ok');
             const cancelButton = document.getElementById('confirm-cancel');
+            titleElement.textContent = title;
             messageElement.textContent = message;
+            confirmButton.textContent = confirmText;
+            cancelButton.textContent = cancelText;
             modal.hidden = false;
             confirmButton.focus();
 
@@ -472,11 +526,13 @@
 
         function updateSelectedDateLabel(dateStr) {
             const selectedDateLabel = document.getElementById('selected-date-label');
+            const compactDateLabel = document.getElementById('compact-date-label');
             const contextBadge = document.getElementById('date-context-badge');
             const todayButton = document.getElementById('today-button');
             const selectedDate = parseSafeDate(dateStr);
             const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
             selectedDateLabel.textContent = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${weekdays[selectedDate.getDay()]}요일`;
+            compactDateLabel.textContent = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
             const today = getTodayString();
             const context = dateStr === today ? 'today' : (dateStr < today ? 'past' : 'future');
             contextBadge.className = `date-context-badge ${context}`;
@@ -608,12 +664,8 @@
                 removeMealListeners();
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 card.className = `meal-content-area ${currentTab}`;
-                const today = getTodayString();
                 const mealName = currentTab === 'lunch' ? '점심' : '저녁';
-                const selectedDate = parseSafeDate(date);
-                statusLabel.innerText = date === today
-                    ? `오늘의 ${mealName}`
-                    : `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${mealName}`;
+                statusLabel.innerText = mealName;
                 renderMealState('loading');
 
                 const fetchResult = await fetchNeisMeals(date);
@@ -641,7 +693,7 @@
                 else renderMealState('empty');
                 
                 try {
-                    updateRatingSelection();
+                    prepareRatingPanel();
                     loadRating(); loadComments(); loadPollData(); loadPreVoteResult();
                 } catch(err) { console.error("서브 기능 로드 에러 방어:", err); }
             }
@@ -673,49 +725,161 @@
             });
         }
 
-        function updateRatingSelection(score = null) {
-            const date = dateInput?.value;
-            const stored = score ?? Number(localStorage.getItem(`voted_${date}_${currentTab}`));
-            document.querySelectorAll('input[name="rating"]').forEach(input => {
-                input.checked = Number(input.value) === stored;
-            });
-            document.getElementById('rating-selection').textContent = stored >= 1 && stored <= 5
-                ? `내가 선택한 별점: ${stored}점`
-                : '';
+        function getRatingStorageKey(date, meal) {
+            return `voted_${date}_${meal}`;
         }
 
-        function submitRating(score) {
+        function setRatingInputsEnabled(enabled) {
+            const stars = document.getElementById('rating-stars');
+            stars.classList.toggle('disabled', !enabled);
+            document.querySelectorAll('input[name="rating"]').forEach(input => {
+                input.disabled = !enabled;
+            });
+        }
+
+        function prepareRatingPanel() {
+            ratingEditMode = false;
+            currentRatingData = null;
+            setRatingInputsEnabled(false);
+            document.querySelectorAll('input[name="rating"]').forEach(input => { input.checked = false; });
+            document.getElementById('rating-selection').textContent = '별점 기능을 준비하고 있습니다';
+            document.getElementById('rating-view-actions').hidden = true;
+            document.getElementById('rating-edit-actions').hidden = true;
+        }
+
+        function renderRatingState(data) {
+            currentRatingData = data;
+            const userRatings = Object.values(data?.users || {}).filter(rating => rating?.active);
+            const totalScore = (Number(data?.totalScore) || 0)
+                + userRatings.reduce((sum, rating) => sum + Number(rating.score || 0), 0);
+            const voterCount = (Number(data?.voterCount) || 0) + userRatings.length;
+            const averageElement = document.getElementById('average-rating-value');
+            const countElement = document.getElementById('rating-count');
+            const selectionElement = document.getElementById('rating-selection');
+            const viewActions = document.getElementById('rating-view-actions');
+            const editActions = document.getElementById('rating-edit-actions');
+            const ownRating = currentUser ? data?.users?.[currentUser.uid] : null;
+            const ownScore = ownRating?.active ? Number(ownRating.score) : null;
+
+            if (voterCount > 0) {
+                averageElement.textContent = `★ ${(totalScore / voterCount).toFixed(1)}`;
+                countElement.textContent = `(${voterCount}명)`;
+            } else {
+                averageElement.textContent = '아직 평가 없음';
+                countElement.textContent = '';
+            }
+
+            document.querySelectorAll('input[name="rating"]').forEach(input => {
+                input.checked = Number(input.value) === ownScore;
+            });
+
+            if (ownScore) {
+                setRatingInputsEnabled(ratingEditMode);
+                selectionElement.textContent = ratingEditMode
+                    ? `현재 ${ownScore}점 · 새 별점을 선택해 주세요`
+                    : `내가 남긴 별점: ${ownScore}점`;
+                viewActions.hidden = ratingEditMode;
+                editActions.hidden = !ratingEditMode;
+            } else {
+                ratingEditMode = false;
+                setRatingInputsEnabled(true);
+                selectionElement.textContent = '별점을 선택해 주세요';
+                viewActions.hidden = true;
+                editActions.hidden = true;
+            }
+        }
+
+        function buildSubmittedRating(existing, score, editing) {
+            if (existing?.active && !editing) return;
+            return { score, active: true };
+        }
+
+        function buildCanceledRating(existing) {
+            if (!existing?.active) return;
+            return { score: 0, active: false };
+        }
+
+        function startRatingEdit() {
+            const ownRating = currentUser ? currentRatingData?.users?.[currentUser.uid] : null;
+            if (!ownRating?.active) return;
+            ratingEditMode = true;
+            renderRatingState(currentRatingData);
+        }
+
+        function stopRatingEdit() {
+            ratingEditMode = false;
+            renderRatingState(currentRatingData);
+        }
+
+        async function submitRating(score) {
             if(!dateInput) return;
             const date = dateInput.value;
-            if (localStorage.getItem(`voted_${date}_${currentTab}`)) {
-                updateRatingSelection();
-                return showToast("이미 별점을 남기셨습니다! 😊", "info");
-            }
-            database.ref(`meals/${date}/${currentTab}/rating`).transaction((data) => {
-                if (!data) return { totalScore: score, voterCount: 1 };
-                const newTotal = (data.totalScore || 0) + score;
-                const newCount = (data.voterCount || 0) + 1;
-                return { totalScore: newTotal, voterCount: newCount };
-            }).then(() => {
-                localStorage.setItem(`voted_${date}_${currentTab}`, String(score));
-                updateRatingSelection(score);
-                showToast("별점 감사합니다! ❤️");
-            }).catch((error) => {
+            const meal = currentTab;
+            const editing = ratingEditMode;
+
+            try {
+                const user = await authReady;
+                if (date !== dateInput.value || meal !== currentTab) return;
+                const ownRatingRef = database.ref(`meals/${date}/${meal}/rating/users/${user.uid}`);
+                const result = await ownRatingRef.transaction(
+                    existing => buildSubmittedRating(existing, score, editing),
+                    undefined,
+                    false
+                );
+
+                if (!result.committed) {
+                    showToast("이미 별점을 남기셨습니다. 수정 버튼을 이용해 주세요.", "info");
+                    renderRatingState(result.snapshot.val());
+                    return;
+                }
+                localStorage.setItem(getRatingStorageKey(date, meal), String(score));
+                ratingEditMode = false;
+                showToast(editing ? "별점을 수정했습니다! ✨" : "별점 감사합니다! ❤️");
+            } catch (error) {
                 console.error("별점 저장 실패:", error);
-                updateRatingSelection();
+                renderRatingState(currentRatingData);
                 showToast("별점을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
-            });
+            }
         }
 
-        function loadRating() {
+        async function cancelRating() {
+            if (!dateInput || !currentUser) return;
+            const date = dateInput.value;
+            const meal = currentTab;
+            const confirmed = await showConfirm("남긴 별점을 취소할까요?", "별점 취소", "별점 취소", "돌아가기");
+            if (!confirmed || date !== dateInput.value || meal !== currentTab) return;
+
+            try {
+                const ownRatingRef = database.ref(`meals/${date}/${meal}/rating/users/${currentUser.uid}`);
+                const result = await ownRatingRef.transaction(
+                    existing => buildCanceledRating(existing),
+                    undefined,
+                    false
+                );
+                if (!result.committed) return showToast("취소할 별점이 없습니다.", "info");
+                localStorage.removeItem(getRatingStorageKey(date, meal));
+                ratingEditMode = false;
+                showToast("별점을 취소했습니다.");
+            } catch (error) {
+                console.error("별점 취소 실패:", error);
+                showToast("별점을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
+            }
+        }
+
+        async function loadRating() {
             if(!dateInput) return;
-            const ratingRef = database.ref(`meals/${dateInput.value}/${currentTab}/rating`);
-            const handleRating = (s) => {
-                const d = s.val();
-                const average = d?.voterCount ? (d.totalScore / d.voterCount).toFixed(1) : '0.0';
-                document.getElementById('avg-rating-display').textContent = `★ ${average}`;
-            };
-            replaceFirebaseListener('rating', ratingRef, handleRating);
+            const date = dateInput.value;
+            const meal = currentTab;
+            try {
+                const user = await authReady;
+                if (date !== dateInput.value || meal !== currentTab) return;
+                const ratingRef = database.ref(`meals/${date}/${meal}/rating`);
+                const handleRating = snapshot => renderRatingState(snapshot.val());
+                replaceFirebaseListener('rating', ratingRef, handleRating);
+            } catch (error) {
+                console.error("별점 불러오기 실패:", error);
+                document.getElementById('rating-selection').textContent = '별점 기능을 사용할 수 없습니다';
+            }
         }
 
         function saveComment() {
@@ -824,7 +988,7 @@
             if (localStorage.getItem(`poll_${date}_${currentTab}`)) return showToast("내일 투표는 이미 하셨습니다! 😊", "info");
             const selectedTab = currentTab;
             const selectedDate = dateInput.value;
-            const confirmed = await showConfirm(`"${name}" 메뉴에 투표할까요?`);
+            const confirmed = await showConfirm(`"${name}" 메뉴에 투표할까요?`, "투표 확인", "투표하기", "취소");
             if (!confirmed || selectedTab !== currentTab || selectedDate !== dateInput.value) return;
             database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
                 localStorage.setItem(`poll_${date}_${currentTab}`, String(idx));
