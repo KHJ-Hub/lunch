@@ -1,8 +1,9 @@
 {
   "rules": {
-    ".read": true,
+    ".read": false,
     ".write": false,
     "meals": {
+      ".read": true,
       "$date": {
         "$meal": {
           "rating": {
@@ -56,6 +57,7 @@
       }
     },
     "polls": {
+      ".read": true,
       "$date": {
         "$meal": {
           "$choice": {
@@ -66,14 +68,28 @@
       }
     },
     "suggestions": {
+      ".read": true,
       "$suggestionId": {
-        ".write": "!data.exists() && newData.exists()",
-        ".validate": "newData.hasChildren(['text', 'timestamp'])",
-        "text": {
+        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestionAuthors').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && data.exists() && !newData.exists())",
+        ".validate": "newData.hasChildren(['content', 'createdAt'])",
+        "content": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
         },
-        "timestamp": {
+        "createdAt": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "suggestionAuthors": {
+      ".read": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr'",
+      "$suggestionId": {
+        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestions').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && data.exists() && !newData.exists())",
+        ".validate": "newData.hasChildren(['authorName'])",
+        "authorName": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
         },
         "$other": {
           ".validate": false

@@ -130,6 +130,14 @@
         .comment-bubble { background: #FFF; padding: 15px; border-radius: 20px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #F0F0F0; position: relative; }
         .comment-text { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
         .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
+        .suggestion-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+        .suggestion-header h3 { margin: 0; }
+        .admin-login-btn, .suggestion-delete-btn { min-height: 36px; border: 0; border-radius: 10px; cursor: pointer; font-size: 0.75rem; font-weight: 800; }
+        .admin-login-btn { padding: 7px 10px; background: #EEF6FF; color: #1565C0; }
+        .admin-login-btn.admin-active { background: #E8F5E9; color: #2E7D32; }
+        .suggestion-delete-btn { margin-left: auto; padding: 6px 10px; background: #FFF0F0; color: #C62828; }
+        .suggestion-notice { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: #F3F9FF; color: #49627A; font-size: 0.76rem; font-weight: 600; line-height: 1.5; }
+        .suggestion-name-row { margin-bottom: 8px; }
         .like-badge { min-height: 36px; cursor: pointer; border: none; background: rgba(255,82,82,0.1); color: var(--like); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
         .scroll-area { max-height: 300px; overflow-y: auto; padding-right: 5px; }
         .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 1000; width: min(calc(100% - 32px), 390px); padding: 13px 16px; border-radius: 14px; background: #333; color: #FFF; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 0.9rem; font-weight: 700; text-align: center; opacity: 0; transform: translate(-50%, 16px); pointer-events: none; transition: 0.25s; }
@@ -244,9 +252,17 @@
             </div>
 
             <div id="suggestion-view-container" style="display:none; text-align:left;">
-                <h3 style="font-size:1.1rem; color:var(--info); font-weight:800; margin-bottom:15px;">💡 건의함</h3>
+                <div class="suggestion-header">
+                    <h3 style="font-size:1.1rem; color:var(--info); font-weight:800;">💡 비공개 급식 건의함</h3>
+                    <button type="button" id="admin-login-button" class="admin-login-btn" onclick="adminSignIn()">관리자 로그인</button>
+                    <button type="button" id="admin-logout-button" class="admin-login-btn admin-active" onclick="adminSignOut()" hidden>관리자 모드 · 로그아웃</button>
+                </div>
+                <p class="suggestion-notice">작성자 정보는 다른 학생에게 공개되지 않으며, 건의 확인을 위해 관리자만 확인할 수 있습니다.</p>
+                <div class="comment-input-row suggestion-name-row">
+                    <input type="text" id="suggest-name-input" maxlength="30" placeholder="이름" aria-label="작성자 이름">
+                </div>
                 <div class="comment-input-row">
-                    <input type="text" id="suggest-input" maxlength="300" placeholder="기능 요청이나 건의사항을 적어주세요!" aria-label="건의사항">
+                    <input type="text" id="suggest-input" maxlength="300" placeholder="급식 건의 내용을 적어주세요!" aria-label="건의 내용">
                     <button type="button" onclick="saveSuggestion()" style="background:var(--info);">건의</button>
                 </div>
                 <div id="suggest-list" class="scroll-area"></div>
@@ -285,6 +301,7 @@
         const SCHOOL_CODE = "7150136";
         const MEAL_CACHE_PREFIX = "baejeong-meals-v1:";
         const MEAL_CACHE_TTL = 15 * 60 * 1000;
+        const ADMIN_EMAIL = "bjt77@baejeong.hs.kr";
 
         const dateInput = document.getElementById('date-selector');
         let currentTab = 'lunch';
@@ -299,6 +316,9 @@
         let activeMealController = null;
         let toastTimer = null;
         let currentUser = null;
+        let isAdmin = false;
+        let currentSuggestions = null;
+        let currentSuggestionAuthors = null;
         let currentRatingData = null;
         let ratingEditMode = false;
         let resolveAuthReady;
@@ -311,9 +331,15 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
+                isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+                updateAdminControls();
+                if (currentTab === 'suggest') loadSuggestions();
                 resolveAuthReady(user);
                 return;
             }
+            isAdmin = false;
+            updateAdminControls();
+            if (currentTab === 'suggest') loadSuggestions();
             auth.signInAnonymously().catch(error => {
                 console.error("익명 인증 실패:", error);
                 rejectAuthReady(error);
@@ -338,6 +364,35 @@
             removeFirebaseListener('rating');
             removeFirebaseListener('comments');
             removeFirebaseListener('poll');
+        }
+
+        function updateAdminControls() {
+            const loginButton = document.getElementById('admin-login-button');
+            const logoutButton = document.getElementById('admin-logout-button');
+            if (!loginButton || !logoutButton) return;
+            loginButton.hidden = isAdmin;
+            logoutButton.hidden = !isAdmin;
+        }
+
+        async function adminSignIn() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await auth.signInWithPopup(provider);
+                if (result.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+                    await auth.signOut();
+                    showToast("등록된 관리자 계정이 아닙니다.", "error");
+                }
+            } catch (error) {
+                console.error("관리자 로그인 실패:", error);
+                showToast("관리자 로그인을 완료하지 못했습니다.", "error");
+            }
+        }
+
+        function adminSignOut() {
+            auth.signOut().catch(error => {
+                console.error("관리자 로그아웃 실패:", error);
+                showToast("관리자 로그아웃을 완료하지 못했습니다.", "error");
+            });
         }
 
         function showToast(message, type = "success") {
@@ -661,6 +716,7 @@
                 document.getElementById('yesterday-winner-box').style.display = 'none';
             } else {
                 removeFirebaseListener('suggestions');
+                removeFirebaseListener('suggestionAuthors');
                 removeMealListeners();
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 card.className = `meal-content-area ${currentTab}`;
@@ -1001,11 +1057,22 @@
         }
 
         function saveSuggestion() {
+            const nameInput = document.getElementById('suggest-name-input');
             const input = document.getElementById('suggest-input');
+            const authorName = nameInput.value.trim();
             const text = input.value.trim();
-            if (!text) return;
-            database.ref(`suggestions`).push({ text, timestamp: new Date().toLocaleString() })
+            if (!authorName) return showToast("이름을 입력해 주세요.", "info");
+            if (!text) return showToast("건의 내용을 입력해 주세요.", "info");
+
+            const suggestionId = database.ref('suggestions').push().key;
+            const createdAt = new Date().toISOString();
+            const updates = {};
+            updates[`suggestions/${suggestionId}`] = { content: text, createdAt };
+            updates[`suggestionAuthors/${suggestionId}`] = { authorName };
+
+            database.ref().update(updates)
                 .then(() => {
+                    nameInput.value = "";
                     input.value = "";
                     showToast("건의사항을 등록했습니다! 💡");
                 })
@@ -1018,26 +1085,78 @@
         function loadSuggestions() {
             const list = document.getElementById('suggest-list');
             const suggestionsRef = database.ref(`suggestions`);
-            const handleSuggestions = (s) => {
-                list.replaceChildren(); const data = s.val();
-                if (data) Object.keys(data).reverse().forEach(key => {
-                    const item = data[key]; const div = document.createElement('div');
+            const renderSuggestions = () => {
+                list.replaceChildren();
+                if (currentSuggestions) Object.keys(currentSuggestions).reverse().forEach(key => {
+                    const item = currentSuggestions[key]; const div = document.createElement('div');
                     div.className = 'comment-bubble'; div.style.borderColor = "#D1E9FF";
 
                     const text = document.createElement('div');
                     text.className = 'comment-text';
                     text.style.color = 'var(--info)';
-                    text.textContent = `💡 ${item.text || ""}`;
+                    text.textContent = `💡 ${item.content || item.text || ""}`;
 
                     const timestamp = document.createElement('span');
                     timestamp.className = 'comment-meta';
-                    timestamp.textContent = item.timestamp || "";
+                    timestamp.textContent = item.createdAt
+                        ? new Date(item.createdAt).toLocaleString()
+                        : item.timestamp || "";
 
-                    div.append(text, timestamp);
+                    const metaRow = document.createElement('div');
+                    metaRow.className = 'comment-meta';
+                    metaRow.append(timestamp);
+
+                    if (isAdmin) {
+                        const author = document.createElement('span');
+                        author.textContent = `작성자: ${currentSuggestionAuthors?.[key]?.authorName || '기존 익명 작성'}`;
+                        metaRow.append(author);
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.type = 'button';
+                        deleteButton.className = 'suggestion-delete-btn';
+                        deleteButton.textContent = '삭제';
+                        deleteButton.setAttribute('aria-label', '건의사항 삭제');
+                        deleteButton.addEventListener('click', () => deleteSuggestion(key));
+                        metaRow.append(deleteButton);
+                    }
+
+                    div.append(text, metaRow);
                     list.appendChild(div);
                 }); else showEmptyListMessage(list, "건의사항을 남겨주세요! 😊");
             };
+            const handleSuggestions = (s) => {
+                currentSuggestions = s.val();
+                renderSuggestions();
+            };
             replaceFirebaseListener('suggestions', suggestionsRef, handleSuggestions);
+
+            if (isAdmin) {
+                const authorsRef = database.ref('suggestionAuthors');
+                const handleAuthors = snapshot => {
+                    currentSuggestionAuthors = snapshot.val();
+                    renderSuggestions();
+                };
+                replaceFirebaseListener('suggestionAuthors', authorsRef, handleAuthors);
+            } else {
+                currentSuggestionAuthors = null;
+                removeFirebaseListener('suggestionAuthors');
+            }
+        }
+
+        async function deleteSuggestion(key) {
+            if (!isAdmin) return;
+            const confirmed = await showConfirm("이 건의글을 삭제할까요? 삭제한 내용은 다시 확인할 수 없습니다.", "건의사항 삭제", "삭제", "취소");
+            if (!confirmed) return;
+            try {
+                await database.ref().update({
+                    [`suggestions/${key}`]: null,
+                    [`suggestionAuthors/${key}`]: null
+                });
+                showToast("건의사항을 삭제했습니다.");
+            } catch (error) {
+                console.error("건의사항 삭제 실패:", error);
+                showToast("건의사항을 삭제하지 못했습니다.", "error");
+            }
         }
 
         function changeTab(tab) {
