@@ -284,10 +284,7 @@
                     <button type="button" id="admin-login-button" class="admin-login-btn" onclick="adminSignIn()">관리자 로그인</button>
                     <button type="button" id="admin-logout-button" class="admin-login-btn admin-active" onclick="adminSignOut()" hidden>관리자 모드 · 로그아웃</button>
                 </div>
-                <p class="suggestion-notice">작성자 정보는 다른 학생에게 공개되지 않으며, 건의 확인을 위해 관리자만 확인할 수 있습니다.</p>
-                <div class="comment-input-row suggestion-name-row">
-                    <input type="text" id="suggest-name-input" maxlength="30" placeholder="이름" aria-label="작성자 이름">
-                </div>
+                <p id="suggestion-auth-status" class="suggestion-notice">학생 건의는 Google 계정으로 로그인한 뒤 등록할 수 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.</p>
                 <div class="comment-input-row">
                     <input type="text" id="suggest-input" maxlength="300" placeholder="급식 건의 내용을 적어주세요!" aria-label="건의 내용">
                     <button type="button" onclick="saveSuggestion()" style="background:var(--info);">건의</button>
@@ -360,12 +357,15 @@
                 currentUser = user;
                 isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
                 updateAdminControls();
+                updateSuggestionAuthStatus();
                 if (currentTab === 'suggest') loadSuggestions();
                 resolveAuthReady(user);
                 return;
             }
+            currentUser = null;
             isAdmin = false;
             updateAdminControls();
+            updateSuggestionAuthStatus();
             if (currentTab === 'suggest') loadSuggestions();
             auth.signInAnonymously().catch(error => {
                 console.error("익명 인증 실패:", error);
@@ -401,6 +401,21 @@
             logoutButton.hidden = !isAdmin;
         }
 
+        function isGoogleSuggestionUser(user) {
+            const signedInWithGoogle = user?.providerData?.some(profile => profile.providerId === 'google.com');
+            return signedInWithGoogle;
+        }
+
+        function updateSuggestionAuthStatus() {
+            const status = document.getElementById('suggestion-auth-status');
+            if (!status) return;
+            if (isGoogleSuggestionUser(currentUser)) {
+                status.textContent = "Google 계정으로 로그인되어 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.";
+                return;
+            }
+            status.textContent = "학생 건의는 Google 계정으로 로그인한 뒤 등록할 수 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.";
+        }
+
         async function adminSignIn() {
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
@@ -418,6 +433,25 @@
             } catch (error) {
                 console.error(error.code, error.message, error);
                 showToast(getAdminLoginErrorMessage(error.code), "error");
+            }
+        }
+
+        async function signInForSuggestion() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                const result = await auth.signInWithPopup(provider);
+                if (!isGoogleSuggestionUser(result.user)) {
+                    console.warn("Google 로그인 제공업체 확인 실패:", result.user?.email || "이메일 정보 없음");
+                    await auth.signOut();
+                    showToast("Google 계정으로 로그인해주세요.", "error");
+                    return null;
+                }
+                return result.user;
+            } catch (error) {
+                console.error(error.code, error.message, error);
+                showToast("Google 계정 로그인을 완료하지 못했습니다.", "error");
+                return null;
             }
         }
 
@@ -1108,30 +1142,34 @@
             });
         }
 
-        function saveSuggestion() {
-            const nameInput = document.getElementById('suggest-name-input');
+        async function saveSuggestion() {
             const input = document.getElementById('suggest-input');
-            const authorName = nameInput.value.trim();
             const text = input.value.trim();
-            if (!authorName) return showToast("이름을 입력해 주세요.", "info");
             if (!text) return showToast("건의 내용을 입력해 주세요.", "info");
+
+            let author = auth.currentUser;
+            if (!isGoogleSuggestionUser(author)) {
+                showToast("건의 작성에는 Google 계정 로그인이 필요합니다.", "info");
+                author = await signInForSuggestion();
+                if (!author) return;
+            }
+
+            const authorName = author.displayName?.trim() || "이름 정보 없음";
 
             const suggestionId = database.ref('suggestions').push().key;
             const createdAt = new Date().toISOString();
             const updates = {};
             updates[`suggestions/${suggestionId}`] = { content: text, createdAt };
-            updates[`suggestionAuthors/${suggestionId}`] = { authorName };
+            updates[`suggestionAuthors/${suggestionId}`] = { authorUid: author.uid, authorName };
 
-            database.ref().update(updates)
-                .then(() => {
-                    nameInput.value = "";
-                    input.value = "";
-                    showToast("건의사항을 등록했습니다! 💡");
-                })
-                .catch((error) => {
-                    console.error("건의사항 저장 실패:", error);
-                    showToast("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
-                });
+            try {
+                await database.ref().update(updates);
+                input.value = "";
+                showToast("건의사항을 등록했습니다! 💡");
+            } catch (error) {
+                console.error("건의사항 저장 실패:", error);
+                showToast("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
+            }
         }
 
         function loadSuggestions() {
@@ -1160,7 +1198,9 @@
 
                     if (isAdmin) {
                         const author = document.createElement('span');
-                        author.textContent = `작성자: ${currentSuggestionAuthors?.[key]?.authorName || '기존 익명 작성'}`;
+                        const authorInfo = currentSuggestionAuthors?.[key];
+                        const authorName = authorInfo?.authorName || '기존 익명 작성';
+                        author.textContent = `작성자: ${authorName}`;
                         metaRow.append(author);
 
                         const deleteButton = document.createElement('button');

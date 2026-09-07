@@ -70,7 +70,7 @@
     "suggestions": {
       ".read": true,
       "$suggestionId": {
-        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestionAuthors').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && data.exists() && !newData.exists())",
+        ".write": "(!data.exists() && newData.exists() && auth != null && auth.token.firebase.sign_in_provider === 'google.com' && newData.parent().parent().child('suggestionAuthors').child($suggestionId).child('authorUid').val() === auth.uid) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && data.exists() && !newData.exists())",
         ".validate": "newData.hasChildren(['content', 'createdAt'])",
         "content": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
@@ -86,10 +86,13 @@
     "suggestionAuthors": {
       ".read": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr'",
       "$suggestionId": {
-        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestions').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && !newData.exists())",
-        ".validate": "newData.hasChildren(['authorName'])",
+        ".write": "(!data.exists() && newData.exists() && auth != null && auth.token.firebase.sign_in_provider === 'google.com' && newData.child('authorUid').val() === auth.uid && newData.parent().parent().child('suggestions').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && !newData.exists())",
+        ".validate": "newData.hasChildren(['authorUid', 'authorName'])",
+        "authorUid": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+        },
         "authorName": {
-          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
         },
         "$other": {
           ".validate": false
