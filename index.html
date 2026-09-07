@@ -378,13 +378,38 @@
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 const result = await auth.signInWithPopup(provider);
-                if (result.user.email?.toLowerCase() !== ADMIN_EMAIL) {
-                    await auth.signOut();
-                    showToast("등록된 관리자 계정이 아닙니다.", "error");
+                const signedInEmail = result.user?.email?.toLowerCase();
+                if (signedInEmail !== ADMIN_EMAIL) {
+                    console.warn("관리자 이메일 불일치:", signedInEmail || "이메일 정보 없음");
+                    try {
+                        await auth.signOut();
+                    } catch (signOutError) {
+                        console.error("비관리자 계정 로그아웃 실패:", signOutError);
+                    }
+                    showToast("관리자 계정으로 로그인해주세요.", "error");
                 }
             } catch (error) {
-                console.error("관리자 로그인 실패:", error);
-                showToast("관리자 로그인을 완료하지 못했습니다.", "error");
+                console.error(error.code, error.message, error);
+                showToast(getAdminLoginErrorMessage(error.code), "error");
+            }
+        }
+
+        function getAdminLoginErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/unauthorized-domain':
+                    return "현재 사이트 도메인이 Firebase 관리자 로그인 허용 목록에 등록되지 않았습니다.";
+                case 'auth/popup-blocked':
+                    return "브라우저가 로그인 창을 차단했습니다. 팝업을 허용한 뒤 다시 시도해주세요.";
+                case 'auth/popup-closed-by-user':
+                    return "로그인 창이 닫혀 관리자 로그인을 취소했습니다.";
+                case 'auth/operation-not-allowed':
+                    return "Firebase에서 Google 로그인 제공업체가 활성화되지 않았습니다.";
+                case 'auth/account-exists-with-different-credential':
+                    return "이 이메일은 다른 로그인 방식으로 이미 연결되어 있습니다.";
+                case 'auth/network-request-failed':
+                    return "네트워크 연결을 확인한 뒤 관리자 로그인을 다시 시도해주세요.";
+                default:
+                    return "관리자 로그인을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.";
             }
         }
 
