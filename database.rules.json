@@ -86,7 +86,7 @@
     "suggestionAuthors": {
       ".read": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr'",
       "$suggestionId": {
-        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestions').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && data.exists() && !newData.exists())",
+        ".write": "(!data.exists() && newData.exists() && newData.parent().parent().child('suggestions').child($suggestionId).exists()) || (auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && !newData.exists())",
         ".validate": "newData.hasChildren(['authorName'])",
         "authorName": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"

@@ -1172,14 +1172,21 @@
             if (!isAdmin) return;
             const confirmed = await showConfirm("이 건의글을 삭제할까요? 삭제한 내용은 다시 확인할 수 없습니다.", "건의사항 삭제", "삭제", "취소");
             if (!confirmed) return;
+            const suggestionPath = `suggestions/${key}`;
+            const authorPath = `suggestionAuthors/${key}`;
             try {
                 await database.ref().update({
-                    [`suggestions/${key}`]: null,
-                    [`suggestionAuthors/${key}`]: null
+                    [suggestionPath]: null,
+                    [authorPath]: null
                 });
                 showToast("건의사항을 삭제했습니다.");
             } catch (error) {
-                console.error("건의사항 삭제 실패:", error);
+                console.error("건의사항 삭제 실패:", {
+                    errorCode: error.code,
+                    errorMessage: error.message,
+                    suggestionId: key,
+                    paths: [suggestionPath, authorPath]
+                }, error);
                 showToast("건의사항을 삭제하지 못했습니다.", "error");
             }
         }
