@@ -264,7 +264,7 @@
                 </div>
 
                 <div class="poll-section" id="poll-box" style="display:none;">
-                    <h3>🔥 내일 메뉴 중 가장 기대되는 것은?</h3>
+                    <h3 id="poll-title">🔥 다음 급식 중 가장 기대되는 것은?</h3>
                     <div id="poll-items-list"></div>
                 </div>
 
@@ -325,6 +325,7 @@
         const SCHOOL_CODE = "7150136";
         const MEAL_CACHE_PREFIX = "baejeong-meals-v1:";
         const MEAL_CACHE_TTL = 15 * 60 * 1000;
+        const NEXT_MEAL_SEARCH_DAYS = 60;
         const ADMIN_EMAIL = "bjt77@baejeong.hs.kr";
 
         const dateInput = document.getElementById('date-selector');
@@ -345,6 +346,7 @@
         let currentSuggestionAuthors = null;
         let currentRatingData = null;
         let ratingEditMode = false;
+        let pollLoadSequence = 0;
         let resolveAuthReady;
         let rejectAuthReady;
         const authReady = new Promise((resolve, reject) => {
@@ -658,6 +660,77 @@
                 if (skipSides.includes(baseName)) return false;
                 return true;
             });
+        }
+
+        function formatDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatNeisDate(date) {
+            return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getPollMealMap(rows) {
+            const meals = {};
+            rows.forEach(row => {
+                const ymd = row.MLSV_YMD;
+                const date = `${ymd.substring(0, 4)}-${ymd.substring(4, 6)}-${ymd.substring(6, 8)}`;
+                const mealType = row.MMEAL_SC_CODE === '2' ? 'lunch' : (row.MMEAL_SC_CODE === '3' ? 'dinner' : null);
+                if (!mealType) return;
+                meals[`${date}_${mealType}`] = row.DDISH_NM
+                    .replace(/<br\s*\/?>/gi, ',')
+                    .replace(/\([\d\.]+\)/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            });
+            return meals;
+        }
+
+        function findNextPollMeal(meals, now = new Date()) {
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOffset = now.getHours() >= 19 ? 1 : 0;
+
+            for (let offset = startOffset; offset < NEXT_MEAL_SEARCH_DAYS; offset += 1) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + offset);
+                const mealTypes = offset === 0 ? ['dinner'] : ['lunch', 'dinner'];
+                for (const mealType of mealTypes) {
+                    const dateKey = formatDateKey(date);
+                    const menu = meals[`${dateKey}_${mealType}`];
+                    if (menu) return { date: dateKey, mealType, menu };
+                }
+            }
+            return null;
+        }
+
+        function getPollTargetLabel(target, now = new Date()) {
+            const targetDate = parseSafeDate(target.date);
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.round((targetDate - today) / 86400000);
+            const mealName = target.mealType === 'lunch' ? '점심' : '저녁';
+            if (diffDays === 0) return `오늘 ${mealName}`;
+            if (diffDays === 1) return `내일 ${mealName}`;
+            return `${targetDate.getMonth() + 1}월 ${targetDate.getDate()}일 ${mealName}`;
+        }
+
+        async function fetchPollMealRows(now) {
+            const fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const toDate = new Date(fromDate);
+            toDate.setDate(toDate.getDate() + NEXT_MEAL_SEARCH_DAYS - 1);
+            const cacheKey = `poll-${formatNeisDate(fromDate)}-${formatNeisDate(toDate)}`;
+            const cachedRows = getCachedMeals(cacheKey);
+            if (cachedRows) return cachedRows;
+
+            const controller = new AbortController();
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_FROM_YMD=${formatNeisDate(fromDate)}&MLSV_TO_YMD=${formatNeisDate(toDate)}`;
+            const data = await fetchJsonWithRetry(url, controller.signal);
+            const apiResult = data.RESULT || data.mealServiceDietInfo?.[0]?.head?.find(item => item.RESULT)?.RESULT;
+            if (apiResult && !['INFO-000', 'INFO-200'].includes(apiResult.CODE)) {
+                throw new Error(apiResult.MESSAGE || '나이스 API 오류');
+            }
+            const rows = data.mealServiceDietInfo?.[1]?.row || [];
+            cacheMeals(cacheKey, rows);
+            return rows;
         }
 
         function getTodayString() {
@@ -1085,55 +1158,56 @@
             replaceFirebaseListener('comments', commentsRef, handleComments);
         }
 
-        function loadPollData() {
-            if(!dateInput) return;
+        async function loadPollData() {
             removeFirebaseListener('poll');
             const box = document.getElementById('poll-box');
-            const tomorrow = parseSafeDate(dateInput.value); tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            const y = tomorrow.getFullYear();
-            const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
-            const d = String(tomorrow.getDate()).padStart(2, '0');
-            const tomorrowStr = `${y}-${m}-${d}`;
-            
-            const menu = (currentTab === 'lunch') ? lunchData[tomorrowStr] : dinnerData[tomorrowStr];
-            if (!menu) { box.style.display = 'none'; return; }
-            
-            const items = filterMenuItems(menu);
-            const list = document.getElementById('poll-items-list');
-            if (items.length === 0) { box.style.display = 'none'; return; }
-            box.style.display = 'block';
-            const pollRef = database.ref(`polls/${tomorrowStr}/${currentTab}`);
-            const handlePoll = (s) => {
-                const votes = s.val() || {}; list.replaceChildren();
-                const selectedVoteValue = localStorage.getItem(`poll_${tomorrowStr}_${currentTab}`);
-                const selectedVote = /^\d+$/.test(selectedVoteValue || '') ? Number(selectedVoteValue) : -1;
-                items.forEach((m, i) => {
-                    const div = document.createElement('button');
-                    div.type = 'button';
-                    div.className = `poll-item-row${selectedVote === i ? ' selected' : ''}`;
-                    div.setAttribute('aria-pressed', String(selectedVote === i));
-                    div.onclick = () => submitVote(tomorrowStr, i, m);
-                    const menuName = document.createElement('span');
-                    menuName.textContent = m;
-                    const voteCount = document.createElement('b');
-                    voteCount.style.color = 'var(--info)';
-                    voteCount.textContent = `${votes[i] || 0}명`;
-                    div.append(menuName, voteCount);
-                    list.appendChild(div);
-                });
-            };
-            replaceFirebaseListener('poll', pollRef, handlePoll);
+            const requestSequence = ++pollLoadSequence;
+            const now = new Date();
+            try {
+                const rows = await fetchPollMealRows(now);
+                if (requestSequence !== pollLoadSequence || currentTab === 'suggest') return;
+                const target = findNextPollMeal(getPollMealMap(rows), now);
+                if (!target) { box.style.display = 'none'; return; }
+
+                const items = filterMenuItems(target.menu);
+                const list = document.getElementById('poll-items-list');
+                if (items.length === 0) { box.style.display = 'none'; return; }
+                document.getElementById('poll-title').textContent = `🔥 ${getPollTargetLabel(target, now)} 가장 기대되는 것은?`;
+                box.style.display = 'block';
+                const pollRef = database.ref(`polls/${target.date}/${target.mealType}`);
+                const handlePoll = (s) => {
+                    const votes = s.val() || {}; list.replaceChildren();
+                    const selectedVoteValue = localStorage.getItem(`poll_${target.date}_${target.mealType}`);
+                    const selectedVote = /^\d+$/.test(selectedVoteValue || '') ? Number(selectedVoteValue) : -1;
+                    items.forEach((menuItem, i) => {
+                        const div = document.createElement('button');
+                        div.type = 'button';
+                        div.className = `poll-item-row${selectedVote === i ? ' selected' : ''}`;
+                        div.setAttribute('aria-pressed', String(selectedVote === i));
+                        div.onclick = () => submitVote(target.date, target.mealType, i, menuItem);
+                        const menuName = document.createElement('span');
+                        menuName.textContent = menuItem;
+                        const voteCount = document.createElement('b');
+                        voteCount.style.color = 'var(--info)';
+                        voteCount.textContent = `${votes[i] || 0}명`;
+                        div.append(menuName, voteCount);
+                        list.appendChild(div);
+                    });
+                };
+                replaceFirebaseListener('poll', pollRef, handlePoll);
+            } catch (error) {
+                if (requestSequence !== pollLoadSequence) return;
+                console.error('다음 급식 투표 대상 조회 실패:', error);
+                box.style.display = 'none';
+            }
         }
 
-        async function submitVote(date, idx, name) {
-            if (localStorage.getItem(`poll_${date}_${currentTab}`)) return showToast("내일 투표는 이미 하셨습니다! 😊", "info");
-            const selectedTab = currentTab;
-            const selectedDate = dateInput.value;
+        async function submitVote(voteDate, mealType, idx, name) {
+            if (localStorage.getItem(`poll_${voteDate}_${mealType}`)) return showToast("이 급식에는 이미 투표하셨습니다! 😊", "info");
             const confirmed = await showConfirm(`"${name}" 메뉴에 투표할까요?`, "투표 확인", "투표하기", "취소");
-            if (!confirmed || selectedTab !== currentTab || selectedDate !== dateInput.value) return;
-            database.ref(`polls/${date}/${currentTab}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
-                localStorage.setItem(`poll_${date}_${currentTab}`, String(idx));
+            if (!confirmed) return;
+            database.ref(`polls/${voteDate}/${mealType}/${idx}`).transaction(v => (v || 0) + 1).then(() => {
+                localStorage.setItem(`poll_${voteDate}_${mealType}`, String(idx));
                 showToast("투표 완료! 🔥");
                 loadPollData();
             }).catch((error) => {
