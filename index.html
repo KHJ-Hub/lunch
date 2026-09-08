@@ -25,6 +25,9 @@
         
         .header h1 { font-size: clamp(1.6rem, 1.45vw, 1.9rem); color: #333; margin: 0; font-weight: 800; letter-spacing: -1px; }
         .header p { font-size: clamp(0.9rem, 0.9vw, 1rem); color: #666; margin: 5px 0 clamp(25px, 1.8vw, 30px); font-weight: 700; opacity: 0.8; }
+        .header-actions { display: flex; justify-content: center; gap: 8px; margin: -14px 0 18px; }
+        .utility-btn, .share-meal-btn { min-height: 40px; border: 1px solid #E4EAF0; border-radius: 12px; padding: 8px 12px; background: #FFF; color: #52606D; cursor: pointer; font-size: 0.78rem; font-weight: 800; }
+        .utility-btn:hover, .share-meal-btn:hover { border-color: #B9C9D8; background: #F8FBFE; }
 
         .date-box { margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
@@ -87,6 +90,8 @@
 
         .menu-text { line-height: 2.0; color: #444; font-size: clamp(1.15rem, 1.1vw, 1.3rem); font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
         .menu-detail { display: block; color: #888; font-size: 0.85rem; font-weight: 500; }
+        .meal-card-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+        .share-meal-btn { min-height: 36px; padding: 6px 11px; font-size: 0.75rem; background: rgba(255,255,255,0.65); }
         .meal-state-detail { display: block; color: #888; font-size: 0.78rem; font-weight: 500; line-height: 1.5; margin-top: 6px; }
         .retry-btn {
             border: none; border-radius: 14px; margin-top: 14px; padding: 9px 15px; min-height: 44px;
@@ -150,6 +155,25 @@
         .modal-actions button { flex: 1; min-height: 44px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 800; }
         .modal-cancel { background: #EEF0F3; color: #555; }
         .modal-confirm { background: var(--info); color: #FFF; }
+        .feature-dialog { width: min(100%, 440px); max-height: min(78vh, 680px); display: flex; flex-direction: column; padding: 20px; border-radius: 22px; background: #FFF; box-shadow: 0 20px 60px rgba(0,0,0,0.22); }
+        .feature-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+        .feature-dialog-header h2 { margin: 0; font-size: 1.12rem; }
+        .feature-close-btn { width: 36px; min-height: 36px; border: 0; border-radius: 50%; background: #F1F3F5; color: #667085; cursor: pointer; font-size: 1.1rem; }
+        .feature-content { min-height: 0; overflow-y: auto; text-align: left; }
+        .search-form { display: flex; gap: 8px; margin-bottom: 12px; }
+        .search-form input { min-width: 0; min-height: 44px; flex: 1; border: 2px solid #E9EDF1; border-radius: 13px; padding: 10px 12px; }
+        .search-form button { min-width: 66px; min-height: 44px; border: 0; border-radius: 13px; background: var(--info); color: #FFF; cursor: pointer; font-weight: 800; }
+        .feature-help, .feature-empty { margin: 0; color: #7B8794; font-size: 0.8rem; line-height: 1.55; }
+        .search-result-list, .stats-grid { display: grid; gap: 9px; }
+        .search-result { width: 100%; border: 1px solid #EAECEF; border-radius: 14px; padding: 12px; background: #FFF; cursor: pointer; text-align: left; }
+        .search-result:hover { border-color: #9BC8EE; background: #F6FBFF; }
+        .search-result-date { display: block; color: var(--info); font-size: 0.76rem; font-weight: 800; margin-bottom: 5px; }
+        .search-result-menu { display: block; color: #3E4A56; font-size: 0.88rem; font-weight: 700; line-height: 1.55; overflow-wrap: anywhere; }
+        .stats-month { margin: 0 0 12px; color: #6B7785; font-size: 0.82rem; font-weight: 700; }
+        .stat-card { border: 1px solid #EAECEF; border-radius: 15px; padding: 13px; background: #FCFDFE; }
+        .stat-card-label { display: block; color: #788694; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-card-value { display: block; color: #374151; font-size: 1rem; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+        .stat-card-detail { display: block; color: #8895A2; font-size: 0.76rem; font-weight: 600; margin-top: 3px; }
         footer { margin-top: 25px; font-size: 0.75rem; color: #BBB; text-align: center; padding-bottom: 15px; }
 
         @media (max-width: 600px) {
@@ -163,6 +187,7 @@
             .comment-text, .poll-item-row span { overflow-wrap: anywhere; word-break: normal; }
             .rating-actions { width: 100%; }
             .rating-action-btn { flex: 1; }
+            .feature-dialog { width: min(100%, 400px); max-height: 82vh; padding: 18px; border-radius: 20px; }
         }
 
         @media (min-width: 1200px) {
@@ -190,6 +215,8 @@
             .comment-text { font-size: 1rem; }
             .suggestion-notice { padding: 12px 14px; font-size: 0.82rem; }
             .scroll-area { max-height: 340px; }
+            .utility-btn { min-height: 42px; padding: 9px 14px; font-size: 0.82rem; }
+            .share-meal-btn { min-height: 40px; padding: 7px 13px; font-size: 0.8rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -203,6 +230,10 @@
             <div class="header">
                 <h1>🍱 배정고 오늘의 급식!</h1>
                 <p>현정T가 만들었음.</p>
+            </div>
+            <div class="header-actions" aria-label="급식 도구">
+                <button type="button" class="utility-btn" onclick="openMenuSearch()">🔎 메뉴 검색</button>
+                <button type="button" class="utility-btn" onclick="openMonthlyStats()">📊 통계</button>
             </div>
 
             <div class="navigation-panel">
@@ -238,6 +269,9 @@
                         </div>
                     </div>
                     <div class="menu-text" id="menu-content" aria-live="polite">식단 로딩 중...</div>
+                    <div class="meal-card-actions">
+                        <button type="button" class="share-meal-btn" onclick="shareCurrentMeal()">↗ 공유</button>
+                    </div>
                 </div>
 
                 <div class="rating-panel">
@@ -300,6 +334,15 @@
             </div>
         </div>
     </div>
+    <div id="feature-modal" class="modal-backdrop" hidden>
+        <div class="feature-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-title">
+            <div class="feature-dialog-header">
+                <h2 id="feature-title"></h2>
+                <button type="button" class="feature-close-btn" onclick="closeFeatureModal()" aria-label="닫기">×</button>
+            </div>
+            <div id="feature-content" class="feature-content"></div>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -340,8 +383,10 @@
         let currentSuggestions = null;
         let currentSuggestionAuthors = null;
         let currentRatingData = null;
+        let currentRenderedMenu = '';
         let ratingEditMode = false;
         let pollLoadSequence = 0;
+        let featureLoadSequence = 0;
         let resolveAuthReady;
         let rejectAuthReady;
         const authReady = new Promise((resolve, reject) => {
@@ -728,6 +773,326 @@
             return rows;
         }
 
+        async function fetchNeisMealRange(fromDate, toDate, cacheName) {
+            const fromYmd = formatNeisDate(fromDate);
+            const toYmd = formatNeisDate(toDate);
+            const cacheKey = `${cacheName}-${fromYmd}-${toYmd}`;
+            const cachedRows = getCachedMeals(cacheKey);
+            if (cachedRows) return cachedRows;
+
+            const controller = new AbortController();
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${NEIS_API_KEY}&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
+            const data = await fetchJsonWithRetry(url, controller.signal);
+            const apiResult = data.RESULT || data.mealServiceDietInfo?.[0]?.head?.find(item => item.RESULT)?.RESULT;
+            if (apiResult && !['INFO-000', 'INFO-200'].includes(apiResult.CODE)) {
+                throw new Error(apiResult.MESSAGE || '나이스 API 오류');
+            }
+            const rows = data.mealServiceDietInfo?.[1]?.row || [];
+            cacheMeals(cacheKey, rows);
+            return rows;
+        }
+
+        function formatMealType(mealType) {
+            return mealType === 'dinner' ? '저녁' : '점심';
+        }
+
+        function getMealTypeFromRow(row) {
+            return row.MMEAL_SC_CODE === '2' ? 'lunch' : (row.MMEAL_SC_CODE === '3' ? 'dinner' : null);
+        }
+
+        function getMealDateFromRow(row) {
+            const ymd = row.MLSV_YMD;
+            return `${ymd.substring(0, 4)}-${ymd.substring(4, 6)}-${ymd.substring(6, 8)}`;
+        }
+
+        function cleanMealMenu(menu) {
+            return (menu || '').replace(/<br\s*\/?>/gi, ',').replace(/\s+/g, ' ').trim();
+        }
+
+        function formatMealDate(date) {
+            const parsed = parseSafeDate(date);
+            return `${parsed.getFullYear()}.${String(parsed.getMonth() + 1).padStart(2, '0')}.${String(parsed.getDate()).padStart(2, '0')}.`;
+        }
+
+        function openFeatureModal(title) {
+            const modal = document.getElementById('feature-modal');
+            document.getElementById('feature-title').textContent = title;
+            document.getElementById('feature-content').replaceChildren();
+            modal.hidden = false;
+        }
+
+        function closeFeatureModal() {
+            document.getElementById('feature-modal').hidden = true;
+        }
+
+        document.getElementById('feature-modal').addEventListener('click', event => {
+            if (event.target.id === 'feature-modal') closeFeatureModal();
+        });
+
+        function addFeatureMessage(text, className = 'feature-help') {
+            const message = document.createElement('p');
+            message.className = className;
+            message.textContent = text;
+            document.getElementById('feature-content').appendChild(message);
+            return message;
+        }
+
+        function openMenuSearch() {
+            const selectedYear = parseSafeDate(dateInput.value).getFullYear();
+            openFeatureModal('🔎 메뉴 검색');
+            const content = document.getElementById('feature-content');
+            const form = document.createElement('form');
+            form.className = 'search-form';
+            const input = document.createElement('input');
+            input.type = 'search';
+            input.placeholder = '메뉴명을 입력하세요';
+            input.maxLength = 40;
+            input.setAttribute('aria-label', '검색할 메뉴명');
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.textContent = '검색';
+            form.append(input, button);
+            content.appendChild(form);
+            addFeatureMessage(`${selectedYear}년 급식표에서 메뉴명을 찾습니다.`, 'feature-help');
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                searchMenus(input.value, selectedYear);
+            });
+            input.focus();
+        }
+
+        async function searchMenus(rawQuery, year) {
+            const query = rawQuery.trim();
+            const content = document.getElementById('feature-content');
+            const oldResults = content.querySelector('.search-result-list, .feature-empty');
+            if (oldResults) oldResults.remove();
+            content.querySelectorAll('[data-feature-loading]').forEach(element => element.remove());
+            if (!query) {
+                addFeatureMessage('찾을 메뉴명을 입력해 주세요.', 'feature-empty');
+                return;
+            }
+
+            const loading = addFeatureMessage('급식표에서 메뉴를 찾는 중이에요…', 'feature-help');
+            loading.dataset.featureLoading = 'true';
+            const requestId = ++featureLoadSequence;
+            try {
+                const rows = await fetchNeisMealRange(new Date(year, 0, 1), new Date(year, 11, 31), 'menu-search');
+                if (requestId !== featureLoadSequence) { loading.remove(); return; }
+                loading.remove();
+                const normalizedQuery = query.toLocaleLowerCase('ko-KR');
+                const results = rows.map(row => ({
+                    date: getMealDateFromRow(row),
+                    mealType: getMealTypeFromRow(row),
+                    menu: cleanMealMenu(row.DDISH_NM)
+                })).filter(item => item.mealType && item.menu.toLocaleLowerCase('ko-KR').includes(normalizedQuery))
+                    .sort((a, b) => a.date.localeCompare(b.date) || a.mealType.localeCompare(b.mealType));
+
+                if (results.length === 0) {
+                    addFeatureMessage('해당 메뉴가 포함된 급식을 찾지 못했어요.', 'feature-empty');
+                    return;
+                }
+
+                const list = document.createElement('div');
+                list.className = 'search-result-list';
+                results.forEach(result => {
+                    const resultButton = document.createElement('button');
+                    resultButton.type = 'button';
+                    resultButton.className = 'search-result';
+                    const date = document.createElement('span');
+                    date.className = 'search-result-date';
+                    date.textContent = `${formatMealDate(result.date)} ${formatMealType(result.mealType)}`;
+                    const menu = document.createElement('span');
+                    menu.className = 'search-result-menu';
+                    menu.textContent = result.menu;
+                    resultButton.append(date, menu);
+                    resultButton.addEventListener('click', () => {
+                        closeFeatureModal();
+                        dateInput.value = result.date;
+                        changeTab(result.mealType);
+                    });
+                    list.appendChild(resultButton);
+                });
+                content.appendChild(list);
+            } catch (error) {
+                if (requestId !== featureLoadSequence) { loading.remove(); return; }
+                console.error('메뉴 검색용 급식 조회 실패:', error);
+                loading.textContent = '메뉴 검색에 필요한 급식표를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+                loading.className = 'feature-empty';
+            }
+        }
+
+        function getRatingSummary(rating) {
+            const userRatings = Object.values(rating?.users || {}).filter(item => item?.active);
+            return {
+                totalScore: (Number(rating?.totalScore) || 0) + userRatings.reduce((sum, item) => sum + Number(item.score || 0), 0),
+                count: (Number(rating?.voterCount) || 0) + userRatings.length
+            };
+        }
+
+        function addStatCard(grid, label, value, detail = '') {
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            const cardLabel = document.createElement('span');
+            cardLabel.className = 'stat-card-label';
+            cardLabel.textContent = label;
+            const cardValue = document.createElement('span');
+            cardValue.className = 'stat-card-value';
+            cardValue.textContent = value;
+            card.append(cardLabel, cardValue);
+            if (detail) {
+                const cardDetail = document.createElement('span');
+                cardDetail.className = 'stat-card-detail';
+                cardDetail.textContent = detail;
+                card.appendChild(cardDetail);
+            }
+            grid.appendChild(card);
+        }
+
+        function formatStatMeal(meal) {
+            const date = parseSafeDate(meal.date);
+            return `${date.getMonth() + 1}월 ${date.getDate()}일 ${formatMealType(meal.mealType)}`;
+        }
+
+        function formatTiedMeals(meals, suffix) {
+            const labels = meals.slice(0, 2).map(formatStatMeal).join(' · ');
+            const more = meals.length > 2 ? ` 외 ${meals.length - 2}건` : '';
+            return `${meals.length > 1 ? '공동 1위 · ' : ''}${labels}${more}${suffix}`;
+        }
+
+        function openMonthlyStats() {
+            const selected = parseSafeDate(dateInput.value);
+            openFeatureModal('📊 월간 급식 통계');
+            const content = document.getElementById('feature-content');
+            const month = document.createElement('p');
+            month.className = 'stats-month';
+            month.textContent = `${selected.getFullYear()}년 ${selected.getMonth() + 1}월 기준`;
+            content.appendChild(month);
+            const loading = addFeatureMessage('이번 달 평가와 투표를 모으는 중이에요…', 'feature-help');
+            loading.dataset.featureLoading = 'true';
+            loadMonthlyStats(selected, loading);
+        }
+
+        async function loadMonthlyStats(selectedDate, loading) {
+            const requestId = ++featureLoadSequence;
+            const year = selectedDate.getFullYear();
+            const month = selectedDate.getMonth();
+            const start = new Date(year, month, 1);
+            const end = new Date(year, month + 1, 0);
+            try {
+                const rows = await fetchNeisMealRange(start, end, 'monthly-stats');
+                const meals = rows.map(row => ({
+                    date: getMealDateFromRow(row), mealType: getMealTypeFromRow(row), menu: cleanMealMenu(row.DDISH_NM)
+                })).filter(meal => meal.mealType);
+                const data = await Promise.all(meals.map(async meal => {
+                    try {
+                        const [ratingSnapshot, pollSnapshot] = await Promise.all([
+                            database.ref(`meals/${meal.date}/${meal.mealType}/rating`).once('value'),
+                            database.ref(`polls/${meal.date}/${meal.mealType}`).once('value')
+                        ]);
+                        return { ...meal, rating: getRatingSummary(ratingSnapshot.val()), votes: pollSnapshot.val() || {} };
+                    } catch (error) {
+                        console.warn('월간 통계 항목 조회 실패:', meal.date, meal.mealType, error);
+                        return { ...meal, rating: { totalScore: 0, count: 0 }, votes: {} };
+                    }
+                }));
+                if (requestId !== featureLoadSequence) { loading.remove(); return; }
+                loading.remove();
+                renderMonthlyStats(data);
+            } catch (error) {
+                if (requestId !== featureLoadSequence) { loading.remove(); return; }
+                console.error('월간 통계 조회 실패:', error);
+                loading.textContent = '월간 통계를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+                loading.className = 'feature-empty';
+            }
+        }
+
+        function renderMonthlyStats(meals) {
+            const grid = document.createElement('div');
+            grid.className = 'stats-grid';
+            const evaluated = meals.filter(meal => meal.rating.count > 0);
+            const totalScore = evaluated.reduce((sum, meal) => sum + meal.rating.totalScore, 0);
+            const totalCount = evaluated.reduce((sum, meal) => sum + meal.rating.count, 0);
+            addStatCard(grid, '이번 달 전체 평균 별점', totalCount ? `★ ${(totalScore / totalCount).toFixed(1)}` : '아직 평가 없음', totalCount ? `누적 평가 ${totalCount}건` : '평가가 등록되면 표시돼요.');
+
+            ['lunch', 'dinner'].forEach(mealType => {
+                const typeMeals = evaluated.filter(meal => meal.mealType === mealType);
+                const score = typeMeals.reduce((sum, meal) => sum + meal.rating.totalScore, 0);
+                const count = typeMeals.reduce((sum, meal) => sum + meal.rating.count, 0);
+                addStatCard(grid, `${formatMealType(mealType)} 평균 별점`, count ? `★ ${(score / count).toFixed(1)}` : '아직 평가 없음', count ? `누적 평가 ${count}건` : '');
+            });
+
+            if (evaluated.length) {
+                const highestAverage = Math.max(...evaluated.map(meal => meal.rating.totalScore / meal.rating.count));
+                const highestMeals = evaluated.filter(meal => Math.abs((meal.rating.totalScore / meal.rating.count) - highestAverage) < 0.0001);
+                addStatCard(grid, '🏆 최고 평점 급식', formatTiedMeals(highestMeals, ` · ★ ${highestAverage.toFixed(1)}`));
+                const mostCount = Math.max(...evaluated.map(meal => meal.rating.count));
+                const mostRatedMeals = evaluated.filter(meal => meal.rating.count === mostCount);
+                addStatCard(grid, '🙌 가장 많은 평가를 받은 급식', formatTiedMeals(mostRatedMeals, ` · ${mostCount}건`));
+            } else {
+                addStatCard(grid, '🏆 최고 평점 급식', '아직 평가 없음');
+                addStatCard(grid, '🙌 가장 많은 평가를 받은 급식', '아직 평가 없음');
+            }
+
+            const menuVotes = {};
+            meals.forEach(meal => {
+                const items = filterMenuItems(meal.menu);
+                Object.entries(meal.votes).forEach(([index, count]) => {
+                    const menuName = items[Number(index)];
+                    if (menuName && Number(count) > 0) menuVotes[menuName] = (menuVotes[menuName] || 0) + Number(count);
+                });
+            });
+            const voteEntries = Object.entries(menuVotes);
+            if (voteEntries.length) {
+                const maxVotes = Math.max(...voteEntries.map(([, count]) => count));
+                const winners = voteEntries.filter(([, count]) => count === maxVotes).map(([name]) => name);
+                addStatCard(grid, '🔥 가장 기대받은 메뉴', `${winners.length > 1 ? '공동 1위 · ' : ''}${winners.slice(0, 2).join(' · ')}${winners.length > 2 ? ` 외 ${winners.length - 2}개` : ''} · ${maxVotes}표`);
+            } else {
+                addStatCard(grid, '🔥 가장 기대받은 메뉴', '아직 투표 없음');
+            }
+            document.getElementById('feature-content').appendChild(grid);
+        }
+
+        async function copyText(text) {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            const copied = document.execCommand('copy');
+            textarea.remove();
+            if (!copied) throw new Error('클립보드 복사에 실패했습니다.');
+        }
+
+        async function shareCurrentMeal() {
+            if (!currentRenderedMenu || !dateInput.value || !['lunch', 'dinner'].includes(currentTab)) {
+                showToast('공유할 급식 메뉴가 없습니다.', 'info');
+                return;
+            }
+            const text = ['🍱 배정고 급식', `${formatMealDate(dateInput.value)} ${formatMealType(currentTab)}`, '', ...currentRenderedMenu.split(/,(?![^(]*\))/).map(item => item.trim()).filter(Boolean), '', '배정고 오늘의 급식', window.location.href].join('\n');
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: '배정고 급식', text, url: window.location.href });
+                    showToast('급식 메뉴를 공유했어요.');
+                    return;
+                } catch (error) {
+                    if (error?.name === 'AbortError') return;
+                    console.warn('Web Share API 공유 실패, 복사 방식으로 전환:', error);
+                }
+            }
+            try {
+                await copyText(text);
+                showToast('급식 메뉴를 복사했어요.');
+            } catch (error) {
+                console.error('급식 메뉴 복사 실패:', error);
+                showToast('급식 메뉴를 복사하지 못했어요.', 'error');
+            }
+        }
+
         function getTodayString() {
             const now = new Date();
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -759,6 +1124,7 @@
         function renderMealState(type) {
             const content = document.getElementById('menu-content');
             content.replaceChildren();
+            currentRenderedMenu = '';
 
             const message = document.createElement('span');
             const detail = document.createElement('small');
@@ -800,6 +1166,7 @@
         function renderMenu(menu) {
             const content = document.getElementById('menu-content');
             content.replaceChildren();
+            currentRenderedMenu = menu;
 
             menu.split(/,(?![^(]*\))/).forEach(item => {
                 const row = document.createElement('div');
