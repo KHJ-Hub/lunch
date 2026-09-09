@@ -3,10 +3,10 @@
     ".read": false,
     ".write": false,
     "meals": {
-      ".read": true,
       "$date": {
         "$meal": {
           "rating": {
+            ".read": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner')",
             "totalScore": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5000000"
             },
@@ -33,6 +33,7 @@
             }
           },
           "comments": {
+            ".read": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner')",
             "$commentId": {
               ".write": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner') && newData.exists() && ((!data.exists() && newData.child('likes').val() === 0) || (data.exists() && data.child('likes').isNumber() && newData.child('text').val() === data.child('text').val() && newData.child('timestamp').val() === data.child('timestamp').val() && newData.child('likes').val() === data.child('likes').val() + 1))",
               ".validate": "newData.hasChildren(['text', 'timestamp', 'likes'])",
@@ -57,9 +58,9 @@
       }
     },
     "polls": {
-      ".read": true,
       "$date": {
         "$meal": {
+          ".read": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner')",
           "$choice": {
             ".write": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner') && $choice.matches(/^[0-9]{1,2}$/) && newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1))",
             ".validate": "newData.val() >= 1 && newData.val() <= 1000000"
