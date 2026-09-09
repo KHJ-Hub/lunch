@@ -1597,20 +1597,64 @@
                 if (!author) return;
             }
 
+            let tokenResult;
+            try {
+                tokenResult = await author.getIdTokenResult(true);
+            } catch (error) {
+                console.error("건의 작성 인증 토큰 확인 실패:", {
+                    errorCode: error.code,
+                    errorMessage: error.message,
+                    uid: author?.uid,
+                    displayName: author?.displayName,
+                    providerData: author?.providerData
+                }, error);
+                showToast("Google 로그인 상태를 확인하지 못했습니다. 다시 로그인 후 시도해 주세요.", "error");
+                return;
+            }
+
+            const activeAuthor = auth.currentUser;
+            const signInProvider = tokenResult?.claims?.firebase?.sign_in_provider;
+            console.info("건의 작성 Google 로그인 확인:", {
+                uid: activeAuthor?.uid,
+                displayName: activeAuthor?.displayName,
+                providerData: activeAuthor?.providerData,
+                signInProvider
+            });
+            if (!activeAuthor || activeAuthor.uid !== author.uid || signInProvider !== 'google.com') {
+                console.error("건의 작성 인증 상태 불일치:", {
+                    expectedUid: author?.uid,
+                    currentUid: activeAuthor?.uid,
+                    signInProvider,
+                    providerData: activeAuthor?.providerData
+                });
+                showToast("Google 로그인 상태를 다시 확인한 뒤 건의를 등록해 주세요.", "error");
+                return;
+            }
+
             const authorName = author.displayName?.trim() || "이름 정보 없음";
 
             const suggestionId = database.ref('suggestions').push().key;
             const createdAt = new Date().toISOString();
+            const suggestionPath = `suggestions/${suggestionId}`;
+            const authorPath = `suggestionAuthors/${suggestionId}`;
             const updates = {};
-            updates[`suggestions/${suggestionId}`] = { content: text, createdAt };
-            updates[`suggestionAuthors/${suggestionId}`] = { authorUid: author.uid, authorName };
+            updates[suggestionPath] = { content: text, createdAt };
+            updates[authorPath] = { authorUid: author.uid, authorName };
 
             try {
                 await database.ref().update(updates);
                 input.value = "";
                 showToast("건의사항을 등록했습니다! 💡");
             } catch (error) {
-                console.error("건의사항 저장 실패:", error);
+                console.error("건의사항 저장 실패:", {
+                    errorCode: error.code,
+                    errorMessage: error.message,
+                    suggestionId,
+                    writeOperation: "atomic multi-location update",
+                    affectedPaths: [suggestionPath, authorPath],
+                    uid: activeAuthor.uid,
+                    signInProvider
+                }, error);
                 showToast("건의사항을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
             }
         }
