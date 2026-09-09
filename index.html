@@ -134,9 +134,12 @@
         .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
         .suggestion-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
         .suggestion-header h3 { margin: 0; }
-        .admin-login-btn, .suggestion-delete-btn { min-height: 36px; border: 0; border-radius: 10px; cursor: pointer; font-size: 0.75rem; font-weight: 800; }
-        .admin-login-btn { padding: 7px 10px; background: #EEF6FF; color: #1565C0; }
-        .admin-login-btn.admin-active { background: #E8F5E9; color: #2E7D32; }
+        .suggestion-auth-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+        .student-login-btn, .teacher-login-btn, .suggestion-logout-btn, .suggestion-delete-btn { min-height: 36px; border: 0; border-radius: 10px; cursor: pointer; font-size: 0.75rem; font-weight: 800; }
+        .student-login-btn { padding: 7px 10px; background: #E8F5E9; color: #2E7D32; }
+        .teacher-login-btn { padding: 7px 10px; background: #EEF6FF; color: #1565C0; }
+        .suggestion-logout-btn { padding: 7px 10px; background: #F2F4F7; color: #55606E; }
+        .suggestion-role-status { color: #536273; font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
         .suggestion-delete-btn { margin-left: auto; padding: 6px 10px; background: #FFF0F0; color: #C62828; }
         .suggestion-notice { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: #F3F9FF; color: #49627A; font-size: 0.76rem; font-weight: 600; line-height: 1.5; }
         .suggestion-name-row { margin-bottom: 8px; }
@@ -188,6 +191,9 @@
             .rating-actions { width: 100%; }
             .rating-action-btn { flex: 1; }
             .feature-dialog { width: min(100%, 400px); max-height: 82vh; padding: 18px; border-radius: 20px; }
+            .suggestion-header { align-items: flex-start; }
+            .suggestion-auth-actions { justify-content: flex-start; }
+            .suggestion-role-status { width: 100%; white-space: normal; }
         }
 
         @media (min-width: 1200px) {
@@ -310,8 +316,12 @@
             <div id="suggestion-view-container" style="display:none; text-align:left;">
                 <div class="suggestion-header">
                     <h3 style="font-size:1.1rem; color:var(--info); font-weight:800;">💡 비공개 급식 건의함</h3>
-                    <button type="button" id="admin-login-button" class="admin-login-btn" onclick="adminSignIn()">관리자 로그인</button>
-                    <button type="button" id="admin-logout-button" class="admin-login-btn admin-active" onclick="adminSignOut()" hidden>관리자 모드 · 로그아웃</button>
+                    <div class="suggestion-auth-actions">
+                        <button type="button" id="student-login-button" class="student-login-btn" onclick="studentSignIn()">학생 로그인</button>
+                        <button type="button" id="teacher-login-button" class="teacher-login-btn" onclick="teacherSignIn()">선생님 로그인</button>
+                        <span id="suggestion-role-status" class="suggestion-role-status" hidden></span>
+                        <button type="button" id="suggestion-logout-button" class="suggestion-logout-btn" onclick="suggestionSignOut()" hidden>로그아웃</button>
+                    </div>
                 </div>
                 <p id="suggestion-auth-status" class="suggestion-notice">학생 건의는 Google 계정으로 로그인한 뒤 등록할 수 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.</p>
                 <div class="comment-input-row">
@@ -436,11 +446,24 @@
         }
 
         function updateAdminControls() {
-            const loginButton = document.getElementById('admin-login-button');
-            const logoutButton = document.getElementById('admin-logout-button');
-            if (!loginButton || !logoutButton) return;
-            loginButton.hidden = isAdmin;
-            logoutButton.hidden = !isAdmin;
+            const studentButton = document.getElementById('student-login-button');
+            const teacherButton = document.getElementById('teacher-login-button');
+            const roleStatus = document.getElementById('suggestion-role-status');
+            const logoutButton = document.getElementById('suggestion-logout-button');
+            if (!studentButton || !teacherButton || !roleStatus || !logoutButton) return;
+
+            const isGoogleUser = isGoogleSuggestionUser(currentUser);
+            studentButton.hidden = isGoogleUser;
+            teacherButton.hidden = isGoogleUser;
+            roleStatus.hidden = !isGoogleUser;
+            logoutButton.hidden = !isGoogleUser;
+            if (!isGoogleUser) return;
+
+            if (isAdmin) {
+                roleStatus.textContent = '선생님 모드';
+            } else {
+                roleStatus.textContent = `학생 로그인됨 · ${currentUser.displayName?.trim() || '이름 정보 없음'}`;
+            }
         }
 
         function isGoogleSuggestionUser(user) {
@@ -451,56 +474,63 @@
         function updateSuggestionAuthStatus() {
             const status = document.getElementById('suggestion-auth-status');
             if (!status) return;
+            if (isAdmin) {
+                status.textContent = "선생님 모드입니다. 작성자 이름 확인과 건의 삭제를 할 수 있습니다.";
+                return;
+            }
             if (isGoogleSuggestionUser(currentUser)) {
-                status.textContent = "Google 계정으로 로그인되어 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.";
+                status.textContent = "학생 로그인 상태입니다. 건의를 작성할 수 있으며 작성자 정보는 선생님만 확인할 수 있습니다.";
                 return;
             }
             status.textContent = "학생 건의는 Google 계정으로 로그인한 뒤 등록할 수 있습니다. 작성자 정보는 다른 학생에게 공개되지 않으며 관리자만 확인할 수 있습니다.";
         }
 
-        async function adminSignIn() {
+        async function signInWithGoogle(role) {
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
                 const result = await auth.signInWithPopup(provider);
-                const signedInEmail = result.user?.email?.toLowerCase();
-                if (signedInEmail !== ADMIN_EMAIL) {
+                if (role === 'teacher' && result.user?.email?.toLowerCase() !== ADMIN_EMAIL) {
+                    const signedInEmail = result.user?.email?.toLowerCase();
                     console.warn("관리자 이메일 불일치:", signedInEmail || "이메일 정보 없음");
                     try {
                         await auth.signOut();
                     } catch (signOutError) {
                         console.error("비관리자 계정 로그아웃 실패:", signOutError);
                     }
-                    showToast("관리자 계정으로 로그인해주세요.", "error");
+                    showToast("선생님 계정으로 로그인해주세요.", "error");
+                    return null;
                 }
+                return result.user;
             } catch (error) {
-                console.error(error.code, error.message, error);
-                showToast(getAdminLoginErrorMessage(error.code), "error");
+                console.error(`${role === 'teacher' ? '선생님' : '학생'} Google 로그인 실패:`, error.code, error.message, error);
+                showToast(role === 'teacher' ? getAdminLoginErrorMessage(error.code) : getSuggestionLoginErrorMessage(error.code), "error");
+                return null;
             }
         }
 
+        async function studentSignIn() {
+            if (isGoogleSuggestionUser(currentUser)) return;
+            showToast("학생 Google 로그인 창을 여는 중입니다…", "info");
+            await signInWithGoogle('student');
+        }
+
+        async function teacherSignIn() {
+            if (isAdmin) return;
+            showToast("선생님 Google 로그인 창을 여는 중입니다…", "info");
+            await signInWithGoogle('teacher');
+        }
+
         async function signInForSuggestion() {
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.setCustomParameters({ prompt: 'select_account' });
-                console.info("건의 작성 Google 로그인 팝업 호출");
-                const result = await auth.signInWithPopup(provider);
-                if (!isGoogleSuggestionUser(result.user)) {
-                    console.warn("Google 로그인 제공업체 확인 실패:", result.user?.email || "이메일 정보 없음");
-                    await auth.signOut();
-                    showToast("Google 계정으로 로그인해주세요.", "error");
-                    return null;
-                }
-                console.info("건의 작성 Google 로그인 성공:", {
-                    uid: result.user.uid,
-                    displayName: result.user.displayName,
-                    providerData: result.user.providerData
-                });
-                return result.user;
-            } catch (error) {
-                console.error("건의 작성 Google 로그인 실패:", error.code, error.message, error);
-                showToast(getSuggestionLoginErrorMessage(error.code), "error");
+            console.info("건의 작성 Google 로그인 팝업 호출");
+            const user = await signInWithGoogle('student');
+            if (user && !isGoogleSuggestionUser(user)) {
+                console.warn("Google 로그인 제공업체 확인 실패:", user.email || "이메일 정보 없음");
+                await auth.signOut();
+                showToast("Google 계정으로 로그인해주세요.", "error");
                 return null;
             }
+            return user;
         }
 
         function getAdminLoginErrorMessage(errorCode) {
@@ -541,10 +571,10 @@
             }
         }
 
-        function adminSignOut() {
+        function suggestionSignOut() {
             auth.signOut().catch(error => {
-                console.error("관리자 로그아웃 실패:", error);
-                showToast("관리자 로그아웃을 완료하지 못했습니다.", "error");
+                console.error("건의함 로그아웃 실패:", error);
+                showToast("로그아웃을 완료하지 못했습니다.", "error");
             });
         }
 
