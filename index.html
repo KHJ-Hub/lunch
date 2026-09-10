@@ -28,6 +28,22 @@
         .header-actions { display: flex; justify-content: center; gap: 8px; margin: -14px 0 18px; }
         .utility-btn, .share-meal-btn { min-height: 40px; border: 1px solid #E4EAF0; border-radius: 12px; padding: 8px 12px; background: #FFF; color: #52606D; cursor: pointer; font-size: 0.78rem; font-weight: 800; }
         .utility-btn:hover, .share-meal-btn:hover { border-color: #B9C9D8; background: #F8FBFE; }
+        .bgm-card { margin: 0 0 18px; padding: 13px; border: 1px solid #E6EAF0; border-radius: 18px; background: linear-gradient(135deg, #F8FBFF, #F9FCFA); text-align: left; }
+        .bgm-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .bgm-card-title { color: #435161; font-size: 0.88rem; font-weight: 800; }
+        .bgm-status { color: #778695; font-size: 0.72rem; font-weight: 700; text-align: right; }
+        .bgm-status.error { color: #C62828; }
+        .bgm-controls { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+        .bgm-btn { min-height: 38px; border: 1px solid #DCE5EE; border-radius: 11px; padding: 7px 11px; background: #FFF; color: #4B5B6B; cursor: pointer; font-size: 0.76rem; font-weight: 800; }
+        .bgm-btn:hover { border-color: #AFC4D7; background: #F5F9FC; }
+        .bgm-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+        .bgm-toggle-btn { margin-left: auto; }
+        .bgm-player-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E8EDF2; }
+        .bgm-player-wrap[hidden] { display: none; }
+        .bgm-player { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; background: #111; border-radius: 13px; overflow: hidden; }
+        .bgm-player iframe { display: block; width: 100% !important; height: 100% !important; border: 0; }
+        .bgm-volume-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: #647383; font-size: 0.76rem; font-weight: 800; }
+        .bgm-volume-row input { flex: 1; accent-color: var(--info); }
 
         .date-box { margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
@@ -241,6 +257,21 @@
                 <button type="button" class="utility-btn" onclick="openMenuSearch()">🔎 메뉴 검색</button>
                 <button type="button" class="utility-btn" onclick="openMonthlyStats()">📊 통계</button>
             </div>
+            <section class="bgm-card" aria-labelledby="bgm-card-title">
+                <div class="bgm-card-header">
+                    <span id="bgm-card-title" class="bgm-card-title">🎵 오늘의 BGM</span>
+                    <span id="bgm-status" class="bgm-status" aria-live="polite">재생 대기</span>
+                </div>
+                <div class="bgm-controls">
+                    <button type="button" id="bgm-play-button" class="bgm-btn" onclick="playBgm()">▶ 재생</button>
+                    <button type="button" id="bgm-pause-button" class="bgm-btn" onclick="pauseBgm()" disabled>⏸ 일시정지</button>
+                    <button type="button" id="bgm-toggle-button" class="bgm-btn bgm-toggle-btn" onclick="toggleBgmPlayer()" aria-controls="bgm-player-wrap" aria-expanded="false">🎵 BGM 열기</button>
+                </div>
+                <div id="bgm-player-wrap" class="bgm-player-wrap" hidden>
+                    <div class="bgm-player" aria-label="YouTube BGM 플레이어"><div id="bgm-player"></div></div>
+                    <label class="bgm-volume-row" for="bgm-volume">볼륨 <input type="range" id="bgm-volume" min="0" max="100" value="50" oninput="setBgmVolume(this.value)"></label>
+                </div>
+            </section>
 
             <div class="navigation-panel">
                 <div class="date-box">
@@ -375,6 +406,8 @@
         const MEAL_CACHE_TTL = 15 * 60 * 1000;
         const NEXT_MEAL_SEARCH_DAYS = 60;
         const ADMIN_EMAIL = "bjt77@baejeong.hs.kr";
+        // YouTube URL의 v= 뒤 11자리 영상 ID만 바꾸면 BGM을 교체할 수 있습니다.
+        const BGM_VIDEO_ID = "be6hd1XZ9IM";
 
         const dateInput = document.getElementById('date-selector');
         let currentTab = 'lunch';
@@ -397,6 +430,8 @@
         let ratingEditMode = false;
         let pollLoadSequence = 0;
         let featureLoadSequence = 0;
+        let bgmPlayer = null;
+        let youtubeApiPromise = null;
         let resolveAuthReady;
         let rejectAuthReady;
         const authReady = new Promise((resolve, reject) => {
@@ -1811,6 +1846,142 @@
             document.getElementById(`tab-${tab}`).classList.add('active');
             document.querySelectorAll('.tab-item').forEach(el => el.setAttribute('aria-selected', String(el.id === `tab-${tab}`)));
             updateUI();
+        }
+
+        function setBgmStatus(message, type = '') {
+            const status = document.getElementById('bgm-status');
+            status.textContent = message;
+            status.classList.toggle('error', type === 'error');
+        }
+
+        function setBgmButtons({ canPause = false } = {}) {
+            document.getElementById('bgm-pause-button').disabled = !canPause;
+        }
+
+        function setBgmPlayerVisible(isVisible) {
+            const playerWrap = document.getElementById('bgm-player-wrap');
+            const toggleButton = document.getElementById('bgm-toggle-button');
+            playerWrap.hidden = !isVisible;
+            toggleButton.setAttribute('aria-expanded', String(isVisible));
+            toggleButton.textContent = isVisible ? '🎵 BGM 접기' : '🎵 BGM 열기';
+        }
+
+        function getBgmErrorMessage(code) {
+            const messages = {
+                2: 'BGM 영상 설정값이 올바르지 않습니다.',
+                5: '이 브라우저에서 BGM 영상을 재생할 수 없습니다.',
+                100: 'BGM 영상을 찾을 수 없습니다.',
+                101: '이 영상은 YouTube 임베드 재생을 허용하지 않습니다.',
+                150: '이 영상은 YouTube 임베드 재생을 허용하지 않습니다.'
+            };
+            return messages[code] || 'BGM을 재생하지 못했습니다. 잠시 후 다시 시도해주세요.';
+        }
+
+        function loadYouTubeIframeApi() {
+            if (window.YT && window.YT.Player) return Promise.resolve();
+            if (youtubeApiPromise) return youtubeApiPromise;
+
+            youtubeApiPromise = new Promise((resolve, reject) => {
+                const existingReadyHandler = window.onYouTubeIframeAPIReady;
+                window.onYouTubeIframeAPIReady = () => {
+                    if (typeof existingReadyHandler === 'function') existingReadyHandler();
+                    resolve();
+                };
+
+                const script = document.createElement('script');
+                script.src = 'https://www.youtube.com/iframe_api';
+                script.async = true;
+                script.onerror = () => reject(new Error('YouTube IFrame Player API를 불러오지 못했습니다.'));
+                document.head.appendChild(script);
+            }).catch(error => {
+                youtubeApiPromise = null;
+                throw error;
+            });
+            return youtubeApiPromise;
+        }
+
+        async function ensureBgmPlayer() {
+            if (bgmPlayer) return bgmPlayer;
+            await loadYouTubeIframeApi();
+
+            return new Promise((resolve, reject) => {
+                let playerReady = false;
+                bgmPlayer = new window.YT.Player('bgm-player', {
+                    width: '480',
+                    height: '270',
+                    videoId: BGM_VIDEO_ID,
+                    playerVars: {
+                        autoplay: 0,
+                        playsinline: 1,
+                        rel: 0,
+                        origin: window.location.origin
+                    },
+                    events: {
+                        onReady: event => {
+                            playerReady = true;
+                            event.target.setVolume(Number(document.getElementById('bgm-volume').value));
+                            setBgmStatus('재생 대기');
+                            resolve(bgmPlayer);
+                        },
+                        onStateChange: event => {
+                            const state = event.data;
+                            if (state === window.YT.PlayerState.PLAYING) {
+                                setBgmStatus('재생 중');
+                                setBgmButtons({ canPause: true });
+                            } else if (state === window.YT.PlayerState.PAUSED) {
+                                setBgmStatus('일시정지됨');
+                                setBgmButtons();
+                            } else if (state === window.YT.PlayerState.ENDED) {
+                                setBgmStatus('재생 완료');
+                                setBgmButtons();
+                            }
+                        },
+                        onError: event => {
+                            const error = new Error(getBgmErrorMessage(event.data));
+                            console.error('YouTube BGM 플레이어 오류:', { code: event.data, videoId: BGM_VIDEO_ID }, error);
+                            setBgmStatus(error.message, 'error');
+                            setBgmButtons();
+                            if (!playerReady) reject(error);
+                        }
+                    }
+                });
+            });
+        }
+
+        async function playBgm() {
+            setBgmPlayerVisible(true);
+            setBgmStatus('플레이어를 준비 중입니다…');
+            try {
+                const player = await ensureBgmPlayer();
+                player.playVideo();
+            } catch (error) {
+                console.error('YouTube BGM 재생 준비 실패:', error);
+                setBgmStatus(error.message || 'BGM을 재생하지 못했습니다.', 'error');
+                setBgmButtons();
+            }
+        }
+
+        function pauseBgm() {
+            if (!bgmPlayer || typeof bgmPlayer.pauseVideo !== 'function') return;
+            bgmPlayer.pauseVideo();
+        }
+
+        async function toggleBgmPlayer() {
+            const shouldOpen = document.getElementById('bgm-player-wrap').hidden;
+            setBgmPlayerVisible(shouldOpen);
+            if (!shouldOpen || bgmPlayer) return;
+
+            setBgmStatus('플레이어를 준비 중입니다…');
+            try {
+                await ensureBgmPlayer();
+            } catch (error) {
+                console.error('YouTube BGM 플레이어 초기화 실패:', error);
+                setBgmStatus(error.message || 'BGM 플레이어를 열지 못했습니다.', 'error');
+            }
+        }
+
+        function setBgmVolume(value) {
+            if (bgmPlayer && typeof bgmPlayer.setVolume === 'function') bgmPlayer.setVolume(Number(value));
         }
 
         window.addEventListener('beforeunload', () => {
