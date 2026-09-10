@@ -39,6 +39,8 @@
         .bgm-btn:disabled { cursor: not-allowed; opacity: 0.5; }
         .bgm-toggle-btn { margin-left: auto; }
         .bgm-settings-btn { border-color: #C9DCF0; background: #EEF6FF; color: #1565C0; }
+        .bgm-request-btn { border-color: #E9D4FF; background: #FAF5FF; color: #7B1FA2; }
+        .bgm-request-manage-btn { border-color: #C9DCF0; background: #EEF6FF; color: #1565C0; }
         .bgm-player-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E8EDF2; }
         .bgm-player-wrap[hidden] { display: none; }
         .bgm-player { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; background: #111; border-radius: 13px; overflow: hidden; }
@@ -55,6 +57,24 @@
         .bgm-save-btn { background: var(--info); color: #FFF; }
         .bgm-preview { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #111; }
         .bgm-preview iframe { width: 100% !important; height: 100% !important; border: 0; }
+        .bgm-request-form { display: grid; gap: 12px; }
+        .bgm-request-form label { display: grid; gap: 6px; color: #536273; font-size: 0.8rem; font-weight: 800; }
+        .bgm-request-form input, .bgm-request-form textarea { width: 100%; min-height: 44px; border: 2px solid #E9EDF1; border-radius: 13px; padding: 10px 12px; color: #374151; }
+        .bgm-request-form textarea { min-height: 76px; resize: vertical; }
+        .bgm-request-submit { min-height: 44px; border: 0; border-radius: 13px; background: #7B1FA2; color: #FFF; cursor: pointer; font-weight: 800; }
+        .bgm-request-list { display: grid; gap: 10px; }
+        .bgm-request-card { border: 1px solid #E8EDF2; border-radius: 15px; padding: 13px; background: #FCFDFE; }
+        .bgm-request-title { display: block; color: #374151; font-size: 0.92rem; font-weight: 800; overflow-wrap: anywhere; }
+        .bgm-request-detail { display: block; margin-top: 5px; color: #788694; font-size: 0.76rem; line-height: 1.5; overflow-wrap: anywhere; }
+        .bgm-request-status { display: inline-block; margin-top: 8px; padding: 4px 8px; border-radius: 999px; background: #F0F3F6; color: #627181; font-size: 0.7rem; font-weight: 800; }
+        .bgm-request-status.applied { background: #E8F5E9; color: #2E7D32; }
+        .bgm-request-status.hold { background: #FFF3E0; color: #C76700; }
+        .bgm-request-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+        .bgm-request-actions button { min-height: 34px; border: 0; border-radius: 9px; padding: 6px 9px; cursor: pointer; font-size: 0.72rem; font-weight: 800; }
+        .bgm-request-preview-btn { background: #EEF6FF; color: #1565C0; }
+        .bgm-request-apply-btn { background: #E8F5E9; color: #2E7D32; }
+        .bgm-request-hold-btn { background: #FFF3E0; color: #C76700; }
+        .bgm-request-delete-btn { background: #FFF0F0; color: #C62828; }
 
         .date-box { margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
@@ -288,7 +308,9 @@
                     <button type="button" id="bgm-play-button" class="bgm-btn" onclick="playBgm()">▶ 재생</button>
                     <button type="button" id="bgm-pause-button" class="bgm-btn" onclick="pauseBgm()" disabled>⏸ 일시정지</button>
                     <button type="button" id="bgm-toggle-button" class="bgm-btn bgm-toggle-btn" onclick="toggleBgmPlayer()" aria-controls="bgm-player-wrap" aria-expanded="false">🎵 BGM 열기</button>
+                    <button type="button" id="bgm-request-button" class="bgm-btn bgm-request-btn" onclick="openBgmRequest()">🎵 BGM 신청</button>
                     <button type="button" id="bgm-settings-button" class="bgm-btn bgm-settings-btn" onclick="openBgmSettings()" hidden>⚙ BGM 설정</button>
+                    <button type="button" id="bgm-request-manage-button" class="bgm-btn bgm-request-manage-btn" onclick="openBgmRequestManagement()" hidden>🎧 신청 관리</button>
                 </div>
                 <div id="bgm-player-wrap" class="bgm-player-wrap" hidden>
                     <div class="bgm-player" aria-label="YouTube BGM 플레이어"><div id="bgm-player-mount" class="bgm-player-mount"><div id="bgm-player"></div></div></div>
@@ -519,7 +541,8 @@
             const roleStatus = document.getElementById('suggestion-role-status');
             const logoutButton = document.getElementById('suggestion-logout-button');
             const bgmSettingsButton = document.getElementById('bgm-settings-button');
-            if (!studentButton || !teacherButton || !roleStatus || !logoutButton || !bgmSettingsButton) return;
+            const bgmRequestManageButton = document.getElementById('bgm-request-manage-button');
+            if (!studentButton || !teacherButton || !roleStatus || !logoutButton || !bgmSettingsButton || !bgmRequestManageButton) return;
 
             const isGoogleUser = isGoogleSuggestionUser(currentUser);
             studentButton.hidden = isGoogleUser;
@@ -527,6 +550,7 @@
             roleStatus.hidden = !isGoogleUser;
             logoutButton.hidden = !isGoogleUser;
             bgmSettingsButton.hidden = !isAdmin;
+            bgmRequestManageButton.hidden = !isAdmin;
             if (!isGoogleUser) return;
 
             if (isAdmin) {
@@ -2416,6 +2440,273 @@
                 }
             });
             input.focus();
+        }
+
+        async function ensureBgmRequestUser() {
+            let requester = auth.currentUser;
+            if (!isGoogleSuggestionUser(requester)) {
+                showToast('Google 로그인 창을 여는 중입니다…', 'info');
+                requester = await signInForSuggestion();
+            }
+            if (!requester || !isGoogleSuggestionUser(requester)) {
+                showToast('Google 계정으로 로그인한 뒤 BGM을 신청해주세요.', 'error');
+                return null;
+            }
+
+            try {
+                const tokenResult = await requester.getIdTokenResult(true);
+                if (auth.currentUser?.uid !== requester.uid || tokenResult?.claims?.firebase?.sign_in_provider !== 'google.com') {
+                    showToast('Google 로그인 상태를 다시 확인해 주세요.', 'error');
+                    return null;
+                }
+            } catch (error) {
+                console.error('BGM 신청 인증 확인 실패:', error.code, error.message, error);
+                showToast('Google 로그인 상태를 확인하지 못했습니다.', 'error');
+                return null;
+            }
+            return requester;
+        }
+
+        async function openBgmRequest() {
+            const requester = await ensureBgmRequestUser();
+            if (!requester) return;
+
+            openFeatureModal('🎵 BGM 신청');
+            const content = document.getElementById('feature-content');
+            const form = document.createElement('form');
+            form.className = 'bgm-request-form';
+
+            const titleLabel = document.createElement('label');
+            titleLabel.textContent = '곡 제목';
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.maxLength = 100;
+            titleInput.placeholder = '예: Animal Crossing 5PM';
+            titleInput.required = true;
+            titleLabel.appendChild(titleInput);
+
+            const linkLabel = document.createElement('label');
+            linkLabel.textContent = 'YouTube 링크 또는 영상 ID';
+            const linkInput = document.createElement('input');
+            linkInput.type = 'text';
+            linkInput.maxLength = 300;
+            linkInput.placeholder = 'https://youtu.be/...';
+            linkInput.required = true;
+            linkLabel.appendChild(linkInput);
+
+            const messageLabel = document.createElement('label');
+            messageLabel.textContent = '한마디 (선택)';
+            const messageInput = document.createElement('textarea');
+            messageInput.maxLength = 300;
+            messageInput.placeholder = '점심시간에 틀어주세요!';
+            messageLabel.appendChild(messageInput);
+
+            const help = document.createElement('p');
+            help.className = 'feature-help';
+            help.textContent = '신청자 이름과 한마디는 선생님만 확인할 수 있습니다.';
+            const submitButton = document.createElement('button');
+            submitButton.type = 'submit';
+            submitButton.className = 'bgm-request-submit';
+            submitButton.textContent = '신청하기';
+            form.append(titleLabel, linkLabel, messageLabel, help, submitButton);
+            content.appendChild(form);
+
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                const title = titleInput.value.trim();
+                const videoId = extractYouTubeVideoId(linkInput.value);
+                const message = messageInput.value.trim();
+                if (!title || !videoId) {
+                    help.textContent = '곡 제목과 유효한 YouTube 링크 또는 영상 ID를 입력해 주세요.';
+                    help.className = 'feature-empty';
+                    return;
+                }
+
+                const duplicateKey = `bgm-request:${requester.uid}:${videoId}`;
+                const cooldownKey = `bgm-request-time:${requester.uid}`;
+                const lastRequestAt = Number(localStorage.getItem(cooldownKey) || 0);
+                if (localStorage.getItem(duplicateKey)) {
+                    help.textContent = '같은 곡은 이미 신청했습니다.';
+                    help.className = 'feature-empty';
+                    return;
+                }
+                if (Date.now() - lastRequestAt < 60000) {
+                    help.textContent = '다음 BGM 신청은 잠시 후에 해주세요.';
+                    help.className = 'feature-empty';
+                    return;
+                }
+
+                const requestId = database.ref('bgmRequests').push().key;
+                const createdAt = new Date().toISOString();
+                const requestPath = `bgmRequests/${requestId}`;
+                const authorPath = `bgmRequestAuthors/${requestId}`;
+                submitButton.disabled = true;
+                try {
+                    await database.ref().update({
+                        [requestPath]: { title, videoId, createdAt, status: 'pending' },
+                        [authorPath]: {
+                            requesterUid: requester.uid,
+                            requesterName: requester.displayName?.trim() || '이름 정보 없음',
+                            message
+                        }
+                    });
+                    localStorage.setItem(duplicateKey, requestId);
+                    localStorage.setItem(cooldownKey, String(Date.now()));
+                    closeFeatureModal();
+                    showToast('BGM 신청을 등록했습니다.');
+                } catch (error) {
+                    console.error('BGM 신청 저장 실패:', {
+                        errorCode: error.code,
+                        errorMessage: error.message,
+                        requestId,
+                        paths: [requestPath, authorPath]
+                    }, error);
+                    help.textContent = 'BGM 신청을 저장하지 못했습니다. 로그인 상태를 확인해 주세요.';
+                    help.className = 'feature-empty';
+                } finally {
+                    submitButton.disabled = false;
+                }
+            });
+            titleInput.focus();
+        }
+
+        function getBgmRequestStatusLabel(status) {
+            return ({ pending: '신청됨', applied: '적용됨', hold: '보류', rejected: '반려' })[status] || '신청됨';
+        }
+
+        async function updateBgmRequestStatus(requestId, status) {
+            if (!isAdmin) return;
+            const path = `bgmRequests/${requestId}/status`;
+            try {
+                await database.ref(path).set(status);
+                showToast(status === 'hold' ? 'BGM 신청을 보류했습니다.' : 'BGM 신청 상태를 변경했습니다.');
+                openBgmRequestManagement();
+            } catch (error) {
+                console.error('BGM 신청 상태 변경 실패:', { errorCode: error.code, errorMessage: error.message, path }, error);
+                showToast('BGM 신청 상태를 변경하지 못했습니다.', 'error');
+            }
+        }
+
+        async function applyBgmRequest(requestId, request) {
+            if (!isAdmin) return;
+            try {
+                await database.ref().update({
+                    'settings/bgmVideoId': request.videoId,
+                    'settings/bgmUpdatedAt': firebase.database.ServerValue.TIMESTAMP,
+                    [`bgmRequests/${requestId}/status`]: 'applied'
+                });
+                applyBgmVideoId(request.videoId);
+                showToast('현재 BGM으로 적용했습니다.');
+                openBgmRequestManagement();
+            } catch (error) {
+                console.error('BGM 신청 적용 실패:', { errorCode: error.code, errorMessage: error.message, requestId, videoId: request.videoId }, error);
+                showToast('BGM 신청을 적용하지 못했습니다.', 'error');
+            }
+        }
+
+        async function deleteBgmRequest(requestId) {
+            if (!isAdmin) return;
+            const confirmed = await showConfirm('이 BGM 신청을 삭제할까요?', 'BGM 신청 삭제', '삭제', '취소');
+            if (!confirmed) return;
+            const requestPath = `bgmRequests/${requestId}`;
+            const authorPath = `bgmRequestAuthors/${requestId}`;
+            try {
+                await database.ref().update({ [requestPath]: null, [authorPath]: null });
+                showToast('BGM 신청을 삭제했습니다.');
+                openBgmRequestManagement();
+            } catch (error) {
+                console.error('BGM 신청 삭제 실패:', { errorCode: error.code, errorMessage: error.message, requestId, paths: [requestPath, authorPath] }, error);
+                showToast('BGM 신청을 삭제하지 못했습니다.', 'error');
+            }
+        }
+
+        async function openBgmRequestManagement() {
+            if (!isAdmin) {
+                showToast('선생님 계정으로 로그인해주세요.', 'error');
+                return;
+            }
+
+            openFeatureModal('🎧 BGM 신청 관리');
+            const content = document.getElementById('feature-content');
+            const loading = document.createElement('p');
+            loading.className = 'feature-help';
+            loading.textContent = 'BGM 신청을 불러오는 중입니다…';
+            content.appendChild(loading);
+            try {
+                const [requestsSnapshot, authorsSnapshot] = await Promise.all([
+                    database.ref('bgmRequests').once('value'),
+                    database.ref('bgmRequestAuthors').once('value')
+                ]);
+                const requests = requestsSnapshot.val() || {};
+                const authors = authorsSnapshot.val() || {};
+                content.replaceChildren();
+                const entries = Object.entries(requests).sort(([, a], [, b]) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+                if (entries.length === 0) {
+                    addFeatureMessage('아직 BGM 신청이 없습니다.', 'feature-empty');
+                    return;
+                }
+
+                const list = document.createElement('div');
+                list.className = 'bgm-request-list';
+                entries.forEach(([requestId, request]) => {
+                    const card = document.createElement('article');
+                    card.className = 'bgm-request-card';
+                    const title = document.createElement('span');
+                    title.className = 'bgm-request-title';
+                    title.textContent = request.title || '제목 없음';
+                    const author = authors[requestId] || {};
+                    const details = document.createElement('span');
+                    details.className = 'bgm-request-detail';
+                    const createdAt = request.createdAt ? new Date(request.createdAt).toLocaleString() : '';
+                    details.textContent = `신청자: ${author.requesterName || '이름 정보 없음'}${createdAt ? ` · ${createdAt}` : ''}`;
+                    const requestMessage = document.createElement('span');
+                    requestMessage.className = 'bgm-request-detail';
+                    requestMessage.textContent = author.message ? `한마디: ${author.message}` : '한마디 없음';
+                    const status = document.createElement('span');
+                    status.className = `bgm-request-status ${request.status || 'pending'}`;
+                    status.textContent = getBgmRequestStatusLabel(request.status);
+                    const previewMount = document.createElement('div');
+                    previewMount.className = 'bgm-preview';
+                    previewMount.hidden = true;
+                    const previewMessage = document.createElement('p');
+                    previewMessage.className = 'feature-help';
+                    previewMessage.hidden = true;
+                    const actions = document.createElement('div');
+                    actions.className = 'bgm-request-actions';
+                    const previewButton = document.createElement('button');
+                    previewButton.type = 'button';
+                    previewButton.className = 'bgm-request-preview-btn';
+                    previewButton.textContent = '미리듣기';
+                    previewButton.addEventListener('click', async () => {
+                        previewMount.hidden = false;
+                        previewMessage.hidden = false;
+                        await previewBgmVideo(request.videoId, previewMount, previewMessage);
+                    });
+                    const applyButton = document.createElement('button');
+                    applyButton.type = 'button';
+                    applyButton.className = 'bgm-request-apply-btn';
+                    applyButton.textContent = '적용';
+                    applyButton.addEventListener('click', () => applyBgmRequest(requestId, request));
+                    const holdButton = document.createElement('button');
+                    holdButton.type = 'button';
+                    holdButton.className = 'bgm-request-hold-btn';
+                    holdButton.textContent = '보류';
+                    holdButton.addEventListener('click', () => updateBgmRequestStatus(requestId, 'hold'));
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'bgm-request-delete-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.addEventListener('click', () => deleteBgmRequest(requestId));
+                    actions.append(previewButton, applyButton, holdButton, deleteButton);
+                    card.append(title, details, requestMessage, status, previewMount, previewMessage, actions);
+                    list.appendChild(card);
+                });
+                content.appendChild(list);
+            } catch (error) {
+                console.error('BGM 신청 목록 조회 실패:', error.code, error.message, error);
+                loading.textContent = 'BGM 신청 목록을 불러오지 못했습니다.';
+                loading.className = 'feature-empty';
+            }
         }
 
         window.addEventListener('beforeunload', () => {
