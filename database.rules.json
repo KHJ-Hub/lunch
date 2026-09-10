@@ -99,6 +99,21 @@
           ".validate": false
         }
       }
+    },
+    "settings": {
+      "bgmVideoId": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr'",
+        ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{11}$/)"
+      },
+      "bgmUpdatedAt": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr'",
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "$other": {
+        ".validate": false
+      }
     }
   }
 }

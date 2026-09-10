@@ -38,12 +38,23 @@
         .bgm-btn:hover { border-color: #AFC4D7; background: #F5F9FC; }
         .bgm-btn:disabled { cursor: not-allowed; opacity: 0.5; }
         .bgm-toggle-btn { margin-left: auto; }
+        .bgm-settings-btn { border-color: #C9DCF0; background: #EEF6FF; color: #1565C0; }
         .bgm-player-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E8EDF2; }
         .bgm-player-wrap[hidden] { display: none; }
         .bgm-player { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; background: #111; border-radius: 13px; overflow: hidden; }
+        .bgm-player-mount { width: 100%; height: 100%; }
         .bgm-player iframe { display: block; width: 100% !important; height: 100% !important; border: 0; }
         .bgm-volume-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: #647383; font-size: 0.76rem; font-weight: 800; }
         .bgm-volume-row input { flex: 1; accent-color: var(--info); }
+        .bgm-settings-form { display: grid; gap: 12px; }
+        .bgm-settings-form label { display: grid; gap: 6px; color: #536273; font-size: 0.8rem; font-weight: 800; }
+        .bgm-settings-form input { min-height: 44px; border: 2px solid #E9EDF1; border-radius: 13px; padding: 10px 12px; color: #374151; }
+        .bgm-settings-actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .bgm-settings-actions button { min-height: 42px; border: 0; border-radius: 12px; padding: 8px 14px; cursor: pointer; font-size: 0.8rem; font-weight: 800; }
+        .bgm-preview-btn { background: #EEF6FF; color: #1565C0; }
+        .bgm-save-btn { background: var(--info); color: #FFF; }
+        .bgm-preview { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #111; }
+        .bgm-preview iframe { width: 100% !important; height: 100% !important; border: 0; }
 
         .date-box { margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .date-label { font-size: 0.8rem; color: #888; font-weight: 600; }
@@ -266,9 +277,10 @@
                     <button type="button" id="bgm-play-button" class="bgm-btn" onclick="playBgm()">▶ 재생</button>
                     <button type="button" id="bgm-pause-button" class="bgm-btn" onclick="pauseBgm()" disabled>⏸ 일시정지</button>
                     <button type="button" id="bgm-toggle-button" class="bgm-btn bgm-toggle-btn" onclick="toggleBgmPlayer()" aria-controls="bgm-player-wrap" aria-expanded="false">🎵 BGM 열기</button>
+                    <button type="button" id="bgm-settings-button" class="bgm-btn bgm-settings-btn" onclick="openBgmSettings()" hidden>⚙ BGM 설정</button>
                 </div>
                 <div id="bgm-player-wrap" class="bgm-player-wrap" hidden>
-                    <div class="bgm-player" aria-label="YouTube BGM 플레이어"><div id="bgm-player"></div></div>
+                    <div class="bgm-player" aria-label="YouTube BGM 플레이어"><div id="bgm-player-mount" class="bgm-player-mount"><div id="bgm-player"></div></div></div>
                     <label class="bgm-volume-row" for="bgm-volume">볼륨 <input type="range" id="bgm-volume" min="0" max="100" value="50" oninput="setBgmVolume(this.value)"></label>
                 </div>
             </section>
@@ -406,8 +418,8 @@
         const MEAL_CACHE_TTL = 15 * 60 * 1000;
         const NEXT_MEAL_SEARCH_DAYS = 60;
         const ADMIN_EMAIL = "bjt77@baejeong.hs.kr";
-        // YouTube URL의 v= 뒤 11자리 영상 ID만 바꾸면 BGM을 교체할 수 있습니다.
-        const BGM_VIDEO_ID = "be6hd1XZ9IM";
+        // Realtime Database 설정값이 없을 때만 사용하는 기본 BGM입니다.
+        const DEFAULT_BGM_VIDEO_ID = "be6hd1XZ9IM";
 
         const dateInput = document.getElementById('date-selector');
         let currentTab = 'lunch';
@@ -431,6 +443,8 @@
         let pollLoadSequence = 0;
         let featureLoadSequence = 0;
         let bgmPlayer = null;
+        let bgmPreviewPlayer = null;
+        let currentBgmVideoId = DEFAULT_BGM_VIDEO_ID;
         let youtubeApiPromise = null;
         let resolveAuthReady;
         let rejectAuthReady;
@@ -485,13 +499,15 @@
             const teacherButton = document.getElementById('teacher-login-button');
             const roleStatus = document.getElementById('suggestion-role-status');
             const logoutButton = document.getElementById('suggestion-logout-button');
-            if (!studentButton || !teacherButton || !roleStatus || !logoutButton) return;
+            const bgmSettingsButton = document.getElementById('bgm-settings-button');
+            if (!studentButton || !teacherButton || !roleStatus || !logoutButton || !bgmSettingsButton) return;
 
             const isGoogleUser = isGoogleSuggestionUser(currentUser);
             studentButton.hidden = isGoogleUser;
             teacherButton.hidden = isGoogleUser;
             roleStatus.hidden = !isGoogleUser;
             logoutButton.hidden = !isGoogleUser;
+            bgmSettingsButton.hidden = !isAdmin;
             if (!isGoogleUser) return;
 
             if (isAdmin) {
@@ -912,6 +928,7 @@
         }
 
         function closeFeatureModal() {
+            destroyBgmPreviewPlayer();
             document.getElementById('feature-modal').hidden = true;
         }
 
@@ -1854,6 +1871,32 @@
             status.classList.toggle('error', type === 'error');
         }
 
+        function isValidYouTubeVideoId(value) {
+            return /^[A-Za-z0-9_-]{11}$/.test(value || '');
+        }
+
+        function extractYouTubeVideoId(rawValue) {
+            const value = (rawValue || '').trim();
+            if (isValidYouTubeVideoId(value)) return value;
+
+            let url;
+            try {
+                url = new URL(value);
+            } catch {
+                return null;
+            }
+
+            const host = url.hostname.toLowerCase().replace(/^www\./, '');
+            let videoId = null;
+            if (host === 'youtu.be') {
+                videoId = url.pathname.split('/').filter(Boolean)[0];
+            } else if (host === 'youtube.com' || host === 'm.youtube.com') {
+                if (url.pathname === '/watch') videoId = url.searchParams.get('v');
+                else if (url.pathname.startsWith('/embed/')) videoId = url.pathname.split('/')[2];
+            }
+            return isValidYouTubeVideoId(videoId) ? videoId : null;
+        }
+
         function setBgmButtons({ canPause = false } = {}) {
             document.getElementById('bgm-pause-button').disabled = !canPause;
         }
@@ -1875,6 +1918,45 @@
                 150: '이 영상은 YouTube 임베드 재생을 허용하지 않습니다.'
             };
             return messages[code] || 'BGM을 재생하지 못했습니다. 잠시 후 다시 시도해주세요.';
+        }
+
+        function resetBgmPlayerMount() {
+            const mount = document.getElementById('bgm-player-mount');
+            if (!mount) return;
+            mount.replaceChildren();
+            const player = document.createElement('div');
+            player.id = 'bgm-player';
+            mount.appendChild(player);
+        }
+
+        function destroyBgmPlayer() {
+            if (bgmPlayer && typeof bgmPlayer.destroy === 'function') {
+                try {
+                    bgmPlayer.destroy();
+                } catch (error) {
+                    console.warn('기존 BGM 플레이어 정리 실패:', error);
+                }
+            }
+            bgmPlayer = null;
+            resetBgmPlayerMount();
+            setBgmButtons();
+        }
+
+        function applyBgmVideoId(videoId) {
+            const nextVideoId = isValidYouTubeVideoId(videoId) ? videoId : DEFAULT_BGM_VIDEO_ID;
+            if (currentBgmVideoId === nextVideoId) return;
+            currentBgmVideoId = nextVideoId;
+            if (bgmPlayer) {
+                destroyBgmPlayer();
+                setBgmStatus('새 BGM이 준비되었습니다. 재생을 눌러주세요.');
+            }
+        }
+
+        function loadBgmSetting() {
+            const bgmRef = database.ref('settings/bgmVideoId');
+            replaceFirebaseListener('bgmSettings', bgmRef, snapshot => {
+                applyBgmVideoId(snapshot.val());
+            });
         }
 
         function loadYouTubeIframeApi() {
@@ -1909,7 +1991,7 @@
                 bgmPlayer = new window.YT.Player('bgm-player', {
                     width: '480',
                     height: '270',
-                    videoId: BGM_VIDEO_ID,
+                    videoId: currentBgmVideoId,
                     playerVars: {
                         autoplay: 0,
                         playsinline: 1,
@@ -1938,7 +2020,7 @@
                         },
                         onError: event => {
                             const error = new Error(getBgmErrorMessage(event.data));
-                            console.error('YouTube BGM 플레이어 오류:', { code: event.data, videoId: BGM_VIDEO_ID }, error);
+                            console.error('YouTube BGM 플레이어 오류:', { code: event.data, videoId: currentBgmVideoId }, error);
                             setBgmStatus(error.message, 'error');
                             setBgmButtons();
                             if (!playerReady) reject(error);
@@ -1984,6 +2066,142 @@
             if (bgmPlayer && typeof bgmPlayer.setVolume === 'function') bgmPlayer.setVolume(Number(value));
         }
 
+        function destroyBgmPreviewPlayer() {
+            if (bgmPreviewPlayer && typeof bgmPreviewPlayer.destroy === 'function') {
+                try {
+                    bgmPreviewPlayer.destroy();
+                } catch (error) {
+                    console.warn('BGM 미리보기 플레이어 정리 실패:', error);
+                }
+            }
+            bgmPreviewPlayer = null;
+        }
+
+        function setBgmSettingsMessage(element, message, type = 'feature-help') {
+            element.textContent = message;
+            element.className = type;
+        }
+
+        async function previewBgmVideo(rawValue, previewMount, message) {
+            const videoId = extractYouTubeVideoId(rawValue);
+            if (!videoId) {
+                setBgmSettingsMessage(message, 'YouTube 링크 또는 11자리 영상 ID를 확인해주세요.', 'feature-empty');
+                return;
+            }
+
+            destroyBgmPreviewPlayer();
+            previewMount.replaceChildren();
+            const playerElement = document.createElement('div');
+            playerElement.id = 'bgm-preview-player';
+            previewMount.appendChild(playerElement);
+            setBgmSettingsMessage(message, '미리보기 플레이어를 준비 중입니다…');
+
+            try {
+                await loadYouTubeIframeApi();
+                await new Promise((resolve, reject) => {
+                    let playerReady = false;
+                    bgmPreviewPlayer = new window.YT.Player('bgm-preview-player', {
+                        width: '400',
+                        height: '225',
+                        videoId,
+                        playerVars: { autoplay: 0, playsinline: 1, rel: 0, origin: window.location.origin },
+                        events: {
+                            onReady: event => {
+                                playerReady = true;
+                                event.target.playVideo();
+                                setBgmSettingsMessage(message, '미리보기를 재생 중입니다.');
+                                resolve();
+                            },
+                            onAutoplayBlocked: () => {
+                                setBgmSettingsMessage(message, '브라우저가 자동 재생을 막았습니다. 아래 플레이어의 재생 버튼을 눌러 확인해주세요.');
+                            },
+                            onError: event => {
+                                const error = new Error(getBgmErrorMessage(event.data));
+                                console.error('YouTube BGM 미리보기 오류:', { code: event.data, videoId }, error);
+                                setBgmSettingsMessage(message, error.message, 'feature-empty');
+                                if (!playerReady) reject(error);
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('BGM 미리보기 준비 실패:', error);
+                setBgmSettingsMessage(message, error.message || '미리보기를 열지 못했습니다.', 'feature-empty');
+            }
+        }
+
+        function openBgmSettings() {
+            if (!isAdmin) {
+                showToast('선생님 계정으로 로그인해주세요.', 'error');
+                return;
+            }
+
+            openFeatureModal('🎵 BGM 설정');
+            const content = document.getElementById('feature-content');
+            const form = document.createElement('form');
+            form.className = 'bgm-settings-form';
+            const label = document.createElement('label');
+            label.textContent = 'YouTube 링크 또는 영상 ID';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = `https://www.youtube.com/watch?v=${currentBgmVideoId}`;
+            input.placeholder = 'https://www.youtube.com/watch?v=...';
+            input.maxLength = 300;
+            input.setAttribute('aria-label', 'YouTube BGM 링크 또는 영상 ID');
+            label.appendChild(input);
+
+            const message = document.createElement('p');
+            message.className = 'feature-help';
+            message.textContent = 'youtu.be, youtube.com/watch?v=, youtube.com/embed/ 형식과 11자리 영상 ID를 지원합니다.';
+            const previewMount = document.createElement('div');
+            previewMount.className = 'bgm-preview';
+            previewMount.hidden = true;
+
+            const actions = document.createElement('div');
+            actions.className = 'bgm-settings-actions';
+            const previewButton = document.createElement('button');
+            previewButton.type = 'button';
+            previewButton.className = 'bgm-preview-btn';
+            previewButton.textContent = '미리보기';
+            const saveButton = document.createElement('button');
+            saveButton.type = 'submit';
+            saveButton.className = 'bgm-save-btn';
+            saveButton.textContent = '저장';
+            actions.append(previewButton, saveButton);
+            form.append(label, message, previewMount, actions);
+            content.appendChild(form);
+
+            previewButton.addEventListener('click', async () => {
+                previewMount.hidden = false;
+                await previewBgmVideo(input.value, previewMount, message);
+            });
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                const videoId = extractYouTubeVideoId(input.value);
+                if (!videoId) {
+                    setBgmSettingsMessage(message, '유효한 YouTube 링크 또는 11자리 영상 ID만 저장할 수 있습니다.', 'feature-empty');
+                    return;
+                }
+
+                saveButton.disabled = true;
+                try {
+                    await database.ref().update({
+                        'settings/bgmVideoId': videoId,
+                        'settings/bgmUpdatedAt': firebase.database.ServerValue.TIMESTAMP
+                    });
+                    applyBgmVideoId(videoId);
+                    closeFeatureModal();
+                    showToast('BGM을 변경했습니다.');
+                } catch (error) {
+                    console.error('BGM 설정 저장 실패:', { errorCode: error.code, errorMessage: error.message, videoId }, error);
+                    setBgmSettingsMessage(message, 'BGM 설정을 저장하지 못했습니다. 선생님 권한을 확인해주세요.', 'feature-empty');
+                } finally {
+                    saveButton.disabled = false;
+                }
+            });
+            input.focus();
+        }
+
         window.addEventListener('beforeunload', () => {
             if (activeMealController) activeMealController.abort();
             Object.keys(activeListeners).forEach(removeFirebaseListener);
@@ -1991,6 +2209,7 @@
 
         setToday();
         setInitialMealTab();
+        loadBgmSetting();
         updateUI();
     </script>
 </body>
