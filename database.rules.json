@@ -68,6 +68,32 @@
         }
       }
     },
+    "commentReplies": {
+      "$date": {
+        "$meal": {
+          ".read": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && ($meal === 'lunch' || $meal === 'dinner')",
+          "$commentId": {
+            ".write": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && root.child('meals').child($date).child($meal).child('comments').child($commentId).exists()",
+            ".validate": "!newData.exists() || newData.hasChildren(['content', 'createdAt', 'updatedAt', 'authorRole'])",
+            "content": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
+            },
+            "createdAt": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100 && (!data.exists() || newData.val() === data.val())"
+            },
+            "updatedAt": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "authorRole": {
+              ".validate": "newData.val() === 'teacher'"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
     "suggestions": {
       ".read": true,
       "$suggestionId": {
@@ -78,6 +104,28 @@
         },
         "createdAt": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "suggestionReplies": {
+      ".read": true,
+      "$suggestionId": {
+        ".write": "auth != null && auth.token.email === 'bjt77@baejeong.hs.kr' && root.child('suggestions').child($suggestionId).exists()",
+        ".validate": "!newData.exists() || newData.hasChildren(['content', 'createdAt', 'updatedAt', 'authorRole'])",
+        "content": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
+        },
+        "createdAt": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100 && (!data.exists() || newData.val() === data.val())"
+        },
+        "updatedAt": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "authorRole": {
+          ".validate": "newData.val() === 'teacher'"
         },
         "$other": {
           ".validate": false

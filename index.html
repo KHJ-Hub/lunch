@@ -159,6 +159,17 @@
         .comment-bubble { background: #FFF; padding: 15px; border-radius: 20px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #F0F0F0; position: relative; }
         .comment-text { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
         .comment-meta { font-size: 0.7rem; color: #AAA; display: flex; align-items: center; gap: 10px; }
+        .teacher-reply { margin: 12px 0 0 10px; padding: 11px 12px; border-left: 3px solid #9CC8F2; border-radius: 0 13px 13px 0; background: #F4F9FF; }
+        .teacher-reply-label { display: block; color: #1565C0; font-size: 0.75rem; font-weight: 800; margin-bottom: 5px; }
+        .teacher-reply-content { color: #435161; font-size: 0.86rem; font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; }
+        .teacher-reply-meta { display: block; margin-top: 6px; color: #8A98A8; font-size: 0.68rem; font-weight: 600; }
+        .teacher-reply-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+        .teacher-reply-btn { min-height: 32px; border: 0; border-radius: 9px; padding: 6px 9px; cursor: pointer; font-size: 0.72rem; font-weight: 800; }
+        .teacher-reply-add-btn, .teacher-reply-edit-btn { margin-top: 10px; background: #EEF6FF; color: #1565C0; }
+        .teacher-reply-delete-btn { background: #FFF0F0; color: #C62828; }
+        .teacher-reply-editor { margin: 12px 0 0 10px; padding: 11px; border: 1px solid #CFE1F3; border-radius: 14px; background: #F8FBFE; }
+        .teacher-reply-editor label { display: block; margin-bottom: 7px; color: #1565C0; font-size: 0.75rem; font-weight: 800; }
+        .teacher-reply-editor textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid #D9E5F0; border-radius: 10px; padding: 9px; color: #435161; }
         .suggestion-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
         .suggestion-header h3 { margin: 0; }
         .suggestion-auth-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
@@ -437,6 +448,9 @@
         let isAdmin = false;
         let currentSuggestions = null;
         let currentSuggestionAuthors = null;
+        let currentComments = null;
+        let currentCommentReplies = null;
+        let currentSuggestionReplies = null;
         let currentRatingData = null;
         let currentRenderedMenu = '';
         let ratingEditMode = false;
@@ -460,6 +474,7 @@
                 updateAdminControls();
                 updateSuggestionAuthStatus();
                 if (currentTab === 'suggest') loadSuggestions();
+                else loadComments();
                 resolveAuthReady(user);
                 return;
             }
@@ -468,6 +483,7 @@
             updateAdminControls();
             updateSuggestionAuthStatus();
             if (currentTab === 'suggest') loadSuggestions();
+            else loadComments();
             auth.signInAnonymously().catch(error => {
                 console.error("익명 인증 실패:", error);
                 rejectAuthReady(error);
@@ -491,6 +507,9 @@
         function removeMealListeners() {
             removeFirebaseListener('rating');
             removeFirebaseListener('comments');
+            removeFirebaseListener('commentReplies');
+            currentComments = null;
+            currentCommentReplies = null;
             removeFirebaseListener('poll');
         }
 
@@ -1352,6 +1371,8 @@
             } else {
                 removeFirebaseListener('suggestions');
                 removeFirebaseListener('suggestionAuthors');
+                removeFirebaseListener('suggestionReplies');
+                currentSuggestionReplies = null;
                 removeMealListeners();
                 mealView.style.display = 'block'; suggestView.style.display = 'none';
                 card.className = `meal-content-area ${currentTab}`;
@@ -1603,12 +1624,149 @@
                 });
         }
 
+        function formatTeacherReplyTime(reply) {
+            const rawTime = reply?.updatedAt || reply?.createdAt;
+            if (!rawTime) return '';
+            const parsed = new Date(rawTime);
+            return Number.isNaN(parsed.getTime()) ? String(rawTime) : parsed.toLocaleString();
+        }
+
+        function renderTeacherReplyArea(container, reply, handlers) {
+            container.replaceChildren();
+            if (reply?.content) {
+                const replyBox = document.createElement('div');
+                replyBox.className = 'teacher-reply';
+                const label = document.createElement('span');
+                label.className = 'teacher-reply-label';
+                label.textContent = '↳ 선생님 답글';
+                const content = document.createElement('div');
+                content.className = 'teacher-reply-content';
+                content.textContent = reply.content;
+                replyBox.append(label, content);
+
+                const replyTime = formatTeacherReplyTime(reply);
+                if (replyTime) {
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'teacher-reply-meta';
+                    timestamp.textContent = replyTime;
+                    replyBox.appendChild(timestamp);
+                }
+
+                if (isAdmin) {
+                    const actions = document.createElement('div');
+                    actions.className = 'teacher-reply-actions';
+                    const editButton = document.createElement('button');
+                    editButton.type = 'button';
+                    editButton.className = 'teacher-reply-btn teacher-reply-edit-btn';
+                    editButton.textContent = '수정';
+                    editButton.addEventListener('click', () => openTeacherReplyEditor(container, reply.content, handlers.save, () => renderTeacherReplyArea(container, reply, handlers)));
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'teacher-reply-btn teacher-reply-delete-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.addEventListener('click', handlers.remove);
+                    actions.append(editButton, deleteButton);
+                    replyBox.appendChild(actions);
+                }
+                container.appendChild(replyBox);
+                return;
+            }
+
+            if (!isAdmin) return;
+            const addButton = document.createElement('button');
+            addButton.type = 'button';
+            addButton.className = 'teacher-reply-btn teacher-reply-add-btn';
+            addButton.textContent = '답글 달기';
+            addButton.addEventListener('click', () => openTeacherReplyEditor(container, '', handlers.save, () => renderTeacherReplyArea(container, reply, handlers)));
+            container.appendChild(addButton);
+        }
+
+        function openTeacherReplyEditor(container, initialContent, save, cancel) {
+            container.replaceChildren();
+            const form = document.createElement('form');
+            form.className = 'teacher-reply-editor';
+            const label = document.createElement('label');
+            label.textContent = '선생님 답글';
+            const input = document.createElement('textarea');
+            input.maxLength = 300;
+            input.value = initialContent;
+            input.placeholder = '학생에게 보여줄 답글을 적어주세요.';
+            input.setAttribute('aria-label', '선생님 답글');
+            label.appendChild(input);
+            const actions = document.createElement('div');
+            actions.className = 'teacher-reply-actions';
+            const cancelButton = document.createElement('button');
+            cancelButton.type = 'button';
+            cancelButton.className = 'teacher-reply-btn';
+            cancelButton.textContent = '취소';
+            cancelButton.addEventListener('click', cancel);
+            const submitButton = document.createElement('button');
+            submitButton.type = 'submit';
+            submitButton.className = 'teacher-reply-btn teacher-reply-edit-btn';
+            submitButton.textContent = '등록';
+            actions.append(cancelButton, submitButton);
+            form.append(label, actions);
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                const content = input.value.trim();
+                if (!content) {
+                    showToast('답글 내용을 입력해 주세요.', 'info');
+                    return;
+                }
+                submitButton.disabled = true;
+                try {
+                    await save(content);
+                } finally {
+                    submitButton.disabled = false;
+                }
+            });
+            container.appendChild(form);
+            input.focus();
+        }
+
+        function buildTeacherReply(content, existingReply) {
+            const now = new Date().toISOString();
+            return {
+                content,
+                createdAt: existingReply?.createdAt || now,
+                updatedAt: now,
+                authorRole: 'teacher'
+            };
+        }
+
+        async function saveCommentTeacherReply(date, meal, commentId, content, existingReply) {
+            if (!isAdmin) return;
+            const path = `commentReplies/${date}/${meal}/${commentId}`;
+            try {
+                await database.ref(path).set(buildTeacherReply(content, existingReply));
+                showToast('선생님 답글을 저장했습니다.');
+            } catch (error) {
+                console.error('한줄평 선생님 답글 저장 실패:', { errorCode: error.code, errorMessage: error.message, path }, error);
+                showToast('답글을 저장하지 못했습니다.', 'error');
+            }
+        }
+
+        async function deleteCommentTeacherReply(date, meal, commentId) {
+            if (!isAdmin) return;
+            const confirmed = await showConfirm('이 선생님 답글을 삭제할까요?', '답글 삭제', '삭제', '취소');
+            if (!confirmed) return;
+            const path = `commentReplies/${date}/${meal}/${commentId}`;
+            try {
+                await database.ref(path).remove();
+                showToast('선생님 답글을 삭제했습니다.');
+            } catch (error) {
+                console.error('한줄평 선생님 답글 삭제 실패:', { errorCode: error.code, errorMessage: error.message, path }, error);
+                showToast('답글을 삭제하지 못했습니다.', 'error');
+            }
+        }
+
         function loadComments() {
             if(!dateInput) return;
             const date = dateInput.value; const list = document.getElementById('comment-list');
             const commentsRef = database.ref(`meals/${date}/${currentTab}/comments`);
-            const handleComments = (s) => {
-                list.replaceChildren(); const data = s.val();
+            const repliesRef = database.ref(`commentReplies/${date}/${currentTab}`);
+            const renderComments = () => {
+                list.replaceChildren(); const data = currentComments;
                 if (data) Object.keys(data).reverse().forEach(k => {
                     const item = data[k]; const div = document.createElement('div');
                     div.className = 'comment-bubble';
@@ -1627,11 +1785,27 @@
                     likeButton.addEventListener('click', () => likeComment(k));
                     meta.append(timestamp, likeButton);
 
-                    div.append(text, meta);
+                    const replyArea = document.createElement('div');
+                    const reply = currentCommentReplies?.[k];
+                    renderTeacherReplyArea(replyArea, reply, {
+                        save: content => saveCommentTeacherReply(date, currentTab, k, content, reply),
+                        remove: () => deleteCommentTeacherReply(date, currentTab, k)
+                    });
+
+                    div.append(text, meta, replyArea);
                     list.appendChild(div);
                 }); else showEmptyListMessage(list, "첫 한줄평을 남겨주세요! 😊");
             };
+            const handleComments = snapshot => {
+                currentComments = snapshot.val();
+                renderComments();
+            };
+            const handleReplies = snapshot => {
+                currentCommentReplies = snapshot.val();
+                renderComments();
+            };
             replaceFirebaseListener('comments', commentsRef, handleComments);
+            replaceFirebaseListener('commentReplies', repliesRef, handleReplies);
         }
 
         async function loadPollData() {
@@ -1772,6 +1946,32 @@
             }
         }
 
+        async function saveSuggestionTeacherReply(suggestionId, content, existingReply) {
+            if (!isAdmin) return;
+            const path = `suggestionReplies/${suggestionId}`;
+            try {
+                await database.ref(path).set(buildTeacherReply(content, existingReply));
+                showToast('선생님 답글을 저장했습니다.');
+            } catch (error) {
+                console.error('건의함 선생님 답글 저장 실패:', { errorCode: error.code, errorMessage: error.message, path }, error);
+                showToast('답글을 저장하지 못했습니다.', 'error');
+            }
+        }
+
+        async function deleteSuggestionTeacherReply(suggestionId) {
+            if (!isAdmin) return;
+            const confirmed = await showConfirm('이 선생님 답글을 삭제할까요?', '답글 삭제', '삭제', '취소');
+            if (!confirmed) return;
+            const path = `suggestionReplies/${suggestionId}`;
+            try {
+                await database.ref(path).remove();
+                showToast('선생님 답글을 삭제했습니다.');
+            } catch (error) {
+                console.error('건의함 선생님 답글 삭제 실패:', { errorCode: error.code, errorMessage: error.message, path }, error);
+                showToast('답글을 삭제하지 못했습니다.', 'error');
+            }
+        }
+
         function loadSuggestions() {
             const list = document.getElementById('suggest-list');
             const suggestionsRef = database.ref(`suggestions`);
@@ -1812,7 +2012,14 @@
                         metaRow.append(deleteButton);
                     }
 
-                    div.append(text, metaRow);
+                    const replyArea = document.createElement('div');
+                    const reply = currentSuggestionReplies?.[key];
+                    renderTeacherReplyArea(replyArea, reply, {
+                        save: content => saveSuggestionTeacherReply(key, content, reply),
+                        remove: () => deleteSuggestionTeacherReply(key)
+                    });
+
+                    div.append(text, metaRow, replyArea);
                     list.appendChild(div);
                 }); else showEmptyListMessage(list, "건의사항을 남겨주세요! 😊");
             };
@@ -1821,6 +2028,13 @@
                 renderSuggestions();
             };
             replaceFirebaseListener('suggestions', suggestionsRef, handleSuggestions);
+
+            const repliesRef = database.ref('suggestionReplies');
+            const handleReplies = snapshot => {
+                currentSuggestionReplies = snapshot.val();
+                renderSuggestions();
+            };
+            replaceFirebaseListener('suggestionReplies', repliesRef, handleReplies);
 
             if (isAdmin) {
                 const authorsRef = database.ref('suggestionAuthors');
@@ -1841,10 +2055,12 @@
             if (!confirmed) return;
             const suggestionPath = `suggestions/${key}`;
             const authorPath = `suggestionAuthors/${key}`;
+            const replyPath = `suggestionReplies/${key}`;
             try {
                 await database.ref().update({
                     [suggestionPath]: null,
-                    [authorPath]: null
+                    [authorPath]: null,
+                    [replyPath]: null
                 });
                 showToast("건의사항을 삭제했습니다.");
             } catch (error) {
@@ -1852,7 +2068,7 @@
                     errorCode: error.code,
                     errorMessage: error.message,
                     suggestionId: key,
-                    paths: [suggestionPath, authorPath]
+                    paths: [suggestionPath, authorPath, replyPath]
                 }, error);
                 showToast("건의사항을 삭제하지 못했습니다.", "error");
             }
