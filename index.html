@@ -584,6 +584,14 @@
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
                 const result = await auth.signInWithPopup(provider);
+                console.info(`${role === 'teacher' ? '선생님' : '학생'} Google 로그인 성공:`, {
+                    uid: result.user?.uid,
+                    email: result.user?.email,
+                    displayName: result.user?.displayName,
+                    providerData: result.user?.providerData,
+                    currentUserUid: auth.currentUser?.uid,
+                    currentUserEmail: auth.currentUser?.email
+                });
                 if (role === 'teacher' && result.user?.email?.toLowerCase() !== ADMIN_EMAIL) {
                     const signedInEmail = result.user?.email?.toLowerCase();
                     console.warn("관리자 이메일 불일치:", signedInEmail || "이메일 정보 없음");
