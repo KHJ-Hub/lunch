@@ -132,8 +132,16 @@
             border-radius: 15px !important; font-weight: 900 !important;
         }
 
-        .menu-text { line-height: 2.0; color: #444; font-size: clamp(1.15rem, 1.1vw, 1.3rem); font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; }
-        .menu-detail { display: block; color: #888; font-size: 0.85rem; font-weight: 500; }
+        .menu-text { line-height: 1.55; color: #444; font-size: clamp(1.02rem, 1vw, 1.18rem); font-weight: 700; word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.2px; text-align: left; }
+        .menu-groups { display: grid; gap: 8px; }
+        .menu-group { padding: 9px 11px; border: 1px solid rgba(0, 0, 0, 0.06); border-radius: 14px; background: rgba(255, 255, 255, 0.52); }
+        .menu-group-title { display: block; margin-bottom: 3px; color: #65717D; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.01em; }
+        .menu-group-items { display: grid; gap: 2px; }
+        .menu-item { min-width: 0; }
+        .menu-group-main { border-color: rgba(255, 152, 0, 0.28); background: rgba(255, 248, 225, 0.82); }
+        .menu-group-main .menu-group-title { color: #B56A00; }
+        .menu-group-main .menu-item { color: #5A3A00; font-weight: 800; }
+        .menu-detail { display: block; color: #888; font-size: 0.78em; font-weight: 500; }
         .meal-card-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
         .share-meal-btn { min-height: 36px; padding: 6px 11px; font-size: 0.75rem; background: rgba(255,255,255,0.65); }
         .meal-state-detail { display: block; color: #888; font-size: 0.78rem; font-weight: 500; line-height: 1.5; margin-top: 6px; }
@@ -225,7 +233,9 @@
             .navigation-panel { position: sticky; top: max(0px, env(safe-area-inset-top)); z-index: 20; margin: 0 -8px 16px; padding: 8px; border-radius: 20px; background: rgba(255,255,255,0.96); box-shadow: 0 8px 20px rgba(15,23,42,0.07); backdrop-filter: blur(10px); }
             .date-box, .tab-switch { margin-bottom: 10px; }
             .tab-switch { margin-bottom: 0; }
-            .menu-text { font-size: clamp(0.98rem, 4.3vw, 1.12rem); line-height: 1.85; word-break: normal; overflow-wrap: anywhere; }
+            .menu-text { font-size: clamp(0.98rem, 4.3vw, 1.12rem); line-height: 1.55; word-break: normal; overflow-wrap: anywhere; }
+            .menu-groups { gap: 7px; }
+            .menu-group { padding: 8px 10px; border-radius: 13px; }
             .comment-text, .poll-item-row span { overflow-wrap: anywhere; word-break: normal; }
             .feature-dialog { width: min(100%, 400px); max-height: 82vh; padding: 18px; border-radius: 20px; }
             .suggestion-header { align-items: flex-start; }
@@ -902,6 +912,49 @@
             return (menu || '').replace(/<br\s*\/?>/gi, ',').replace(/\s+/g, ' ').trim();
         }
 
+        const MENU_HIGHLIGHT_CATEGORIES = [
+            { key: 'rice', label: '🍚 밥', keywords: ['볶음밥', '덮밥', '비빔밥', '주먹밥', '카레라이스', '오므라이스', '밥'] },
+            { key: 'soup', label: '🥣 국/찌개', keywords: ['찌개', '전골', '스프', '우동', '라면', '국수', '국', '탕'] },
+            { key: 'main', label: '⭐ 오늘의 메인', keywords: ['돈까스', '떡갈비', '불고기', '제육', '스테이크', '갈비', '치킨', '닭', '생선', '고등어', '삼치', '연어', '가자미', '갈치', '코다리', '고기', '찜', '튀김'] },
+            { key: 'side', label: '🍳 반찬', keywords: [] },
+            { key: 'kimchi', label: '🥬 김치', keywords: ['김치', '깍두기', '석박지', '겉절이'] },
+            { key: 'dessert', label: '🍎 후식', keywords: ['과일', '사과', '배', '바나나', '귤', '오렌지', '포도', '수박', '딸기', '키위', '파인애플', '멜론', '요구르트', '요거트', '주스', '음료', '아이스크림', '케이크', '쿠키', '푸딩', '젤리', '빵'] },
+            { key: 'other', label: '➕ 기타', keywords: [] }
+        ];
+
+        function getMenuItemName(item) {
+            return item.replace(/\([^)]*\)/g, '').trim();
+        }
+
+        function classifyMenuItem(item) {
+            const name = getMenuItemName(item);
+            // 국물 음식(김치찌개 등)은 김치보다 먼저 판별하고, 밥·후식도 메인 키워드보다 우선합니다.
+            const priority = ['rice', 'soup', 'dessert', 'kimchi', 'main'];
+            for (const key of priority) {
+                const category = MENU_HIGHLIGHT_CATEGORIES.find(item => item.key === key);
+                if (category.keywords.some(keyword => name.includes(keyword))) return key;
+            }
+            if (/^(소스|양념|장|간장|시즈닝|김가루)/.test(name)) return 'other';
+            return 'side';
+        }
+
+        function appendMenuItem(container, item) {
+            const row = document.createElement('div');
+            row.className = 'menu-item';
+            const detailMatch = item.match(/^(.+?[^\s(])\s*(\(.*)$/);
+
+            if (detailMatch) {
+                row.appendChild(document.createTextNode(detailMatch[1]));
+                const detail = document.createElement('span');
+                detail.className = 'menu-detail';
+                detail.textContent = detailMatch[2];
+                row.appendChild(detail);
+            } else {
+                row.textContent = item;
+            }
+            container.appendChild(row);
+        }
+
         function formatMealDate(date) {
             const parsed = parseSafeDate(date);
             return `${parsed.getFullYear()}.${String(parsed.getMonth() + 1).padStart(2, '0')}.${String(parsed.getDate()).padStart(2, '0')}.`;
@@ -1216,23 +1269,28 @@
             content.replaceChildren();
             currentRenderedMenu = menu;
 
-            menu.split(/,(?![^(]*\))/).forEach(item => {
-                const row = document.createElement('div');
-                const trimmedItem = item.trim();
-                const detailMatch = trimmedItem.match(/^(.+?[^\s(])\s*(\(.*)$/);
-
-                if (detailMatch) {
-                    row.appendChild(document.createTextNode(detailMatch[1]));
-                    const detail = document.createElement('span');
-                    detail.className = 'menu-detail';
-                    detail.textContent = detailMatch[2];
-                    row.appendChild(detail);
-                } else {
-                    row.textContent = trimmedItem;
-                }
-
-                content.appendChild(row);
+            const groups = new Map(MENU_HIGHLIGHT_CATEGORIES.map(category => [category.key, []]));
+            menu.split(/,(?![^(]*\))/).map(item => item.trim()).filter(Boolean).forEach(item => {
+                groups.get(classifyMenuItem(item)).push(item);
             });
+
+            const groupContainer = document.createElement('div');
+            groupContainer.className = 'menu-groups';
+            MENU_HIGHLIGHT_CATEGORIES.forEach(category => {
+                const items = groups.get(category.key);
+                if (!items.length) return;
+                const group = document.createElement('section');
+                group.className = `menu-group${category.key === 'main' ? ' menu-group-main' : ''}`;
+                const title = document.createElement('span');
+                title.className = 'menu-group-title';
+                title.textContent = category.label;
+                const itemList = document.createElement('div');
+                itemList.className = 'menu-group-items';
+                items.forEach(item => appendMenuItem(itemList, item));
+                group.append(title, itemList);
+                groupContainer.appendChild(group);
+            });
+            content.appendChild(groupContainer);
         }
 
         function showEmptyListMessage(list, text) {
