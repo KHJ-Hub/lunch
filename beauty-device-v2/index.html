@@ -48,7 +48,13 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 .type{font-size:26px;font-weight:950;letter-spacing:-.045em;margin:8px 0}
 .type-sub{font-size:13px;color:var(--muted);line-height:1.5}
 .pick{padding:0;overflow:hidden}
+.product-visual{padding:14px 14px 0;background:linear-gradient(160deg,#fff0f6,#fff)}
+.product-photo{width:100%;aspect-ratio:4/3;border-radius:22px;background-image:url('products.webp');background-size:400% 200%;background-repeat:no-repeat;background-color:#fff;box-shadow:inset 0 0 0 1px rgba(240,219,228,.8)}
 .pick-top{padding:18px 18px 14px;background:linear-gradient(135deg,#fff0f6,#fff)}
+.product-desc{font-size:13px;line-height:1.62;color:#5d5158;margin:12px 0 0}
+.fit-box{margin-top:14px;padding:13px 14px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+.fit-box b{display:block;font-size:11px;color:#b32867;margin-bottom:5px}
+.fit-box p{margin:0;font-size:12px;line-height:1.5;color:#5d5158}
 .rank{font-size:11px;font-weight:900;color:#b32867;letter-spacing:.12em}
 .product{font-size:23px;font-weight:950;letter-spacing:-.045em;margin:6px 0 3px}
 .brandname{font-size:12px;color:var(--muted)}
@@ -59,8 +65,14 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 .reason ul{padding:0;margin:0;list-style:none;display:grid;gap:8px}
 .reason li{font-size:13px;line-height:1.45;color:#544951;padding-left:20px;position:relative}
 .reason li:before{content:"✓";position:absolute;left:0;color:var(--pink);font-weight:900}
-.also{margin-top:14px;padding:18px}
-.compare-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.also{margin-top:14px;padding:16px}
+.compare-row{display:grid;grid-template-columns:86px 1fr;gap:13px;align-items:center}
+.alt-photo{width:86px;height:104px;border-radius:16px;background-image:url('products.webp');background-size:400% 200%;background-repeat:no-repeat;background-color:#fff4f8;border:1px solid var(--line)}
+.compare-copy{min-width:0}
+.compare-row b{font-size:17px}
+.compare-desc{font-size:12px;line-height:1.5;color:#5d5158;margin:8px 0 0}
+.compare-tip{font-size:11px;line-height:1.45;color:var(--muted);margin-top:8px}
+
 .compare-row b{font-size:17px}
 .staff{margin-top:14px;background:#241b22;color:#fff;border:0}
 .staff .label{font-size:11px;opacity:.68;letter-spacing:.12em;font-weight:800}
@@ -123,11 +135,14 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
       <div class="type-sub" id="resultSub"></div>
     </div>
     <div class="card pick">
+      <div class="product-visual"><div class="product-photo" id="mainPhoto" role="img"></div></div>
       <div class="pick-top">
         <div class="rank">MAIN PICK</div>
         <div class="product" id="mainName"></div>
         <div class="brandname" id="mainBrand"></div>
         <div class="tags" id="mainTags"></div>
+        <p class="product-desc" id="mainDesc"></p>
+        <div class="fit-box"><b data-i="fitTitle">이런 고객에게 추천</b><p id="mainFit"></p></div>
       </div>
       <div class="reason">
         <h3 data-i="why">왜 잘 맞나요?</h3>
@@ -137,11 +152,15 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 
     <div class="card also">
       <div class="rank">ALSO MATCH</div>
-      <div class="compare-row" style="margin-top:7px">
-        <div><b id="alsoName"></b><div class="brandname" id="alsoBrand"></div></div>
-        <div class="tags" id="alsoTags" style="justify-content:flex-end;margin-top:0"></div>
+      <div class="compare-row" style="margin-top:10px">
+        <div class="alt-photo" id="alsoPhoto" role="img"></div>
+        <div class="compare-copy">
+          <b id="alsoName"></b><div class="brandname" id="alsoBrand"></div>
+          <div class="tags" id="alsoTags" style="margin-top:8px"></div>
+          <p class="compare-desc" id="alsoDesc"></p>
+          <div class="compare-tip" id="alsoReason"></div>
+        </div>
       </div>
-      <div class="type-sub" id="alsoReason" style="margin-top:12px"></div>
     </div>
 
     <div class="card staff">
@@ -175,10 +194,10 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 
 <script>
 const I18N={
-ko:{kicker:"",heroTitle:"나에게 맞는<br>뷰티 디바이스 찾기",heroSub:"피부 고민과 홈케어 취향을 선택하면 나에게 잘 맞는 뷰티 디바이스를 찾아드려요.",pill1:"약 30초",pill2:"5 Questions",pill3:"맞춤 제품 추천",start:"START ✨",notice:"본 서비스는 고객이 선택한 고민과 사용 선호도를 바탕으로 제품 선택을 돕는 안내 서비스이며 의료적 피부 진단이 아닙니다.",quick:"30초면 끝나요",back:"이전",next:"다음",why:"왜 잘 맞나요?",myConcern:"MY CONCERN",share:"결과 공유하기",restart:"다시 찾기",footer:"제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 재고 및 판매 여부는 방문 시점에 따라 달라질 수 있습니다.",resultSub:"선택한 고민과 홈케어 취향을 바탕으로 제품을 비교했어요.",also:"함께 비교해볼 만한 제품이에요.",shareText:"나의 뷰티 디바이스 추천 결과"},
-en:{kicker:"",heroTitle:"Find My<br>Beauty Device",heroSub:"Choose your skin concerns and home-care preferences to find beauty devices that may suit you.",pill1:"About 30 sec",pill2:"5 Questions",pill3:"Personalized picks",start:"START ✨",notice:"This service is a product-selection guide based on your answers and is not a medical skin diagnosis.",quick:"About 30 seconds",back:"Back",next:"Next",why:"Why this match?",myConcern:"MY CONCERN",share:"Share result",restart:"Start again",footer:"Please check each product's official instructions and precautions before use. Availability may change.",resultSub:"We compared beauty devices based on your concerns and home-care preferences.",also:"Another device worth comparing.",shareText:"My Beauty Device Finder result"},
-zh:{kicker:"",heroTitle:"找到適合我的<br>美容儀",heroSub:"選擇你的肌膚困擾與居家保養偏好，我們會推薦適合你比較的美容儀。",pill1:"約30秒",pill2:"5個問題",pill3:"個人化推薦",start:"開始 ✨",notice:"本服務僅依照你的回答提供商品選擇參考，並非醫療性肌膚診斷。",quick:"約30秒完成",back:"上一步",next:"下一步",why:"為什麼適合？",myConcern:"我的困擾",share:"分享結果",restart:"重新測試",footer:"使用前請確認各商品官方使用方法與注意事項。店內庫存與販售狀況可能變動。",resultSub:"我們依照你的肌膚困擾與居家保養偏好比較了美容儀。",also:"也可以一起比較這款。",shareText:"我的美容儀推薦結果"},
-ja:{kicker:"",heroTitle:"私に合う<br>美容デバイスを探す",heroSub:"肌悩みとホームケアの好みを選ぶと、あなたに合う美容デバイスをご案内します。",pill1:"約30秒",pill2:"5 Questions",pill3:"パーソナル提案",start:"START ✨",notice:"本サービスは回答内容をもとに商品選びをサポートするもので、医療的な肌診断ではありません。",quick:"約30秒で完了",back:"戻る",next:"次へ",why:"おすすめの理由",myConcern:"MY CONCERN",share:"結果をシェア",restart:"もう一度",footer:"使用前に各商品の公式使用方法・注意事項をご確認ください。在庫・販売状況は店頭状況により変わる場合があります。",resultSub:"選択した悩みとホームケアの好みをもとに、美容デバイスを比較しました。",also:"あわせて比較しやすい商品です。",shareText:"私のビューティーデバイス診断結果"}
+ko:{kicker:"",heroTitle:"나에게 맞는<br>뷰티 디바이스 찾기",heroSub:"피부 고민과 홈케어 취향을 선택하면 나에게 잘 맞는 뷰티 디바이스를 찾아드려요.",pill1:"약 30초",pill2:"5 Questions",pill3:"맞춤 제품 추천",start:"START ✨",notice:"본 서비스는 고객이 선택한 고민과 사용 선호도를 바탕으로 제품 선택을 돕는 안내 서비스이며 의료적 피부 진단이 아닙니다.",quick:"30초면 끝나요",back:"이전",next:"다음",why:"왜 잘 맞나요?",fitTitle:"이런 고객에게 추천",myConcern:"MY CONCERN",share:"결과 공유하기",restart:"다시 찾기",footer:"제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 재고 및 판매 여부는 방문 시점에 따라 달라질 수 있습니다.",resultSub:"선택한 고민과 홈케어 취향을 바탕으로 제품을 비교했어요.",also:"함께 비교해볼 만한 제품이에요.",shareText:"나의 뷰티 디바이스 추천 결과"},
+en:{kicker:"",heroTitle:"Find My<br>Beauty Device",heroSub:"Choose your skin concerns and home-care preferences to find beauty devices that may suit you.",pill1:"About 30 sec",pill2:"5 Questions",pill3:"Personalized picks",start:"START ✨",notice:"This service is a product-selection guide based on your answers and is not a medical skin diagnosis.",quick:"About 30 seconds",back:"Back",next:"Next",why:"Why this match?",fitTitle:"Recommended for",myConcern:"MY CONCERN",share:"Share result",restart:"Start again",footer:"Please check each product's official instructions and precautions before use. Availability may change.",resultSub:"We compared beauty devices based on your concerns and home-care preferences.",also:"Another device worth comparing.",shareText:"My Beauty Device Finder result"},
+zh:{kicker:"",heroTitle:"找到適合我的<br>美容儀",heroSub:"選擇你的肌膚困擾與居家保養偏好，我們會推薦適合你比較的美容儀。",pill1:"約30秒",pill2:"5個問題",pill3:"個人化推薦",start:"開始 ✨",notice:"本服務僅依照你的回答提供商品選擇參考，並非醫療性肌膚診斷。",quick:"約30秒完成",back:"上一步",next:"下一步",why:"為什麼適合？",fitTitle:"適合這樣的你",myConcern:"我的困擾",share:"分享結果",restart:"重新測試",footer:"使用前請確認各商品官方使用方法與注意事項。店內庫存與販售狀況可能變動。",resultSub:"我們依照你的肌膚困擾與居家保養偏好比較了美容儀。",also:"也可以一起比較這款。",shareText:"我的美容儀推薦結果"},
+ja:{kicker:"",heroTitle:"私に合う<br>美容デバイスを探す",heroSub:"肌悩みとホームケアの好みを選ぶと、あなたに合う美容デバイスをご案内します。",pill1:"約30秒",pill2:"5 Questions",pill3:"パーソナル提案",start:"START ✨",notice:"本サービスは回答内容をもとに商品選びをサポートするもので、医療的な肌診断ではありません。",quick:"約30秒で完了",back:"戻る",next:"次へ",why:"おすすめの理由",fitTitle:"こんな方におすすめ",myConcern:"MY CONCERN",share:"結果をシェア",restart:"もう一度",footer:"使用前に各商品の公式使用方法・注意事項をご確認ください。在庫・販売状況は店頭状況により変わる場合があります。",resultSub:"選択した悩みとホームケアの好みをもとに、美容デバイスを比較しました。",also:"あわせて比較しやすい商品です。",shareText:"私のビューティーデバイス診断結果"}
 };
 
 const Q={
@@ -239,15 +258,58 @@ ja:[
 ]};
 
 const products=[
- {id:"x2",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
- {id:"mini",brand:"medicube AGE-R",name:"부스터 프로 미니 플러스",names:{en:"Booster Pro Mini Plus",zh:"Booster Pro Mini Plus",ja:"ブースタープロ ミニプラス"},v:{glow:4,absorb:4,texture:3,trouble:5,elastic:1,jaw:1,all:3,quick:5,target:4,beginner:5,easy:5,multi:2,focus:4,gentle:5,whole:4,cheek:3,jawarea:1,eye:2,spot:5},tags:["간편","컨디션","입문"]},
- {id:"vroller",brand:"medicube AGE-R",name:"부스터 브이 롤러",names:{en:"Booster V Roller",zh:"Booster V Roller",ja:"ブースター V ローラー"},v:{glow:1,absorb:1,texture:1,trouble:0,elastic:5,jaw:5,all:2,quick:3,target:5,beginner:3,easy:3,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:1,spot:2},tags:["페이스라인","EMS","집중"]},
- {id:"glow",brand:"medicube AGE-R",name:"부스터 글로우",names:{en:"Booster Glow",zh:"Booster Glow",ja:"ブースターグロウ"},v:{glow:5,absorb:5,texture:3,trouble:3,elastic:2,jaw:0,all:2,quick:5,target:4,beginner:5,easy:5,multi:2,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["광채","스킨케어","간편"]},
- {id:"vsera",brand:"MOMMYCARE",name:"EMS 브이쎄라",names:{en:"EMS V-SERA",zh:"EMS V-SERA",ja:"EMS V-SERA"},v:{glow:0,absorb:1,texture:0,trouble:0,elastic:4,jaw:5,all:1,quick:4,target:5,beginner:4,easy:4,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:0,spot:1},tags:["페이스라인","EMS","집중"]},
- {id:"thome",brand:"THOME",name:"투앤티업",names:{en:"20TYUP",zh:"20TYUP",ja:"20TYUP"},v:{glow:2,absorb:2,texture:4,trouble:5,elastic:1,jaw:0,all:2,quick:5,target:5,beginner:5,easy:5,multi:1,focus:5,gentle:4,whole:2,cheek:2,jawarea:0,eye:0,spot:5},tags:["트러블","스팟","입문"]},
- {id:"therma",brand:"LG Pra.L",name:"수퍼폼 써마샷 얼티밋",names:{en:"Superform Thermashot Ultimate",zh:"Superform Thermashot Ultimate",ja:"スーパーフォーム サーマショット アルティメット"},v:{glow:4,absorb:4,texture:5,trouble:1,elastic:5,jaw:4,all:5,quick:2,target:4,beginner:2,easy:2,multi:5,focus:4,gentle:1,whole:5,cheek:5,jawarea:4,eye:1,spot:2},tags:["탄력","피부결","올인원"]},
- {id:"galvanic",brand:"LG Pra.L",name:"갈바닉 부스터",names:{en:"Galvanic Booster",zh:"Galvanic Booster",ja:"ガルバニック ブースター"},v:{glow:4,absorb:5,texture:2,trouble:1,elastic:1,jaw:0,all:1,quick:5,target:4,beginner:5,easy:5,multi:1,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["스킨케어","간편","입문"]}
+ {id:"x2",photo:"0% 0%",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
+ {id:"mini",photo:"33.333% 0%",brand:"medicube AGE-R",name:"부스터 프로 미니 플러스",names:{en:"Booster Pro Mini Plus",zh:"Booster Pro Mini Plus",ja:"ブースタープロ ミニプラス"},v:{glow:4,absorb:4,texture:3,trouble:5,elastic:1,jaw:1,all:3,quick:5,target:4,beginner:5,easy:5,multi:2,focus:4,gentle:5,whole:4,cheek:3,jawarea:1,eye:2,spot:5},tags:["간편","컨디션","입문"]},
+ {id:"vroller",photo:"66.667% 0%",brand:"medicube AGE-R",name:"부스터 브이 롤러",names:{en:"Booster V Roller",zh:"Booster V Roller",ja:"ブースター V ローラー"},v:{glow:1,absorb:1,texture:1,trouble:0,elastic:5,jaw:5,all:2,quick:3,target:5,beginner:3,easy:3,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:1,spot:2},tags:["페이스라인","EMS","집중"]},
+ {id:"glow",photo:"100% 0%",brand:"medicube AGE-R",name:"부스터 글로우",names:{en:"Booster Glow",zh:"Booster Glow",ja:"ブースターグロウ"},v:{glow:5,absorb:5,texture:3,trouble:3,elastic:2,jaw:0,all:2,quick:5,target:4,beginner:5,easy:5,multi:2,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["광채","스킨케어","간편"]},
+ {id:"vsera",photo:"0% 100%",brand:"MOMMYCARE",name:"EMS 브이쎄라",names:{en:"EMS V-SERA",zh:"EMS V-SERA",ja:"EMS V-SERA"},v:{glow:0,absorb:1,texture:0,trouble:0,elastic:4,jaw:5,all:1,quick:4,target:5,beginner:4,easy:4,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:0,spot:1},tags:["페이스라인","EMS","집중"]},
+ {id:"thome",photo:"33.333% 100%",brand:"THOME",name:"투앤티업",names:{en:"20TYUP",zh:"20TYUP",ja:"20TYUP"},v:{glow:2,absorb:2,texture:4,trouble:5,elastic:1,jaw:0,all:2,quick:5,target:5,beginner:5,easy:5,multi:1,focus:5,gentle:4,whole:2,cheek:2,jawarea:0,eye:0,spot:5},tags:["트러블","스팟","입문"]},
+ {id:"therma",photo:"66.667% 100%",brand:"LG Pra.L",name:"수퍼폼 써마샷 얼티밋",names:{en:"Superform Thermashot Ultimate",zh:"Superform Thermashot Ultimate",ja:"スーパーフォーム サーマショット アルティメット"},v:{glow:4,absorb:4,texture:5,trouble:1,elastic:5,jaw:4,all:5,quick:2,target:4,beginner:2,easy:2,multi:5,focus:4,gentle:1,whole:5,cheek:5,jawarea:4,eye:1,spot:2},tags:["탄력","피부결","올인원"]},
+ {id:"galvanic",photo:"100% 100%",brand:"LG Pra.L",name:"갈바닉 부스터",names:{en:"Galvanic Booster",zh:"Galvanic Booster",ja:"ガルバニック ブースター"},v:{glow:4,absorb:5,texture:2,trouble:1,elastic:1,jaw:0,all:1,quick:5,target:4,beginner:5,easy:5,multi:1,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["스킨케어","간편","입문"]}
 ];
+
+const productDescriptions={
+ko:{
+ x2:"광채, 스킨케어 흡수, 피부결, 탄력, 페이스라인 등 여러 고민을 한 기기로 폭넓게 관리하고 싶은 고객에게 어울리는 멀티 기능형 디바이스예요.",
+ mini:"간편한 루틴으로 피부 컨디션과 브라이트닝 케어를 시작하고 싶은 고객이 비교하기 좋은 컴팩트 타입이에요.",
+ vroller:"턱선과 페이스라인을 중심으로 집중 관리하고 싶을 때 비교하기 좋은 롤러형 EMS 디바이스예요.",
+ glow:"수분감과 광채, 스킨케어 루틴과 함께 쓰는 홈케어를 선호할 때 비교하기 좋은 타입이에요.",
+ vsera:"EMS를 활용한 페이스라인 중심의 집중 홈케어를 원하는 고객이 비교하기 좋은 타입이에요.",
+ thome:"트러블이 신경 쓰이는 부위를 중심으로 간편하게 관리하고 싶거나 첫 디바이스를 찾는 고객이 비교하기 좋아요.",
+ therma:"탄력, 피부결, 모공 등 여러 고민을 보다 집중적으로 관리하고 싶은 고객에게 어울리는 멀티 기능형 디바이스예요.",
+ galvanic:"평소 사용하던 스킨케어를 바른 뒤 간단한 흡수 루틴을 더하고 싶은 고객이 비교하기 좋은 타입이에요."
+},
+en:{
+ x2:"A multi-function device for customers who want one device to cover glow, skincare absorption, texture, firmness and facial-contour focused routines.",
+ mini:"A compact option for customers who want a simple routine focused on skin condition and brightening care.",
+ vroller:"A roller-style EMS option for customers who want to focus mainly on the jawline and facial contour.",
+ glow:"A good comparison option for customers who prioritize hydration, glow and a skincare-paired home-care routine.",
+ vsera:"An EMS-focused option for customers who want a more targeted facial-contour home-care routine.",
+ thome:"A beginner-friendly option for customers who want simple, targeted care for areas where skin condition is a concern.",
+ therma:"A multi-function option for customers who want more focused care for firmness, texture and pores.",
+ galvanic:"A simple option for customers who want to add an absorption-focused step after applying their usual skincare."
+},
+zh:{
+ x2:"適合想用一台美容儀同時兼顧光澤、保養品吸收、膚質、彈力與臉部線條等多種需求的顧客。",
+ mini:"適合想用簡單流程開始肌膚狀態與提亮保養的顧客比較。",
+ vroller:"適合想集中保養下顎線與臉部輪廓的滾輪式 EMS 美容儀。",
+ glow:"適合重視水潤感、光澤與搭配日常保養品使用的居家保養需求。",
+ vsera:"適合想以 EMS 進行臉部輪廓集中居家保養的顧客比較。",
+ thome:"適合在意局部肌膚狀態、想簡單開始美容儀保養的顧客。",
+ therma:"適合想更集中比較彈力、膚質與毛孔等多種需求的多功能美容儀。",
+ galvanic:"適合在日常保養品後，加入簡單吸收保養步驟的顧客。"
+},
+ja:{
+ x2:"ツヤ、スキンケアサポート、キメ、ハリ、フェイスラインなど複数の悩みを1台で幅広くケアしたい方に向く多機能タイプです。",
+ mini:"肌コンディションやブライトニングケアをシンプルなルーティンで始めたい方に比較しやすいコンパクトタイプです。",
+ vroller:"フェイスラインを中心に集中ケアしたい方に比較しやすいローラー型EMSデバイスです。",
+ glow:"うるおい・ツヤ・普段のスキンケアと合わせたホームケアを重視する方に比較しやすいタイプです。",
+ vsera:"EMSを使ったフェイスライン中心の集中ホームケアを求める方に比較しやすいタイプです。",
+ thome:"肌コンディションが気になる部分を手軽にケアしたい方や、初めての美容デバイスを探している方に比較しやすいタイプです。",
+ therma:"ハリ・キメ・毛穴など複数の悩みをより集中的にケアしたい方に向く多機能タイプです。",
+ galvanic:"普段のスキンケア後に、シンプルな浸透サポートのステップを加えたい方に比較しやすいタイプです。"
+}
+};
 
 const labels={
 ko:{glow:"건조·광채",absorb:"스킨케어 흡수",texture:"모공·피부결",trouble:"트러블·컨디션",elastic:"탄력",jaw:"턱선·라인",whole:"얼굴 전체",cheek:"볼·팔자",jawarea:"턱선",eye:"눈가",spot:"특정 부위",quick:"간단한 루틴",target:"집중 관리",all:"다기능",care:"꼼꼼한 관리",beginner:"입문",some:"사용 경험 있음",advanced:"숙련",easy:"사용 편의",multi:"다양한 기능",focus:"집중 관리",gentle:"편안한 사용감"},
@@ -314,6 +376,20 @@ function scoreProduct(p){
  return s;
 }
 function pname(p){return (p.names&&p.names[lang])||p.name}
+function pdesc(p){return productDescriptions[lang][p.id]||""}
+function setProductPhoto(el,p){
+ el.style.backgroundPosition=p.photo;
+ el.setAttribute("aria-label",pname(p));
+}
+function fitLine(p){
+ const c=answers[0]||[];
+ const top=c.slice().sort((a,b)=>(p.v[b]||0)-(p.v[a]||0))[0]||c[0];
+ const style=answers[2];
+ if(lang==="ko") return labels.ko[top]+" 고민을 우선으로 보고, "+labels.ko[style]+"을 원하는 고객에게 특히 비교하기 좋아요.";
+ if(lang==="en") return "A strong comparison if "+labels.en[top]+" is a priority and you prefer "+labels.en[style].toLowerCase()+".";
+ if(lang==="zh") return "如果你最重視「"+labels.zh[top]+"」，並偏好「"+labels.zh[style]+"」，很適合一起比較。";
+ return "「"+labels.ja[top]+"」を重視し、「"+labels.ja[style]+"」を希望する方に比較しやすい商品です。";
+}
 function translatedTags(p){
  const map={
   ko:p.tags,
@@ -360,10 +436,10 @@ function showResult(){
  const main=ranked[0].p, also=ranked[1].p;
  $("#resultType").textContent=resultType();
  $("#resultSub").textContent=t("resultSub");
- $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand;
+ $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; setProductPhoto($("#mainPhoto"),main); $("#mainDesc").textContent=pdesc(main); $("#mainFit").textContent=fitLine(main);
  $("#mainTags").innerHTML=translatedTags(main).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#mainReasons").innerHTML=reasonLines(main).map(x=>'<li>'+x+'</li>').join("");
- $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand;
+ $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; setProductPhoto($("#alsoPhoto"),also); $("#alsoDesc").textContent=pdesc(also);
  $("#alsoTags").innerHTML=translatedTags(also).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#alsoReason").textContent=t("also");
  $("#staffConcern").textContent=answers[0].map(x=>labels[lang][x]).join(" · ");
