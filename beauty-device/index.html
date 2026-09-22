@@ -88,13 +88,12 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 
   <section id="home">
     <div class="card hero">
-      <div class="kicker" data-i="kicker">매장 입점 제품 기준</div>
       <h1 data-i="heroTitle">나에게 맞는<br>뷰티 디바이스 찾기</h1>
-      <div class="sub" data-i="heroSub">피부 고민과 홈케어 취향을 선택하면 매장에서 만나볼 수 있는 제품 중 잘 맞는 기기를 찾아드려요.</div>
+      <div class="sub" data-i="heroSub">피부 고민과 홈케어 취향을 선택하면 나에게 잘 맞는 뷰티 디바이스를 찾아드려요.</div>
       <div class="hero-pills">
         <span class="pill" data-i="pill1">약 30초</span>
         <span class="pill" data-i="pill2">5 Questions</span>
-        <span class="pill" data-i="pill3">매장 입점 제품만 추천</span>
+        <span class="pill" data-i="pill3">맞춤 제품 추천</span>
       </div>
       <div style="height:18px"></div>
       <button class="primary" id="start" data-i="start">START ✨</button>
@@ -158,7 +157,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
       <button class="primary" id="share" data-i="share">결과 공유하기</button>
       <button class="secondary" id="restart" data-i="restart">다시 찾기</button>
     </div>
-    <div class="foot" data-i="footer">제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 매장 재고 및 판매 여부는 현장 상황에 따라 달라질 수 있습니다.</div>
+    <div class="foot" data-i="footer">제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 재고 및 판매 여부는 방문 시점에 따라 달라질 수 있습니다.</div>
   </section>
 </div>
 
@@ -176,10 +175,10 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 
 <script>
 const I18N={
-ko:{kicker:"매장 입점 제품 기준",heroTitle:"나에게 맞는<br>뷰티 디바이스 찾기",heroSub:"피부 고민과 홈케어 취향을 선택하면 매장에서 만나볼 수 있는 제품 중 잘 맞는 기기를 찾아드려요.",pill1:"약 30초",pill2:"5 Questions",pill3:"매장 입점 제품만 추천",start:"START ✨",notice:"본 서비스는 고객이 선택한 고민과 사용 선호도를 바탕으로 제품 선택을 돕는 안내 서비스이며 의료적 피부 진단이 아닙니다.",quick:"30초면 끝나요",back:"이전",next:"다음",why:"왜 잘 맞나요?",myConcern:"MY CONCERN",share:"결과 공유하기",restart:"다시 찾기",footer:"제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 매장 재고 및 판매 여부는 현장 상황에 따라 달라질 수 있습니다.",resultSub:"선택한 고민과 홈케어 취향을 바탕으로 매장 제품을 비교했어요.",also:"함께 비교해볼 만한 제품이에요.",shareText:"나의 뷰티 디바이스 추천 결과"},
-en:{kicker:"Based on products available in-store",heroTitle:"Find My<br>Beauty Device",heroSub:"Choose your skin concerns and home-care preferences to find devices available in this store that may suit you.",pill1:"About 30 sec",pill2:"5 Questions",pill3:"In-store products only",start:"START ✨",notice:"This service is a product-selection guide based on your answers and is not a medical skin diagnosis.",quick:"About 30 seconds",back:"Back",next:"Next",why:"Why this match?",myConcern:"MY CONCERN",share:"Share result",restart:"Start again",footer:"Please check each product's official instructions and precautions before use. Availability may change.",resultSub:"We compared in-store devices based on your concerns and home-care preferences.",also:"Another device worth comparing.",shareText:"My Beauty Device Finder result"},
-zh:{kicker:"依店內販售商品推薦",heroTitle:"找到適合我的<br>美容儀",heroSub:"選擇你的肌膚困擾與居家保養偏好，我們會從店內商品中推薦適合比較的美容儀。",pill1:"約30秒",pill2:"5個問題",pill3:"僅推薦店內商品",start:"開始 ✨",notice:"本服務僅依照你的回答提供商品選擇參考，並非醫療性肌膚診斷。",quick:"約30秒完成",back:"上一步",next:"下一步",why:"為什麼適合？",myConcern:"我的困擾",share:"分享結果",restart:"重新測試",footer:"使用前請確認各商品官方使用方法與注意事項。店內庫存與販售狀況可能變動。",resultSub:"我們依照你的肌膚困擾與居家保養偏好比較了店內美容儀。",also:"也可以一起比較這款。",shareText:"我的美容儀推薦結果"},
-ja:{kicker:"店頭取扱い商品からご案内",heroTitle:"私に合う<br>美容デバイスを探す",heroSub:"肌悩みとホームケアの好みを選ぶと、店頭で購入できる商品の中から比較しやすいデバイスをご案内します。",pill1:"約30秒",pill2:"5 Questions",pill3:"店頭商品だけを案内",start:"START ✨",notice:"本サービスは回答内容をもとに商品選びをサポートするもので、医療的な肌診断ではありません。",quick:"約30秒で完了",back:"戻る",next:"次へ",why:"おすすめの理由",myConcern:"MY CONCERN",share:"結果をシェア",restart:"もう一度",footer:"使用前に各商品の公式使用方法・注意事項をご確認ください。在庫・販売状況は店頭状況により変わる場合があります。",resultSub:"選択した悩みとホームケアの好みをもとに、店頭商品を比較しました。",also:"あわせて比較しやすい商品です。",shareText:"私のビューティーデバイス診断結果"}
+ko:{kicker:"",heroTitle:"나에게 맞는<br>뷰티 디바이스 찾기",heroSub:"피부 고민과 홈케어 취향을 선택하면 나에게 잘 맞는 뷰티 디바이스를 찾아드려요.",pill1:"약 30초",pill2:"5 Questions",pill3:"맞춤 제품 추천",start:"START ✨",notice:"본 서비스는 고객이 선택한 고민과 사용 선호도를 바탕으로 제품 선택을 돕는 안내 서비스이며 의료적 피부 진단이 아닙니다.",quick:"30초면 끝나요",back:"이전",next:"다음",why:"왜 잘 맞나요?",myConcern:"MY CONCERN",share:"결과 공유하기",restart:"다시 찾기",footer:"제품 사용 전 공식 사용법과 주의사항을 확인해주세요. 재고 및 판매 여부는 방문 시점에 따라 달라질 수 있습니다.",resultSub:"선택한 고민과 홈케어 취향을 바탕으로 제품을 비교했어요.",also:"함께 비교해볼 만한 제품이에요.",shareText:"나의 뷰티 디바이스 추천 결과"},
+en:{kicker:"",heroTitle:"Find My<br>Beauty Device",heroSub:"Choose your skin concerns and home-care preferences to find beauty devices that may suit you.",pill1:"About 30 sec",pill2:"5 Questions",pill3:"Personalized picks",start:"START ✨",notice:"This service is a product-selection guide based on your answers and is not a medical skin diagnosis.",quick:"About 30 seconds",back:"Back",next:"Next",why:"Why this match?",myConcern:"MY CONCERN",share:"Share result",restart:"Start again",footer:"Please check each product's official instructions and precautions before use. Availability may change.",resultSub:"We compared beauty devices based on your concerns and home-care preferences.",also:"Another device worth comparing.",shareText:"My Beauty Device Finder result"},
+zh:{kicker:"",heroTitle:"找到適合我的<br>美容儀",heroSub:"選擇你的肌膚困擾與居家保養偏好，我們會推薦適合你比較的美容儀。",pill1:"約30秒",pill2:"5個問題",pill3:"個人化推薦",start:"開始 ✨",notice:"本服務僅依照你的回答提供商品選擇參考，並非醫療性肌膚診斷。",quick:"約30秒完成",back:"上一步",next:"下一步",why:"為什麼適合？",myConcern:"我的困擾",share:"分享結果",restart:"重新測試",footer:"使用前請確認各商品官方使用方法與注意事項。店內庫存與販售狀況可能變動。",resultSub:"我們依照你的肌膚困擾與居家保養偏好比較了美容儀。",also:"也可以一起比較這款。",shareText:"我的美容儀推薦結果"},
+ja:{kicker:"",heroTitle:"私に合う<br>美容デバイスを探す",heroSub:"肌悩みとホームケアの好みを選ぶと、あなたに合う美容デバイスをご案内します。",pill1:"約30秒",pill2:"5 Questions",pill3:"パーソナル提案",start:"START ✨",notice:"本サービスは回答内容をもとに商品選びをサポートするもので、医療的な肌診断ではありません。",quick:"約30秒で完了",back:"戻る",next:"次へ",why:"おすすめの理由",myConcern:"MY CONCERN",share:"結果をシェア",restart:"もう一度",footer:"使用前に各商品の公式使用方法・注意事項をご確認ください。在庫・販売状況は店頭状況により変わる場合があります。",resultSub:"選択した悩みとホームケアの好みをもとに、美容デバイスを比較しました。",also:"あわせて比較しやすい商品です。",shareText:"私のビューティーデバイス診断結果"}
 };
 
 const Q={
