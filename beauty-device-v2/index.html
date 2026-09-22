@@ -49,7 +49,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 .type-sub{font-size:13px;color:var(--muted);line-height:1.5}
 .pick{padding:0;overflow:hidden}
 .product-visual{padding:14px 14px 0;background:linear-gradient(160deg,#fff0f6,#fff)}
-.product-photo{width:100%;aspect-ratio:4/3;border-radius:22px;background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;box-shadow:inset 0 0 0 1px rgba(240,219,228,.8)}
+.product-photo{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:22px;background:#fff;box-shadow:inset 0 0 0 1px rgba(240,219,228,.8)}
 .pick-top{padding:18px 18px 14px;background:linear-gradient(135deg,#fff0f6,#fff)}
 .price-row{display:flex;align-items:baseline;gap:7px;margin-top:10px;flex-wrap:wrap}
 .price-label{font-size:11px;color:var(--muted);font-weight:800}
@@ -71,7 +71,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 .reason li:before{content:"✓";position:absolute;left:0;color:var(--pink);font-weight:900}
 .also{margin-top:14px;padding:16px}
 .compare-row{display:grid;grid-template-columns:86px 1fr;gap:13px;align-items:center}
-.alt-photo{width:86px;height:104px;border-radius:16px;background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff4f8;border:1px solid var(--line)}
+.alt-photo{display:block;width:86px;height:104px;object-fit:contain;border-radius:16px;background:#fff4f8;border:1px solid var(--line)}
 .compare-copy{min-width:0}
 .compare-row b{font-size:17px}
 .compare-desc{font-size:12px;line-height:1.5;color:#5d5158;margin:8px 0 0}
@@ -139,7 +139,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
       <div class="type-sub" id="resultSub"></div>
     </div>
     <div class="card pick">
-      <div class="product-visual"><div class="product-photo" id="mainPhoto" role="img"></div></div>
+      <div class="product-visual"><img class="product-photo" id="mainPhoto" alt="" referrerpolicy="no-referrer"></div>
       <div class="pick-top">
         <div class="rank">MAIN PICK</div>
         <div class="product" id="mainName"></div>
@@ -158,7 +158,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
     <div class="card also">
       <div class="rank">ALSO MATCH</div>
       <div class="compare-row" style="margin-top:10px">
-        <div class="alt-photo" id="alsoPhoto" role="img"></div>
+        <img class="alt-photo" id="alsoPhoto" alt="" referrerpolicy="no-referrer">
         <div class="compare-copy">
           <b id="alsoName"></b><div class="brandname" id="alsoBrand"></div>
           <div class="tags" id="alsoTags" style="margin-top:8px"></div>
@@ -264,14 +264,14 @@ ja:[
 ]};
 
 const products=[
- {id:"x2",price:"375,000원",image:"./assets/medicube-x2.jpg?v=1",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
- {id:"mini",price:"CHECK",image:"./assets/medicube-mini-plus.jpg?v=1",brand:"medicube AGE-R",name:"부스터 프로 미니 플러스",names:{en:"Booster Pro Mini Plus",zh:"Booster Pro Mini Plus",ja:"ブースタープロ ミニプラス"},v:{glow:4,absorb:4,texture:3,trouble:5,elastic:1,jaw:1,all:3,quick:5,target:4,beginner:5,easy:5,multi:2,focus:4,gentle:5,whole:4,cheek:3,jawarea:1,eye:2,spot:5},tags:["간편","컨디션","입문"]},
- {id:"vroller",price:"CHECK",image:"./assets/medicube-v-roller.jpg?v=1",brand:"medicube AGE-R",name:"부스터 브이 롤러",names:{en:"Booster V Roller",zh:"Booster V Roller",ja:"ブースター V ローラー"},v:{glow:1,absorb:1,texture:1,trouble:0,elastic:5,jaw:5,all:2,quick:3,target:5,beginner:3,easy:3,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:1,spot:2},tags:["페이스라인","EMS","집중"]},
- {id:"glow",price:"388,500원",image:"./assets/medicube-glow.jpg?v=1",brand:"medicube AGE-R",name:"부스터 글로우",names:{en:"Booster Glow",zh:"Booster Glow",ja:"ブースターグロウ"},v:{glow:5,absorb:5,texture:3,trouble:3,elastic:2,jaw:0,all:2,quick:5,target:4,beginner:5,easy:5,multi:2,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["광채","스킨케어","간편"]},
- {id:"vsera",price:"109,000원",image:"./assets/mommycare-vthera.jpg?v=1",brand:"MOMMYCARE",name:"EMS 브이쎄라",names:{en:"EMS V-SERA",zh:"EMS V-SERA",ja:"EMS V-SERA"},v:{glow:0,absorb:1,texture:0,trouble:0,elastic:4,jaw:5,all:1,quick:4,target:5,beginner:4,easy:4,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:0,spot:1},tags:["페이스라인","EMS","집중"]},
- {id:"thome",price:"299,000원",image:"./assets/thome-twentyup.jpg?v=1",brand:"THOME",name:"투앤티업",names:{en:"20TYUP",zh:"20TYUP",ja:"20TYUP"},v:{glow:2,absorb:2,texture:4,trouble:5,elastic:1,jaw:0,all:2,quick:5,target:5,beginner:5,easy:5,multi:1,focus:5,gentle:4,whole:2,cheek:2,jawarea:0,eye:0,spot:5},tags:["트러블","스팟","입문"]},
- {id:"therma",price:"CHECK",image:"./assets/lg-thermashot.jpg?v=1",brand:"LG Pra.L",name:"수퍼폼 써마샷 얼티밋",names:{en:"Superform Thermashot Ultimate",zh:"Superform Thermashot Ultimate",ja:"スーパーフォーム サーマショット アルティメット"},v:{glow:4,absorb:4,texture:5,trouble:1,elastic:5,jaw:4,all:5,quick:2,target:4,beginner:2,easy:2,multi:5,focus:4,gentle:1,whole:5,cheek:5,jawarea:4,eye:1,spot:2},tags:["탄력","피부결","올인원"]},
- {id:"galvanic",price:"108,000원",image:"./assets/lg-galvanic.jpg?v=1",brand:"LG Pra.L",name:"갈바닉 부스터",names:{en:"Galvanic Booster",zh:"Galvanic Booster",ja:"ガルバニック ブースター"},v:{glow:4,absorb:5,texture:2,trouble:1,elastic:1,jaw:0,all:1,quick:5,target:4,beginner:5,easy:5,multi:1,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["스킨케어","간편","입문"]}
+ {id:"x2",price:"375,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025174514ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
+ {id:"mini",price:"126,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0023/A00000023790172ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 프로 미니 플러스",names:{en:"Booster Pro Mini Plus",zh:"Booster Pro Mini Plus",ja:"ブースタープロ ミニプラス"},v:{glow:4,absorb:4,texture:3,trouble:5,elastic:1,jaw:1,all:3,quick:5,target:4,beginner:5,easy:5,multi:2,focus:4,gentle:5,whole:4,cheek:3,jawarea:1,eye:2,spot:5},tags:["간편","컨디션","입문"]},
+ {id:"vroller",price:"197,880원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024757319ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 브이 롤러",names:{en:"Booster V Roller",zh:"Booster V Roller",ja:"ブースター V ローラー"},v:{glow:1,absorb:1,texture:1,trouble:0,elastic:5,jaw:5,all:2,quick:3,target:5,beginner:3,easy:3,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:1,spot:2},tags:["페이스라인","EMS","집중"]},
+ {id:"glow",price:"388,500원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025287513ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 글로우",names:{en:"Booster Glow",zh:"Booster Glow",ja:"ブースターグロウ"},v:{glow:5,absorb:5,texture:3,trouble:3,elastic:2,jaw:0,all:2,quick:5,target:4,beginner:5,easy:5,multi:2,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["광채","스킨케어","간편"]},
+ {id:"vsera",price:"109,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024879740ko.jpg?l=ko",brand:"MOMMYCARE",name:"EMS 브이쎄라",names:{en:"EMS V-SERA",zh:"EMS V-SERA",ja:"EMS V-SERA"},v:{glow:0,absorb:1,texture:0,trouble:0,elastic:4,jaw:5,all:1,quick:4,target:5,beginner:4,easy:4,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:0,spot:1},tags:["페이스라인","EMS","집중"]},
+ {id:"thome",price:"299,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025297230ko.jpg?l=ko",brand:"THOME",name:"투앤티업",names:{en:"20TYUP",zh:"20TYUP",ja:"20TYUP"},v:{glow:2,absorb:2,texture:4,trouble:5,elastic:1,jaw:0,all:2,quick:5,target:5,beginner:5,easy:5,multi:1,focus:5,gentle:4,whole:2,cheek:2,jawarea:0,eye:0,spot:5},tags:["트러블","스팟","입문"]},
+ {id:"therma",price:"599,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024433522ko.jpg?l=ko",brand:"LG Pra.L",name:"수퍼폼 써마샷 얼티밋",names:{en:"Superform Thermashot Ultimate",zh:"Superform Thermashot Ultimate",ja:"スーパーフォーム サーマショット アルティメット"},v:{glow:4,absorb:4,texture:5,trouble:1,elastic:5,jaw:4,all:5,quick:2,target:4,beginner:2,easy:2,multi:5,focus:4,gentle:1,whole:5,cheek:5,jawarea:4,eye:1,spot:2},tags:["탄력","피부결","올인원"]},
+ {id:"galvanic",price:"108,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0023/A00000023910339ko.jpg?l=ko",brand:"LG Pra.L",name:"갈바닉 부스터",names:{en:"Galvanic Booster",zh:"Galvanic Booster",ja:"ガルバニック ブースター"},v:{glow:4,absorb:5,texture:2,trouble:1,elastic:1,jaw:0,all:1,quick:5,target:4,beginner:5,easy:5,multi:1,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["스킨케어","간편","입문"]}
 ];
 
 const productDescriptions={
@@ -388,9 +388,8 @@ function pprice(p){
  return lang==="ko"?"가격 확인":lang==="en"?"Check price":lang==="zh"?"價格確認":"価格確認";
 }
 function setProductPhoto(el,p){
- el.style.backgroundImage='url("'+p.image+'")';
- el.style.backgroundPosition="center";
- el.setAttribute("aria-label",pname(p));
+ el.src=p.image;
+ el.alt=pname(p);
 }
 function fitLine(p){
  const c=answers[0]||[];
@@ -447,10 +446,10 @@ function showResult(){
  const main=ranked[0].p, also=ranked[1].p;
  $("#resultType").textContent=resultType();
  $("#resultSub").textContent=t("resultSub");
- $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=pprice(main); $("#mainDesc").textContent=pdesc(main); $("#mainFit").textContent=fitLine(main);
+ $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=main.price; $("#mainDesc").textContent=pdesc(main); $("#mainFit").textContent=fitLine(main);
  $("#mainTags").innerHTML=translatedTags(main).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#mainReasons").innerHTML=reasonLines(main).map(x=>'<li>'+x+'</li>').join("");
- $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=pprice(also); $("#alsoDesc").textContent=pdesc(also);
+ $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=also.price; $("#alsoDesc").textContent=pdesc(also);
  $("#alsoTags").innerHTML=translatedTags(also).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#alsoReason").textContent=t("also");
  $("#staffConcern").textContent=answers[0].map(x=>labels[lang][x]).join(" · ");
