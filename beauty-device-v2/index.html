@@ -49,7 +49,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
 .type-sub{font-size:13px;color:var(--muted);line-height:1.5}
 .pick{padding:0;overflow:hidden}
 .product-visual{padding:14px 14px 0;background:linear-gradient(160deg,#fff0f6,#fff)}
-.product-photo{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:22px;background:#fff;box-shadow:inset 0 0 0 1px rgba(240,219,228,.8)}
+.product-link{display:block;line-height:0;border-radius:22px;cursor:pointer}.product-photo{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:22px;background:#fff;box-shadow:inset 0 0 0 1px rgba(240,219,228,.8)}
 .pick-top{padding:18px 18px 14px;background:linear-gradient(135deg,#fff0f6,#fff)}
 .price-row{display:flex;align-items:baseline;gap:7px;margin-top:10px;flex-wrap:wrap}
 .price-label{font-size:11px;color:var(--muted);font-weight:800}
@@ -139,7 +139,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
       <div class="type-sub" id="resultSub"></div>
     </div>
     <div class="card pick">
-      <div class="product-visual"><img class="product-photo" id="mainPhoto" alt="" referrerpolicy="no-referrer"></div>
+      <div class="product-visual"><a id="mainLink" class="product-link" href="#" target="_blank" rel="noopener noreferrer"><img class="product-photo" id="mainPhoto" alt="" referrerpolicy="no-referrer"></a></div>
       <div class="pick-top">
         <div class="rank">MAIN PICK</div>
         <div class="product" id="mainName"></div>
@@ -158,7 +158,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
     <div class="card also">
       <div class="rank">ALSO MATCH</div>
       <div class="compare-row" style="margin-top:10px">
-        <img class="alt-photo" id="alsoPhoto" alt="" referrerpolicy="no-referrer">
+        <a id="alsoLink" class="product-link" href="#" target="_blank" rel="noopener noreferrer"><img class="alt-photo" id="alsoPhoto" alt="" referrerpolicy="no-referrer"></a>
         <div class="compare-copy">
           <b id="alsoName"></b><div class="brandname" id="alsoBrand"></div>
           <div class="tags" id="alsoTags" style="margin-top:8px"></div>
@@ -274,6 +274,18 @@ const products=[
  {id:"galvanic",price:"108,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0023/A00000023910339ko.jpg?l=ko",brand:"LG Pra.L",name:"갈바닉 부스터",names:{en:"Galvanic Booster",zh:"Galvanic Booster",ja:"ガルバニック ブースター"},v:{glow:4,absorb:5,texture:2,trouble:1,elastic:1,jaw:0,all:1,quick:5,target:4,beginner:5,easy:5,multi:1,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["스킨케어","간편","입문"]}
 ];
 
+
+const PRODUCT_URLS={
+ x2:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000251745",
+ mini:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000237901",
+ vroller:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000247573",
+ glow:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000252875",
+ vsera:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000248797",
+ thome:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000252972",
+ therma:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000244335",
+ galvanic:"https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000239103"
+};
+
 const productDescriptions={
 ko:{
  x2:"광채, 스킨케어 흡수, 피부결, 탄력, 페이스라인 등 여러 고민을 한 기기로 폭넓게 관리하고 싶은 고객에게 어울리는 멀티 기능형 디바이스예요.",
@@ -383,6 +395,7 @@ function scoreProduct(p){
 }
 function pname(p){return (p.names&&p.names[lang])||p.name}
 function pdesc(p){return productDescriptions[lang][p.id]||""}
+function purl(p){return PRODUCT_URLS[p.id]||"https://www.oliveyoung.co.kr/store/main/main.do"}
 function pprice(p){
  if(p.price!=="CHECK") return p.price;
  return lang==="ko"?"가격 확인":lang==="en"?"Check price":lang==="zh"?"價格確認":"価格確認";
@@ -446,10 +459,10 @@ function showResult(){
  const main=ranked[0].p, also=ranked[1].p;
  $("#resultType").textContent=resultType();
  $("#resultSub").textContent=t("resultSub");
- $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=main.price; $("#mainDesc").textContent=pdesc(main); $("#mainFit").textContent=fitLine(main);
+ $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; $("#mainLink").href=purl(main); setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=main.price; $("#mainDesc").textContent=pdesc(main); $("#mainFit").textContent=fitLine(main);
  $("#mainTags").innerHTML=translatedTags(main).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#mainReasons").innerHTML=reasonLines(main).map(x=>'<li>'+x+'</li>').join("");
- $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=also.price; $("#alsoDesc").textContent=pdesc(also);
+ $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; $("#alsoLink").href=purl(also); setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=also.price; $("#alsoDesc").textContent=pdesc(also);
  $("#alsoTags").innerHTML=translatedTags(also).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#alsoReason").textContent=t("also");
  $("#staffConcern").textContent=answers[0].map(x=>labels[lang][x]).join(" · ");
