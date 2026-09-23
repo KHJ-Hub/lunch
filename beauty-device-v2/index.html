@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff5c9d">
+<meta name="description" content="Find the beauty device that fits your skincare concerns and home-care preferences at Olive Young Haeundae LCT.">
+<link rel="canonical" href="https://khj-hub.github.io/lunch/beauty-device-v2/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Beauty Device Finder | OLIVE YOUNG HAEUNDAE LCT">
+<meta property="og:description" content="Find the beauty device that fits your skincare concerns and home-care preferences.">
+<meta property="og:url" content="https://khj-hub.github.io/lunch/beauty-device-v2/">
+<meta property="og:image" content="https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025174514ko.jpg?l=ko">
+<meta property="og:image:alt" content="Beauty Device Finder">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Beauty Device Finder | OLIVE YOUNG HAEUNDAE LCT">
+<meta name="twitter:description" content="Find the beauty device that fits your skincare concerns and home-care preferences.">
+<meta name="twitter:image" content="https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025174514ko.jpg?l=ko">
 <title>Find My Beauty Device</title>
 <style>
 :root{--pink:#ff5c9d;--pink2:#ff8db8;--ink:#241b22;--muted:#796f77;--bg:#fff8fb;--card:#fff;--line:#f0dbe4;--soft:#ffe9f1;--shadow:0 18px 45px rgba(91,42,66,.12)}
@@ -477,96 +489,117 @@ $("#back").onclick=()=>{if(step>0){step--;renderQ()}};
 $("#restart").onclick=()=>{step=0;answers=[[],null,null,null,null];show("home")};
 
 function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines=3){
- const words=String(text||"").split(/\s+/);
+ const chars=Array.from(String(text||""));
  let line="", lines=[];
- for(const word of words){
-  const test=line?line+" "+word:word;
-  if(ctx.measureText(test).width>maxWidth && line){lines.push(line); line=word;}
+ for(const ch of chars){
+  const test=line+ch;
+  if(ctx.measureText(test).width>maxWidth && line){lines.push(line);line=ch;}
   else line=test;
  }
- if(line) lines.push(line);
+ if(line)lines.push(line);
  lines=lines.slice(0,maxLines);
  lines.forEach((ln,i)=>ctx.fillText(ln,x,y+i*lineHeight));
  return y+lines.length*lineHeight;
 }
-async function createShareCard(){
+function dataUrlToFile(dataUrl,filename){
+ const parts=dataUrl.split(",");
+ const mime=(parts[0].match(/:(.*?);/)||[])[1]||"image/png";
+ const binary=atob(parts[1]);
+ const bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+ return new File([bytes],filename,{type:mime});
+}
+function createShareFile(){
  const p=window.__mainPick;
  const canvas=document.createElement("canvas");
- canvas.width=1080; canvas.height=1350;
+ canvas.width=1080;canvas.height=1350;
  const ctx=canvas.getContext("2d");
+
  const grad=ctx.createLinearGradient(0,0,1080,1350);
- grad.addColorStop(0,"#fff7fb"); grad.addColorStop(.58,"#ffffff"); grad.addColorStop(1,"#ffeaf2");
- ctx.fillStyle=grad; ctx.fillRect(0,0,1080,1350);
+ grad.addColorStop(0,"#fff7fb");grad.addColorStop(.62,"#ffffff");grad.addColorStop(1,"#ffe9f2");
+ ctx.fillStyle=grad;ctx.fillRect(0,0,1080,1350);
 
  ctx.fillStyle="#ff5c9d";
- ctx.beginPath(); ctx.arc(920,145,120,0,Math.PI*2); ctx.fill();
- ctx.globalAlpha=.12; ctx.beginPath(); ctx.arc(145,1165,180,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+ ctx.beginPath();ctx.arc(940,155,128,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.10;ctx.beginPath();ctx.arc(80,1240,210,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
 
- ctx.fillStyle="#241b22"; ctx.font="800 38px system-ui, sans-serif";
- ctx.fillText("BEAUTY DEVICE FINDER",80,100);
- ctx.fillStyle="#8a8087"; ctx.font="600 25px system-ui, sans-serif";
- ctx.fillText(lang==="ko"?"올리브영 해운대엘시티점":"OLIVE YOUNG HAEUNDAE LCT",80,145);
+ ctx.fillStyle="#241b22";ctx.font="800 40px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("BEAUTY DEVICE FINDER",76,100);
+ ctx.fillStyle="#8a8087";ctx.font="600 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(lang==="ko"?"올리브영 해운대엘시티점":"OLIVE YOUNG HAEUNDAE LCT",76,145);
 
- ctx.fillStyle="#b32867"; ctx.font="800 28px system-ui, sans-serif";
- ctx.fillText("MY BEAUTY PICK",80,260);
+ ctx.fillStyle="#b32867";ctx.font="800 28px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("MY BEAUTY PICK",76,280);
 
- ctx.fillStyle="#241b22"; ctx.font="900 64px system-ui, sans-serif";
- let y=wrapCanvasText(ctx,resultType(),80,350,880,76,3);
+ ctx.fillStyle="#241b22";ctx.font="900 66px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ let y=wrapCanvasText(ctx,resultType(),76,378,900,78,3);
 
- y+=50; ctx.fillStyle="#8a8087"; ctx.font="700 25px system-ui, sans-serif";
- ctx.fillText("MAIN PICK",80,y);
- y+=72; ctx.fillStyle="#241b22"; ctx.font="900 56px system-ui, sans-serif";
- y=wrapCanvasText(ctx,pname(p),80,y,900,66,3);
+ y+=58;ctx.fillStyle="#8a8087";ctx.font="800 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("MAIN PICK",76,y);
+ y+=76;ctx.fillStyle="#241b22";ctx.font="900 58px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ y=wrapCanvasText(ctx,pname(p),76,y,910,68,3);
 
- y+=30; ctx.fillStyle="#796f77"; ctx.font="600 30px system-ui, sans-serif";
- ctx.fillText(p.brand,80,y);
+ y+=30;ctx.fillStyle="#796f77";ctx.font="600 30px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(p.brand,76,y);
 
- y+=80;
+ y+=105;
  const chips=translatedTags(p).slice(0,3);
- let cx=80;
+ let cx=76;
  for(const chip of chips){
-  ctx.font="700 25px system-ui, sans-serif";
-  const w=ctx.measureText(chip).width+48;
-  ctx.fillStyle="#fff"; ctx.strokeStyle="#f0dbe4"; ctx.lineWidth=3;
-  ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(cx,y-34,w,54,27); else ctx.rect(cx,y-34,w,54);
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle="#5d5158"; ctx.fillText(chip,cx+24,y+2); cx+=w+14;
+  ctx.font="700 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+  const w=Math.min(ctx.measureText(chip).width+52,280);
+  ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=3;
+  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(cx,y-38,w,60,30);ctx.fill();ctx.stroke();}
+  else{ctx.fillRect(cx,y-38,w,60);ctx.strokeRect(cx,y-38,w,60);}
+  ctx.fillStyle="#5d5158";ctx.fillText(chip,cx+26,y+1);
+  cx+=w+14;
  }
 
- y+=115; ctx.fillStyle="#5d5158"; ctx.font="500 30px system-ui, sans-serif";
- const desc=(productDescriptions[lang]&&productDescriptions[lang][p.id])||"";
- wrapCanvasText(ctx,desc,80,y,900,47,4);
+ ctx.fillStyle="#241b22";ctx.font="800 30px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(lang==="ko"?"나에게 맞는 뷰티 디바이스 찾기":"Find your beauty device",76,1135);
+ ctx.fillStyle="#8a8087";ctx.font="500 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("khj-hub.github.io/lunch/beauty-device-v2/",76,1184);
+ ctx.fillStyle="#ff5c9d";ctx.fillRect(76,1268,928,6);
 
- ctx.fillStyle="#241b22"; ctx.font="800 27px system-ui, sans-serif";
- ctx.fillText(lang==="ko"?"QR에서 다시 결과 확인하기":"View your result again",80,1190);
- ctx.fillStyle="#8a8087"; ctx.font="500 23px system-ui, sans-serif";
- ctx.fillText("khj-hub.github.io/lunch/beauty-device-v2/",80,1235);
-
- ctx.fillStyle="#ff5c9d"; ctx.fillRect(80,1287,920,5);
-
- return await new Promise(resolve=>canvas.toBlob(resolve,"image/png",.95));
+ return dataUrlToFile(canvas.toDataURL("image/png",1),"my-beauty-pick.png");
 }
 
-$("#share").onclick=async()=>{
+$("#share").onclick=()=>{
  const p=window.__mainPick;
- const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+location.href;
+ const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/";
+ const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+pageUrl;
  try{
-  const blob=await createShareCard();
-  const file=new File([blob],"my-beauty-pick.png",{type:"image/png"});
+  const file=createShareFile();
+
+  // Keep this call synchronous in the tap handler for iPhone/iPad Safari.
   if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-   await navigator.share({title:"Beauty Device Finder",text:txt,files:[file]});
+   navigator.share({title:"Beauty Device Finder",text:txt,files:[file]}).catch(err=>{
+    if(err&&err.name!=="AbortError"){
+     navigator.share({title:"Beauty Device Finder",text:txt,url:pageUrl}).catch(()=>{});
+    }
+   });
    return;
   }
+
   if(navigator.share){
-   await navigator.share({title:"Beauty Device Finder",text:txt});
+   navigator.share({title:"Beauty Device Finder",text:txt,url:pageUrl}).catch(()=>{});
    return;
   }
+
+  const blob=file;
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-  a.href=url; a.download="my-beauty-pick.png"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);
-  alert(lang==="ko"?"결과 카드 이미지를 저장했어요!":lang==="zh"?"已儲存結果卡片！":lang==="ja"?"結果カードを保存しました！":"Result card saved!");
- }catch(e){}
+  a.href=url;a.download="my-beauty-pick.png";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).catch(()=>{});
+  alert(lang==="ko"?"결과 카드 이미지를 저장했어요. 링크도 함께 복사했어요!":lang==="zh"?"已儲存結果卡片並複製連結！":lang==="ja"?"結果カードを保存し、リンクもコピーしました！":"Result card saved and link copied!");
+ }catch(e){
+  if(navigator.share){
+   navigator.share({title:"Beauty Device Finder",text:txt,url:pageUrl}).catch(()=>{});
+  }else if(navigator.clipboard){
+   navigator.clipboard.writeText(txt).then(()=>alert(lang==="ko"?"링크를 복사했어요!":"Link copied!")).catch(()=>{});
+  }
+ }
 };
 $("#langBtn").onclick=()=>$("#langSheet").classList.remove("hidden");
 $("#langSheet").onclick=e=>{if(e.target.id==="langSheet")$("#langSheet").classList.add("hidden")};
