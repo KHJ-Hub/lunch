@@ -214,11 +214,11 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
     </div>
 
     <div class="card staff">
-      <div class="label">SHOW TO STAFF</div>
+      <div class="label">SHOW TO STAFF · 직원에게 보여주세요</div>
       <div class="staff-title">MY BEAUTY PICK</div>
       <div class="staff-grid">
-        <div class="staff-cell"><small data-i="myConcern">MY CONCERN</small><b id="staffConcern"></b></div>
-        <div class="staff-cell"><small>MAIN PICK</small><b id="staffMain"></b></div>
+        <div class="staff-cell"><small>피부 고민</small><b id="staffConcern"></b></div>
+        <div class="staff-cell"><small>추천 제품</small><b id="staffMain"></b></div>
       </div>
     </div>
 
@@ -606,8 +606,8 @@ function showResult(){
  $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; $("#alsoLink").href=purl(also); setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=pprice(also); $("#alsoDesc").textContent=pdesc(also);
  $("#alsoTags").innerHTML=translatedTags(also).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#alsoReason").textContent=t("also");
- $("#staffConcern").textContent=answers[0].map(x=>labels[lang][x]).join(" · ");
- $("#staffMain").textContent=pname(main);
+ $("#staffConcern").textContent=answers[0].map(x=>labels.ko[x]).join(" · ");
+ $("#staffMain").textContent=main.name;
  show("result");
  window.__ranked=ranked.map(x=>x.p);
  window.__mainPick=main;
@@ -661,7 +661,7 @@ function renderSelectedProduct(p){
  $("#mainFit").textContent=fitLine(p);
  $("#mainTags").innerHTML=translatedTags(p).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#mainReasons").innerHTML=reasonLines(p).map(x=>'<li>'+x+'</li>').join("");
- $("#staffMain").textContent=pname(p);
+ $("#staffMain").textContent=p.name;
 }
 $("#mainName").onclick=()=>{const p=window.__mainPick;if(p)renderSelectedProduct(p)};
 $("#alsoName").onclick=()=>{
