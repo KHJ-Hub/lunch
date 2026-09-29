@@ -679,9 +679,57 @@ $("#mainShop").onclick=()=>{
  saveResultState();
  window.location.href=purl(p);
 };
+function encodeResultPayload(){
+ try{
+  const payload={a:answers,l:lang,p:(window.__mainPick&&window.__mainPick.id)||null};
+  return btoa(JSON.stringify(payload)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+ }catch(e){return ""}
+}
+function decodeResultPayload(raw){
+ try{
+  const b64=raw.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-raw.length%4)%4);
+  return JSON.parse(atob(b64));
+ }catch(e){return null}
+}
+function makeShareResultUrl(){
+ const url=new URL("https://khj-hub.github.io/lunch/beauty-device-v2/");
+ url.searchParams.set("v","11");
+ const r=encodeResultPayload();
+ if(r)url.searchParams.set("r",r);
+ return url.toString();
+}
+function applySharedMainProduct(id){
+ if(!id)return;
+ const p=products.find(x=>x.id===id);
+ if(!p||!window.__mainPick||p.id===window.__mainPick.id)return;
+ const previous=window.__mainPick;
+ renderSelectedProduct(p);
+ window.__alsoPick=previous;
+ $("#alsoName").textContent=pname(previous);
+ $("#alsoBrand").textContent=previous.brand;
+ $("#alsoLink").href=purl(previous);
+ setProductPhoto($("#alsoPhoto"),previous);
+ $("#alsoPrice").textContent=pprice(previous);
+ $("#alsoDesc").textContent=pdesc(previous);
+ $("#alsoTags").innerHTML=translatedTags(previous).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
+}
+function restoreSharedResult(){
+ try{
+  const raw=new URLSearchParams(location.search).get("r");
+  if(!raw)return false;
+  const s=decodeResultPayload(raw);
+  if(!s||!Array.isArray(s.a)||s.a.length!==6)return false;
+  answers=s.a;
+  if(s.l&&I18N[s.l])setLang(s.l);
+  showResult();
+  applySharedMainProduct(s.p);
+  return true;
+ }catch(e){return false}
+}
 function saveResultState(){
  try{
-  localStorage.setItem("beauty-device-pending-result",JSON.stringify({answers,lang,ts:Date.now()}));
+  localStorage.setItem("beauty-device-pending-result",JSON.stringify({answers,lang,ts:Date.now(),p:(window.__mainPick&&window.__mainPick.id)||null}));
+  history.replaceState(null,"",makeShareResultUrl());
  }catch(e){}
 }
 function restoreResultState(){
@@ -692,8 +740,9 @@ function restoreResultState(){
   if(!s||!Array.isArray(s.answers)||s.answers.length!==6)return false;
   if(Date.now()-(s.ts||0)>1000*60*60*12){localStorage.removeItem("beauty-device-pending-result");return false;}
   answers=s.answers;
-  if(s.lang)lang=s.lang;
+  if(s.lang&&I18N[s.lang])setLang(s.lang);
   showResult();
+  applySharedMainProduct(s.p);
   localStorage.removeItem("beauty-device-pending-result");
   return true;
  }catch(e){return false}
@@ -822,7 +871,7 @@ function createShareFile(){
 
 $("#share").onclick=()=>{
  const p=window.__mainPick;
- const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/?v=10";
+ const pageUrl=makeShareResultUrl();
  const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+pageUrl;
  try{
   const file=createShareFile();
@@ -861,7 +910,8 @@ $("#langBtn").onclick=()=>$("#langSheet").classList.remove("hidden");
 $("#langSheet").onclick=e=>{if(e.target.id==="langSheet")$("#langSheet").classList.add("hidden")};
 document.querySelectorAll(".langbtn").forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
 setLang(localStorage.getItem("beauty-device-lang")||"ko");
-window.addEventListener("pageshow",()=>{restoreResultState()});
+restoreSharedResult();
+window.addEventListener("pageshow",()=>{if(!new URLSearchParams(location.search).get("r"))restoreResultState()});
 </script>
 </body>
 </html>
