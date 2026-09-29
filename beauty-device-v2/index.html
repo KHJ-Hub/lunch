@@ -326,7 +326,7 @@ ja:[
 ]};
 
 const products=[
- {id:"x2",price:"375,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025174514ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
+ {id:"x2",price:"375,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025174506ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 프로 X2",names:{en:"Booster Pro X2",zh:"Booster Pro X2",ja:"ブースタープロ X2"},v:{glow:4,absorb:5,texture:5,trouble:2,elastic:5,jaw:4,all:5,quick:3,target:3,beginner:3,easy:3,multi:5,focus:3,gentle:2,whole:5,cheek:4,jawarea:4,eye:2,spot:2},tags:["올인원","탄력","피부결"]},
  {id:"mini",price:"126,000원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0023/A00000023790172ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 프로 미니 플러스",names:{en:"Booster Pro Mini Plus",zh:"Booster Pro Mini Plus",ja:"ブースタープロ ミニプラス"},v:{glow:4,absorb:4,texture:3,trouble:5,elastic:1,jaw:1,all:3,quick:5,target:4,beginner:5,easy:5,multi:2,focus:4,gentle:5,whole:4,cheek:3,jawarea:1,eye:2,spot:5},tags:["간편","컨디션","입문"]},
  {id:"vroller",price:"197,880원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024757319ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 브이 롤러",names:{en:"Booster V Roller",zh:"Booster V Roller",ja:"ブースター V ローラー"},v:{glow:1,absorb:1,texture:1,trouble:0,elastic:5,jaw:5,all:2,quick:3,target:5,beginner:3,easy:3,multi:1,focus:5,gentle:2,whole:2,cheek:4,jawarea:5,eye:1,spot:2},tags:["페이스라인","EMS","집중"]},
  {id:"glow",price:"388,500원",image:"https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025287513ko.jpg?l=ko",brand:"medicube AGE-R",name:"부스터 글로우",names:{en:"Booster Glow",zh:"Booster Glow",ja:"ブースターグロウ"},v:{glow:5,absorb:5,texture:3,trouble:3,elastic:2,jaw:0,all:2,quick:5,target:4,beginner:5,easy:5,multi:2,focus:3,gentle:5,whole:5,cheek:3,jawarea:0,eye:2,spot:2},tags:["광채","스킨케어","간편"]},
@@ -660,6 +660,28 @@ function dataUrlToFile(dataUrl,filename){
  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
  return new File([bytes],filename,{type:mime});
 }
+
+const shareProductImages={};
+function preloadShareProductImage(p){
+ if(shareProductImages[p.id]) return;
+ const img=new Image();
+ img.crossOrigin="anonymous";
+ img.referrerPolicy="no-referrer";
+ img.decoding="async";
+ img.onload=()=>{shareProductImages[p.id]=img};
+ img.onerror=()=>{shareProductImages[p.id]=null};
+ img.src=p.image;
+}
+products.forEach(preloadShareProductImage);
+
+function drawContain(ctx,img,x,y,w,h){
+ const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+ if(!iw||!ih)return;
+ const r=Math.min(w/iw,h/ih);
+ const dw=iw*r, dh=ih*r;
+ ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
+
 function createShareFile(){
  const p=window.__mainPick;
  const canvas=document.createElement("canvas");
@@ -667,57 +689,74 @@ function createShareFile(){
  const ctx=canvas.getContext("2d");
 
  const grad=ctx.createLinearGradient(0,0,1080,1350);
- grad.addColorStop(0,"#fff7fb");grad.addColorStop(.62,"#ffffff");grad.addColorStop(1,"#ffe9f2");
+ grad.addColorStop(0,"#fff7fb");grad.addColorStop(.68,"#ffffff");grad.addColorStop(1,"#ffe9f2");
  ctx.fillStyle=grad;ctx.fillRect(0,0,1080,1350);
 
- ctx.fillStyle="#ff5c9d";
- ctx.beginPath();ctx.arc(940,155,128,0,Math.PI*2);ctx.fill();
- ctx.globalAlpha=.10;ctx.beginPath();ctx.arc(80,1240,210,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-
  ctx.fillStyle="#241b22";ctx.font="800 40px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("BEAUTY DEVICE FINDER",76,100);
- ctx.fillStyle="#8a8087";ctx.font="600 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText(lang==="ko"?"올리브영 해운대엘시티점":"OLIVE YOUNG HAEUNDAE LCT",76,145);
+ ctx.fillText("BEAUTY DEVICE FINDER",70,92);
+ ctx.fillStyle="#8a8087";ctx.font="600 23px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(lang==="ko"?"올리브영 해운대엘시티점":"OLIVE YOUNG HAEUNDAE LCT",70,132);
 
- ctx.fillStyle="#b32867";ctx.font="800 28px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("MY BEAUTY PICK",76,280);
+ ctx.fillStyle="#b32867";ctx.font="800 26px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("MY BEAUTY PICK",70,235);
 
- ctx.fillStyle="#241b22";ctx.font="900 66px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- let y=wrapCanvasText(ctx,resultType(),76,378,900,78,3);
+ ctx.fillStyle="#241b22";ctx.font="900 58px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ wrapCanvasText(ctx,resultType(),70,315,520,68,2);
 
- y+=58;ctx.fillStyle="#8a8087";ctx.font="800 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("MAIN PICK",76,y);
- y+=76;ctx.fillStyle="#241b22";ctx.font="900 58px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- y=wrapCanvasText(ctx,pname(p),76,y,910,68,3);
-
- y+=30;ctx.fillStyle="#796f77";ctx.font="600 30px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText(p.brand,76,y);
-
- y+=105;
- const chips=translatedTags(p).slice(0,3);
- let cx=76;
- for(const chip of chips){
-  ctx.font="700 25px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
-  const w=Math.min(ctx.measureText(chip).width+52,280);
-  ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=3;
-  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(cx,y-38,w,60,30);ctx.fill();ctx.stroke();}
-  else{ctx.fillRect(cx,y-38,w,60);ctx.strokeRect(cx,y-38,w,60);}
-  ctx.fillStyle="#5d5158";ctx.fillText(chip,cx+26,y+1);
-  cx+=w+14;
+ // Official product image only. No AI-generated device artwork is used here.
+ ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=3;
+ if(ctx.roundRect){ctx.beginPath();ctx.roundRect(615,215,395,395,30);ctx.fill();ctx.stroke();}
+ else{ctx.fillRect(615,215,395,395);ctx.strokeRect(615,215,395,395);}
+ const officialImg=shareProductImages[p.id];
+ if(officialImg){
+  try{drawContain(ctx,officialImg,638,238,349,349);}catch(e){}
  }
 
- ctx.fillStyle="#241b22";ctx.font="800 30px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText(lang==="ko"?"나에게 맞는 뷰티 디바이스 찾기":"Find your beauty device",76,1135);
- ctx.fillStyle="#8a8087";ctx.font="500 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("khj-hub.github.io/lunch/beauty-device-v2/",76,1184);
- ctx.fillStyle="#ff5c9d";ctx.fillRect(76,1268,928,6);
+ ctx.fillStyle="#8a8087";ctx.font="800 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("MAIN PICK",70,500);
+ ctx.fillStyle="#241b22";ctx.font="900 52px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ let y=wrapCanvasText(ctx,pname(p),70,570,500,60,3);
+ y+=20;ctx.fillStyle="#796f77";ctx.font="600 27px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(p.brand,70,y);
+
+ y+=84;
+ const chips=translatedTags(p).slice(0,3);
+ let cx=70;
+ for(const chip of chips){
+  ctx.font="700 23px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+  const w=Math.min(ctx.measureText(chip).width+46,250);
+  ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=2;
+  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(cx,y-34,w,54,27);ctx.fill();ctx.stroke();}
+  else{ctx.fillRect(cx,y-34,w,54);ctx.strokeRect(cx,y-34,w,54);}
+  ctx.fillStyle="#5d5158";ctx.fillText(chip,cx+23,y);
+  cx+=w+12;
+ }
+
+ ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=2;
+ if(ctx.roundRect){ctx.beginPath();ctx.roundRect(70,800,940,290,28);ctx.fill();ctx.stroke();}
+ else{ctx.fillRect(70,800,940,290);ctx.strokeRect(70,800,940,290);}
+
+ ctx.fillStyle="#b32867";ctx.font="800 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(lang==="ko"?"WHY IT MATCHES":"WHY IT MATCHES",105,855);
+ ctx.fillStyle="#4d434a";ctx.font="600 27px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ const reasons=reasonLines(p);
+ let ry=910;
+ for(const line of reasons.slice(0,3)){
+  ry=wrapCanvasText(ctx,"• "+line,105,ry,835,39,2)+16;
+ }
+
+ ctx.fillStyle="#241b22";ctx.font="800 29px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(lang==="ko"?"나에게 맞는 뷰티 디바이스 찾기":"Find your beauty device",70,1190);
+ ctx.fillStyle="#8a8087";ctx.font="500 22px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("khj-hub.github.io/lunch/beauty-device-v2/",70,1230);
+ ctx.fillStyle="#ff5c9d";ctx.fillRect(70,1285,940,6);
 
  return dataUrlToFile(canvas.toDataURL("image/png",1),"my-beauty-pick.png");
 }
 
 $("#share").onclick=()=>{
  const p=window.__mainPick;
- const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/?v=7";
+ const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/?v=8";
  const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+pageUrl;
  try{
   const file=createShareFile();
