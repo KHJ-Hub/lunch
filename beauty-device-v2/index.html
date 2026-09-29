@@ -178,10 +178,10 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
       <div class="type-sub" id="resultSub"></div>
     </div>
     <div class="card pick">
-      <div class="product-visual"><button id="mainSelect" class="product-link product-select" type="button" style="border:0;padding:0;width:100%;background:transparent"><img class="product-photo" id="mainPhoto" alt="" referrerpolicy="no-referrer"></button></div>
+      <div class="product-visual"><a id="mainLink" class="product-link" href="#" target="_blank" rel="noopener noreferrer"><img class="product-photo" id="mainPhoto" alt="" referrerpolicy="no-referrer"></a></div>
       <div class="pick-top">
         <div class="rank">MAIN PICK</div>
-        <div class="product" id="mainName"></div>
+        <button class="product product-title-btn" id="mainName" type="button" style="border:0;background:transparent;padding:0;text-align:left;color:inherit"></button>
         <div class="brandname" id="mainBrand"></div>
         <div class="tags" id="mainTags"></div>
         <div class="price-row"><span class="price-label" data-i="priceLabel">올리브영 정상가</span><span class="price-value" id="mainPrice"></span></div>
@@ -202,9 +202,9 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
     <div class="card also">
       <div class="rank">ALSO MATCH</div>
       <div class="compare-row" style="margin-top:10px">
-        <button id="alsoSelect" class="product-link product-select" type="button" style="border:0;padding:0;background:transparent"><img class="alt-photo" id="alsoPhoto" alt="" referrerpolicy="no-referrer"></button>
+        <a id="alsoLink" class="product-link" href="#" target="_blank" rel="noopener noreferrer"><img class="alt-photo" id="alsoPhoto" alt="" referrerpolicy="no-referrer"></a>
         <div class="compare-copy">
-          <b id="alsoName"></b><div class="brandname" id="alsoBrand"></div>
+          <button id="alsoName" type="button" style="border:0;background:transparent;padding:0;text-align:left;font:inherit;font-weight:800;color:inherit"></button><div class="brandname" id="alsoBrand"></div>
           <div class="tags" id="alsoTags" style="margin-top:8px"></div>
           <div class="price-row"><span class="price-label" data-i="priceLabel">올리브영 정상가</span><span class="price-value" id="alsoPrice" style="font-size:15px"></span></div>
           <p class="compare-desc" id="alsoDesc"></p>
@@ -600,10 +600,10 @@ function showResult(){
  const main=ranked[0].p, also=ranked[1].p;
  $("#resultType").textContent=resultType();
  $("#resultSub").textContent=t("resultSub");
- $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=pprice(main); $("#mainDesc").textContent=pdesc(main); $("#mainHow").textContent=pguide(main,"how"); $("#mainPair").textContent=pguide(main,"pair"); $("#mainFit").textContent=fitLine(main);
+ $("#mainName").textContent=pname(main); $("#mainBrand").textContent=main.brand; $("#mainLink").href=purl(main); setProductPhoto($("#mainPhoto"),main); $("#mainPrice").textContent=pprice(main); $("#mainDesc").textContent=pdesc(main); $("#mainHow").textContent=pguide(main,"how"); $("#mainPair").textContent=pguide(main,"pair"); $("#mainFit").textContent=fitLine(main);
  $("#mainTags").innerHTML=translatedTags(main).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#mainReasons").innerHTML=reasonLines(main).map(x=>'<li>'+x+'</li>').join("");
- $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=pprice(also); $("#alsoDesc").textContent=pdesc(also);
+ $("#alsoName").textContent=pname(also); $("#alsoBrand").textContent=also.brand; $("#alsoLink").href=purl(also); setProductPhoto($("#alsoPhoto"),also); $("#alsoPrice").textContent=pprice(also); $("#alsoDesc").textContent=pdesc(also);
  $("#alsoTags").innerHTML=translatedTags(also).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  $("#alsoReason").textContent=t("also");
  $("#staffConcern").textContent=answers[0].map(x=>labels[lang][x]).join(" · ");
@@ -622,18 +622,19 @@ function renderProductGuides(){
   const guide=productGuides[lang][p.id];
   const best=(lang==="ko"?pdesc(p):pdesc(p));
   return '<div class="product-guide-card">'
-   +'<button class="product-link guide-select" data-product="'+p.id+'" type="button" style="border:0;padding:0;width:100%;background:transparent">'
+   +'<a class="product-link guide-shop" data-product="'+p.id+'" href="'+purl(p)+'" target="_blank" rel="noopener noreferrer">'
    +'<img class="product-guide-photo" src="'+p.image+'" alt="'+pname(p)+'" referrerpolicy="no-referrer">'
-   +'</button>'
+   +'</a>'
    +'<div class="product-guide-body">'
    +'<div class="product-guide-brand">'+p.brand+'</div>'
-   +'<div class="product-guide-name">'+pname(p)+'</div>'
+   +'<button class="product-guide-name guide-select" data-product="'+p.id+'" type="button" style="border:0;background:transparent;padding:0;text-align:left;color:inherit;width:100%">'+pname(p)+'</button>'
    +'<div class="product-guide-price">'+pprice(p)+'</div>'
    +'<div class="product-guide-section"><b>'+t("howUse")+'</b><p>'+guide.how+'</p></div>'
    +'<div class="product-guide-section"><b>'+t("pairWith")+'</b><p>'+guide.pair+'</p></div>'
    +'<div class="product-guide-section"><b>'+t("fitTitle")+'</b><p>'+best+'</p></div>'
    +'</div></div>';
  }).join("");
+ grid.querySelectorAll(".guide-shop").forEach(a=>a.onclick=()=>saveResultState());
  grid.querySelectorAll(".guide-select").forEach(btn=>btn.onclick=()=>{
   const p=products.find(x=>x.id===btn.dataset.product);
   if(!p)return;
@@ -651,6 +652,7 @@ function renderSelectedProduct(p){
  window.__mainPick=p;
  $("#mainName").textContent=pname(p);
  $("#mainBrand").textContent=p.brand;
+ $("#mainLink").href=purl(p);
  setProductPhoto($("#mainPhoto"),p);
  $("#mainPrice").textContent=pprice(p);
  $("#mainDesc").textContent=pdesc(p);
@@ -661,14 +663,14 @@ function renderSelectedProduct(p){
  $("#mainReasons").innerHTML=reasonLines(p).map(x=>'<li>'+x+'</li>').join("");
  $("#staffMain").textContent=pname(p);
 }
-$("#mainSelect").onclick=()=>{const p=window.__mainPick;if(p)renderSelectedProduct(p)};
-$("#alsoSelect").onclick=()=>{
+$("#mainName").onclick=()=>{const p=window.__mainPick;if(p)renderSelectedProduct(p)};
+$("#alsoName").onclick=()=>{
  const p=window.__alsoPick;
  if(!p)return;
  const previous=window.__mainPick;
  renderSelectedProduct(p);
  window.__alsoPick=previous;
- $("#alsoName").textContent=pname(previous); $("#alsoBrand").textContent=previous.brand; setProductPhoto($("#alsoPhoto"),previous); $("#alsoPrice").textContent=pprice(previous); $("#alsoDesc").textContent=pdesc(previous);
+ $("#alsoName").textContent=pname(previous); $("#alsoBrand").textContent=previous.brand; $("#alsoLink").href=purl(previous); setProductPhoto($("#alsoPhoto"),previous); $("#alsoPrice").textContent=pprice(previous); $("#alsoDesc").textContent=pdesc(previous);
  $("#alsoTags").innerHTML=translatedTags(previous).slice(0,2).map(x=>'<span class="tag">'+x+'</span>').join("");
  window.scrollTo({top:document.querySelector(".result-head").offsetTop,behavior:"smooth"});
 };
@@ -678,24 +680,30 @@ $("#mainShop").onclick=()=>{
  window.location.href=purl(p);
 };
 function saveResultState(){
- try{sessionStorage.setItem("beauty-device-result",JSON.stringify({answers,lang,show:true}));}catch(e){}
+ try{
+  localStorage.setItem("beauty-device-pending-result",JSON.stringify({answers,lang,ts:Date.now()}));
+ }catch(e){}
 }
 function restoreResultState(){
  try{
-  const raw=sessionStorage.getItem("beauty-device-result");
+  const raw=localStorage.getItem("beauty-device-pending-result");
   if(!raw)return false;
   const s=JSON.parse(raw);
   if(!s||!Array.isArray(s.answers)||s.answers.length!==6)return false;
+  if(Date.now()-(s.ts||0)>1000*60*60*12){localStorage.removeItem("beauty-device-pending-result");return false;}
   answers=s.answers;
   if(s.lang)lang=s.lang;
   showResult();
+  localStorage.removeItem("beauty-device-pending-result");
   return true;
  }catch(e){return false}
 }
-$("#start").onclick=()=>{step=0;answers=[[],null,null,null,null,null];show("quiz");renderQ()};
+$("#mainLink").onclick=()=>saveResultState();
+$("#alsoLink").onclick=()=>saveResultState();
+$("#start").onclick=()=>{try{localStorage.removeItem("beauty-device-pending-result")}catch(e){};step=0;answers=[[],null,null,null,null,null];show("quiz");renderQ()};
 $("#next").onclick=()=>{if(step<5){step++;renderQ();window.scrollTo({top:0,behavior:"smooth"})}else showResult()};
 $("#back").onclick=()=>{if(step>0){step--;renderQ()}};
-$("#restart").onclick=()=>{step=0;answers=[[],null,null,null,null,null];show("home")};
+$("#restart").onclick=()=>{try{localStorage.removeItem("beauty-device-pending-result")}catch(e){};step=0;answers=[[],null,null,null,null,null];show("home")};
 
 function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines=3){
  const chars=Array.from(String(text||""));
@@ -814,7 +822,7 @@ function createShareFile(){
 
 $("#share").onclick=()=>{
  const p=window.__mainPick;
- const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/?v=9";
+ const pageUrl="https://khj-hub.github.io/lunch/beauty-device-v2/?v=10";
  const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+pageUrl;
  try{
   const file=createShareFile();
