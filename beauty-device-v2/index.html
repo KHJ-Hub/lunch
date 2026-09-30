@@ -1012,10 +1012,7 @@ function createShareFile(){
  ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=3;
  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(615,215,395,395,30);ctx.fill();ctx.stroke();}
  else{ctx.fillRect(615,215,395,395);ctx.strokeRect(615,215,395,395);}
- ctx.fillStyle="#b32867";ctx.font="800 20px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- const qrLabel=lang==="ko"?"QR로 결과 보기":lang==="zh"?"掃描 QR 查看結果":lang==="ja"?"QRで結果を見る":"SCAN TO VIEW RESULT";
- ctx.fillText(qrLabel,650,258);
- drawShareQr(ctx,makeShareResultUrl(),654,282,317);
+ drawShareQr(ctx,makeShareResultUrl(),654,254,317);
 
  ctx.fillStyle="#8a8087";ctx.font="800 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
  ctx.fillText("MAIN PICK",70,500);
