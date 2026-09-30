@@ -250,6 +250,7 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 const I18N={
 ko:{kicker:"",heroTitle:"나에게 맞는<br>뷰티 디바이스 찾기",heroSub:"피부 고민과 홈케어 취향을 선택하면 나에게 잘 맞는 뷰티 디바이스를 찾아드려요.",pill1:"약 40초",pill2:"6 Questions",pill3:"맞춤 제품 추천",start:"START ✨",notice:"본 서비스는 고객이 선택한 고민과 사용 선호도를 바탕으로 제품 선택을 돕는 안내 서비스이며 의료적 피부 진단이 아닙니다.",quick:"약 40초면 끝나요",back:"이전",next:"다음",why:"왜 잘 맞나요?",howUse:"HOW TO USE",pairWith:"PAIR WITH",modeTitle:"MODES / CARE · 모드·케어 기능",modeNote:"브랜드 공식 안내에서 확인 가능한 모드·관리 목적만 요약했으며, 사용감은 개인에 따라 다를 수 있어요.",fitTitle:"BEST FOR",priceLabel:"공식 정상가 · 2026.10.01",priceDate:"2026.10.01 기준",priceFoot:"가격은 2026.10.01 올리브영 공식 온라인몰에서 확인한 정상가 기준입니다. 확인이 어려운 제품은 ‘가격 확인’으로 표시하며, 행사·옵션·매장에 따라 실제 판매가는 달라질 수 있어요.",myConcern:"MY CONCERN",share:"결과 카드 공유하기",guideAll:"8개 제품 가이드 보기",guideTitle:"PRODUCT GUIDE",guideNotice:"제품 이미지는 실제 올리브영 상품 이미지로만 표시합니다.",shopOlive:"올리브영에서 제품 보기 ↗",restart:"다시 찾기",stockNotice:"제품 정보·가격·재고는 실제 판매처 및 공식 상품 페이지에서 확인해주세요.",footer:"제품 설명은 2026.10.01 기준 브랜드 공식 페이지 및 공식 사용 가이드를 바탕으로 요약했습니다. 제품 사용 전 동봉 사용설명서와 최신 공식 사용법·주의사항을 확인해주세요.",resultSub:"선택한 고민, 홈케어 취향과 예산을 바탕으로 제품을 비교했어요.",also:"함께 비교해볼 만한 제품이에요.",shareText:"나의 뷰티 디바이스 추천 결과"},
@@ -886,7 +887,7 @@ function decodeResultPayload(raw){
 }
 function makeShareResultUrl(){
  const url=new URL("https://khj-hub.github.io/lunch/beauty-device-v2/");
- url.searchParams.set("v","12");
+ url.searchParams.set("v","13");
  const r=encodeResultPayload();
  if(r)url.searchParams.set("r",r);
  return url.toString();
@@ -969,25 +970,20 @@ function dataUrlToFile(dataUrl,filename){
  return new File([bytes],filename,{type:mime});
 }
 
-const shareProductImages={};
-function preloadShareProductImage(p){
- if(shareProductImages[p.id]) return;
- const img=new Image();
- img.crossOrigin="anonymous";
- img.referrerPolicy="no-referrer";
- img.decoding="async";
- img.onload=()=>{shareProductImages[p.id]=img};
- img.onerror=()=>{shareProductImages[p.id]=null};
- img.src=p.image;
-}
-products.forEach(preloadShareProductImage);
-
-function drawContain(ctx,img,x,y,w,h){
- const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
- if(!iw||!ih)return;
- const r=Math.min(w/iw,h/ih);
- const dw=iw*r, dh=ih*r;
- ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+function drawShareQr(ctx,text,x,y,size){
+ if(typeof QRCode==="undefined")throw new Error("QR library unavailable");
+ const holder=document.createElement("div");
+ new QRCode(holder,{
+  text,
+  width:size,
+  height:size,
+  colorDark:"#241b22",
+  colorLight:"#ffffff",
+  correctLevel:QRCode.CorrectLevel.M
+ });
+ const qrCanvas=holder.querySelector("canvas");
+ if(!qrCanvas)throw new Error("QR canvas unavailable");
+ ctx.drawImage(qrCanvas,x,y,size,size);
 }
 
 function createShareFile(){
@@ -1011,14 +1007,15 @@ function createShareFile(){
  ctx.fillStyle="#241b22";ctx.font="900 58px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
  wrapCanvasText(ctx,resultType(),70,315,520,68,2);
 
- // Official product image only. No AI-generated device artwork is used here.
+ // Shared cards intentionally contain no product photography.
+ // The QR stores the completed-result URL so scanning restores this exact result.
  ctx.fillStyle="#fff";ctx.strokeStyle="#f0dbe4";ctx.lineWidth=3;
  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(615,215,395,395,30);ctx.fill();ctx.stroke();}
  else{ctx.fillRect(615,215,395,395);ctx.strokeRect(615,215,395,395);}
- const officialImg=shareProductImages[p.id];
- if(officialImg){
-  try{drawContain(ctx,officialImg,638,238,349,349);}catch(e){}
- }
+ ctx.fillStyle="#b32867";ctx.font="800 20px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ const qrLabel=lang==="ko"?"QR로 결과 보기":lang==="zh"?"掃描 QR 查看結果":lang==="ja"?"QRで結果を見る":"SCAN TO VIEW RESULT";
+ ctx.fillText(qrLabel,650,258);
+ drawShareQr(ctx,makeShareResultUrl(),654,282,317);
 
  ctx.fillStyle="#8a8087";ctx.font="800 24px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
  ctx.fillText("MAIN PICK",70,500);
@@ -1056,7 +1053,8 @@ function createShareFile(){
  ctx.fillStyle="#241b22";ctx.font="800 29px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
  ctx.fillText(lang==="ko"?"나에게 맞는 뷰티 디바이스 찾기":"Find your beauty device",70,1190);
  ctx.fillStyle="#8a8087";ctx.font="500 22px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("khj-hub.github.io/lunch/beauty-device-v2/",70,1230);
+ const qrGuide=lang==="ko"?"QR을 스캔하면 이 결과 화면이 바로 열려요.":lang==="zh"?"掃描 QR 即可直接開啟此結果頁面。":lang==="ja"?"QRを読み取ると、この結果画面がそのまま開きます。":"Scan the QR code to open this exact result.";
+ ctx.fillText(qrGuide,70,1230);
  ctx.fillStyle="#ff5c9d";ctx.fillRect(70,1285,940,6);
 
  return dataUrlToFile(canvas.toDataURL("image/png",1),"my-beauty-pick.png");
@@ -1065,7 +1063,7 @@ function createShareFile(){
 $("#share").onclick=()=>{
  const p=window.__mainPick;
  const pageUrl=makeShareResultUrl();
- const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p)+"\n"+pageUrl;
+ const txt=t("shareText")+"\n"+resultType()+"\nMAIN PICK: "+pname(p);
  try{
   const file=createShareFile();
 
@@ -1090,7 +1088,7 @@ $("#share").onclick=()=>{
   a.href=url;a.download="my-beauty-pick.png";document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
   if(navigator.clipboard)navigator.clipboard.writeText(txt).catch(()=>{});
-  alert(lang==="ko"?"결과 카드 이미지를 저장했어요. 링크도 함께 복사했어요!":lang==="zh"?"已儲存結果卡片並複製連結！":lang==="ja"?"結果カードを保存し、リンクもコピーしました！":"Result card saved and link copied!");
+  alert(lang==="ko"?"QR이 포함된 결과 카드 이미지를 저장했어요!":lang==="zh"?"已儲存包含 QR 的結果卡片！":lang==="ja"?"QR付きの結果カードを保存しました！":"Result card with QR saved!");
  }catch(e){
   if(navigator.share){
    navigator.share({title:"Beauty Device Finder",text:txt,url:pageUrl}).catch(()=>{});
