@@ -244,12 +244,14 @@ h1{font-size:34px;line-height:1.07;letter-spacing:-.055em;margin:18px 0 12px;pos
     <div class="langopts">
       <button class="langbtn" data-lang="ko">한국어</button>
       <button class="langbtn" data-lang="en">English</button>
+      <button class="langbtn" data-lang="zhs">简体中文</button>
       <button class="langbtn" data-lang="zh">繁體中文</button>
       <button class="langbtn" data-lang="ja">日本語</button>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.4.2/dist/umd/full.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 const I18N={
@@ -634,6 +636,29 @@ zh:{glow:"乾燥・光澤",absorb:"保養品吸收",texture:"毛孔・膚質",tr
 ja:{glow:"乾燥・ツヤ",absorb:"スキンケアなじみ",texture:"毛穴・キメ",trouble:"肌コンディション",elastic:"ハリ",jaw:"フェイスライン",whole:"顔全体",cheek:"頬",jawarea:"フェイスライン",eye:"目元",spot:"特定部位",quick:"簡単ルーティン",target:"集中ケア",all:"多機能",care:"丁寧なケア",beginner:"初心者",some:"使用経験あり",advanced:"経験豊富",easy:"使いやすさ",multi:"多機能",focus:"集中ケア",gentle:"やさしい使用感",budget15:"15万ウォン以下",budget30:"15〜30万ウォン",budget50:"30〜50万ウォン",budget50p:"50万ウォン以上",budgetAny:"予算なし"}
 };
 
+const zhSimplifier=(window.OpenCC&&OpenCC.Converter)
+ ? OpenCC.Converter({from:"tw",to:"cn"})
+ : (text=>String(text));
+function simplifyZhValue(value){
+ if(typeof value==="string")return zhSimplifier(value);
+ if(Array.isArray(value))return value.map(simplifyZhValue);
+ if(value&&typeof value==="object"){
+  const out={};
+  Object.keys(value).forEach(k=>out[k]=simplifyZhValue(value[k]));
+  return out;
+ }
+ return value;
+}
+I18N.zhs=simplifyZhValue(I18N.zh);
+Q.zhs=simplifyZhValue(Q.zh);
+productDescriptions.zhs=simplifyZhValue(productDescriptions.zh);
+productGuides.zhs=simplifyZhValue(productGuides.zh);
+productModes.zhs=simplifyZhValue(productModes.zh);
+labels.zhs=simplifyZhValue(labels.zh);
+products.forEach(p=>{
+ if(p.names&&p.names.zh)p.names.zhs=zhSimplifier(p.names.zh);
+});
+
 let lang="ko", step=0;
 let answers=[[],null,null,null,null,null];
 const $=s=>document.querySelector(s);
@@ -641,9 +666,9 @@ const $=s=>document.querySelector(s);
 function t(k){return I18N[lang][k]||k}
 function setLang(l){
  lang=l; localStorage.setItem("beauty-device-lang",l);
- document.documentElement.lang=l==="zh"?"zh-Hant":l;
+ document.documentElement.lang=l==="zh"?"zh-Hant":l==="zhs"?"zh-Hans":l;
  document.querySelectorAll("[data-i]").forEach(el=>el.innerHTML=t(el.dataset.i));
- $("#langBtn").textContent=({ko:"한국어",en:"English",zh:"繁體中文",ja:"日本語"})[l]+" ▾";
+ $("#langBtn").textContent=({ko:"한국어",en:"English",zhs:"简体中文",zh:"繁體中文",ja:"日本語"})[l]+" ▾";
  $("#langSheet").classList.add("hidden");
  if(!$("#quiz").classList.contains("hidden")) renderQ();
  if(!$("#result").classList.contains("hidden")) showResult();
@@ -672,7 +697,7 @@ function renderQ(){
  $("#back").style.visibility=step===0?"hidden":"visible";
  const valid=q.multi?answers[step].length>0:!!answers[step];
  $("#next").disabled=!valid;
- $("#next").textContent=step===5?(lang==="ko"?"결과 보기 ✨":lang==="en"?"See my result ✨":lang==="zh"?"查看結果 ✨":"結果を見る ✨"):t("next");
+ $("#next").textContent=step===5?(lang==="ko"?"결과 보기 ✨":lang==="en"?"See my result ✨":lang==="zhs"?"查看结果 ✨":lang==="zh"?"查看結果 ✨":"結果を見る ✨"):t("next");
 }
 
 function scoreProduct(p){
@@ -732,7 +757,7 @@ function renderModes(p){return pmodes(p).map(m=>'<div class="mode-item"><span cl
 function purl(p){return PRODUCT_URLS[p.id]||"https://www.oliveyoung.co.kr/store/main/main.do"}
 function pprice(p){
  if(p.price!=="CHECK") return p.price;
- return lang==="ko"?"가격 확인":lang==="en"?"Check price":lang==="zh"?"價格確認":"価格確認";
+ return lang==="ko"?"가격 확인":lang==="en"?"Check price":lang==="zhs"?"价格确认":lang==="zh"?"價格確認":"価格確認";
 }
 function setProductPhoto(el,p){
  el.src=p.image;
@@ -744,6 +769,7 @@ function fitLine(p){
  const style=answers[2];
  if(lang==="ko") return labels.ko[top]+" 고민을 우선으로 보고, "+labels.ko[style]+"을 원하는 고객에게 특히 비교하기 좋아요.";
  if(lang==="en") return "A strong comparison if "+labels.en[top]+" is a priority and you prefer "+labels.en[style].toLowerCase()+".";
+ if(lang==="zhs") return "如果你最重视「"+labels.zhs[top]+"」，并偏好「"+labels.zhs[style]+"」，很适合一起比较。";
  if(lang==="zh") return "如果你最重視「"+labels.zh[top]+"」，並偏好「"+labels.zh[style]+"」，很適合一起比較。";
  return "「"+labels.ja[top]+"」を重視し、「"+labels.ja[style]+"」を希望する方に比較しやすい商品です。";
 }
@@ -754,6 +780,7 @@ function translatedTags(p){
   zh:p.id==="x2"?["多功能","彈力","膚質"]:p.id==="mini"?["簡單","肌膚狀態","入門"]:p.id==="vroller"?["下顎線","EMS","集中"]:p.id==="glow"?["光澤","保養","簡單"]:p.id==="vsera"?["下顎線","EMS","集中"]:p.id==="thome"?["水滴超音波","保養","安瓶"]:p.id==="therma"?["彈力","膚質","多功能"]:["保養","簡單","入門"],
   ja:p.id==="x2"?["多機能","ハリ","キメ"]:p.id==="mini"?["簡単","コンディション","初心者"]:p.id==="vroller"?["フェイスライン","EMS","集中"]:p.id==="glow"?["ツヤ","スキンケア","簡単"]:p.id==="vsera"?["フェイスライン","EMS","集中"]:p.id==="thome"?["水滴超音波","スキンケア","アンプル"]:p.id==="therma"?["ハリ","キメ","多機能"]:["スキンケア","簡単","初心者"]
  };
+ if(lang==="zhs")return map.zh.map(zhSimplifier);
  return map[lang];
 }
 function reasonLines(p){
@@ -768,6 +795,11 @@ function reasonLines(p){
   "It scored highly for your selected "+labels.en[top]+" concern.",
   "Your "+labels.en[area]+" focus and "+labels.en[style]+" preference were included.",
   "We also considered "+labels.en[exp]+", "+labels.en[pri]+" and "+labels.en[answers[5]]+"."
+ ];
+ if(lang==="zhs") return [
+  "在你选择的「"+labels.zhs[top]+"」需求中匹配分数较高。",
+  "同时纳入「"+labels.zhs[area]+"」与「"+labels.zhs[style]+"」偏好。",
+  "也综合考虑「"+labels.zhs[exp]+"」、「"+labels.zhs[pri]+"」与「"+labels.zhs[answers[5]]+"」。"
  ];
  if(lang==="zh") return [
   "在你選擇的「"+labels.zh[top]+"」需求中配對分數較高。",
@@ -785,7 +817,7 @@ function resultType(){
  const l=labels[lang];
  if(lang==="ko") return c.map(x=>l[x]).join(" + ")+" 집중형";
  if(lang==="en") return c.map(x=>l[x]).join(" + ")+" Match";
- if(lang==="zh") return c.map(x=>l[x]).join(" + ")+" 型";
+ if(lang==="zhs"||lang==="zh") return c.map(x=>l[x]).join(" + ")+" 型";
  return c.map(x=>l[x]).join(" + ")+" タイプ";
 }
 function showResult(){
@@ -1103,12 +1135,12 @@ $("#share").onclick=()=>{
   a.href=url;a.download="my-beauty-pick.png";document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
   if(navigator.clipboard)navigator.clipboard.writeText(txt).catch(()=>{});
-  alert(lang==="ko"?"QR이 포함된 결과 카드 이미지를 저장했어요!":lang==="zh"?"已儲存包含 QR 的結果卡片！":lang==="ja"?"QR付きの結果カードを保存しました！":"Result card with QR saved!");
+  alert(lang==="ko"?"QR이 포함된 결과 카드 이미지를 저장했어요!":lang==="zhs"?"已保存包含 QR 的结果卡片！":lang==="zh"?"已儲存包含 QR 的結果卡片！":lang==="ja"?"QR付きの結果カードを保存しました！":"Result card with QR saved!");
  }catch(e){
   if(navigator.share){
    navigator.share({title:"Beauty Device Finder",text:txt,url:pageUrl}).catch(()=>{});
   }else if(navigator.clipboard){
-   navigator.clipboard.writeText(txt).then(()=>alert(lang==="ko"?"링크를 복사했어요!":"Link copied!")).catch(()=>{});
+   navigator.clipboard.writeText(txt).then(()=>alert(lang==="ko"?"링크를 복사했어요!":lang==="zhs"?"链接已复制！":lang==="zh"?"連結已複製！":lang==="ja"?"リンクをコピーしました！":"Link copied!")).catch(()=>{});
   }
  }
 };
