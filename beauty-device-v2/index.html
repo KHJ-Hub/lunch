@@ -1047,12 +1047,30 @@ function createShareFile(){
   ry=wrapCanvasText(ctx,"• "+line,105,ry,835,39,2)+16;
  }
 
- ctx.fillStyle="#241b22";ctx.font="800 29px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- ctx.fillText("MY BEAUTY PICK",70,1190);
- ctx.fillStyle="#8a8087";ctx.font="500 22px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
- const qrGuide=lang==="ko"?"QR을 스캔하면 이 결과 화면이 바로 열려요.":lang==="zh"?"掃描 QR 即可直接開啟此結果頁面。":lang==="ja"?"QRを読み取ると、この結果画面がそのまま開きます。":"Scan the QR code to open this exact result.";
- ctx.fillText(qrGuide,70,1230);
- ctx.fillStyle="#ff5c9d";ctx.fillRect(70,1285,940,6);
+ // Staff-facing card: always Korean, regardless of the selected customer language.
+ ctx.fillStyle="#241b22";
+ if(ctx.roundRect){ctx.beginPath();ctx.roundRect(70,1120,940,180,30);ctx.fill();}
+ else{ctx.fillRect(70,1120,940,180);}
+ ctx.fillStyle="#c8c0c5";ctx.font="800 16px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("SHOW TO STAFF · 직원에게 보여주세요",105,1150);
+ ctx.fillStyle="#ffffff";ctx.font="900 29px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("MY BEAUTY PICK",105,1187);
+
+ const staffConcern=answers[0].map(x=>labels.ko[x]).join(" · ");
+ const staffProduct=p.name;
+ ctx.strokeStyle="#4b4248";ctx.lineWidth=2;
+ if(ctx.roundRect){
+  ctx.beginPath();ctx.roundRect(105,1205,390,70,16);ctx.stroke();
+  ctx.beginPath();ctx.roundRect(515,1205,460,70,16);ctx.stroke();
+ }else{
+  ctx.strokeRect(105,1205,390,70);ctx.strokeRect(515,1205,460,70);
+ }
+ ctx.fillStyle="#a89fa5";ctx.font="600 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText("피부 고민",125,1228);
+ ctx.fillText("추천 제품",535,1228);
+ ctx.fillStyle="#ffffff";ctx.font="800 19px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+ ctx.fillText(staffConcern,125,1258);
+ ctx.fillText(staffProduct,535,1258);
 
  return dataUrlToFile(canvas.toDataURL("image/png",1),"my-beauty-pick.png");
 }
